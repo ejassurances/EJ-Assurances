@@ -174,7 +174,7 @@ export const Route = createFileRoute("/api/public/leads")({
             .single();
           if (error || !inserted) {
             return Response.json(
-              { error: "Insertion impossible", detail: error?.message },
+              { error: "Insertion impossible" },
               { status: 500, headers: corsHeaders() },
             );
           }
