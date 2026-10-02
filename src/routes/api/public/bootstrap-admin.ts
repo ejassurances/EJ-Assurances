@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { timingSafeEqual } from "node:crypto";
 
 // One-shot idempotent seeder: creates the initial admin account if and only if
 // no admin currently exists in user_roles. Safe to call multiple times.
@@ -6,6 +7,14 @@ export const Route = createFileRoute("/api/public/bootstrap-admin")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const expected = (process.env["BOOTSTRAP_ADMIN_TOKEN"] ?? "").trim();
+        const provided = (request.headers.get("x-bootstrap-admin-token") ?? "").trim();
+        if (!expected || !provided) return new Response("Unauthorized", { status: 401 });
+        const a = Buffer.from(expected);
+        const b = Buffer.from(provided);
+        if (a.length !== b.length || !timingSafeEqual(a, b)) {
+          return new Response("Unauthorized", { status: 401 });
+        }
         const body = (await request.json().catch(() => ({}))) as {
           email?: string;
           password?: string;
