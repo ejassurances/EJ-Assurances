@@ -447,6 +447,22 @@ function DossierDetail() {
       )}
 
 
+      {(dossier.type_assurance === "sante" || dossier.type_assurance === "prevoyance_sante") && (
+        <div className="crm-card flex flex-wrap items-center justify-between gap-3 p-4">
+          <div>
+            <p className="text-sm font-semibold text-ink">Recueil santé</p>
+            <p className="text-xs text-ink-muted">
+              {(() => {
+                const rs = (dossier.recueil_besoins as Record<string, any> | null)?.["recueil_sante"];
+                return rs ? `Statut : ${({ commence: "commencé", en_cours: "en cours", termine: "terminé", a_revoir: "à revoir" } as Record<string, string>)[rs.statut] ?? rs.statut}` : "Pas encore commencé";
+              })()}
+            </p>
+          </div>
+          <Link to="/espace/recueil-sante/$dossierId" params={{ dossierId: id }} className="rounded-full bg-[color:var(--crm-navy)] px-4 py-2 text-xs font-medium text-primary-foreground">
+            Faire le point sur les besoins
+          </Link>
+        </div>
+      )}
       {!parcoursActif && (
         <DossierPipeline
           dossierId={id}

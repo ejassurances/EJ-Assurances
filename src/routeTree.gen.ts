@@ -85,6 +85,7 @@ import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/em
 import { Route as ApiPublicWebhooksNeolianeRouteImport } from './routes/api/public/webhooks/neoliane'
 import { Route as ApiPublicWebhooksCrmRouteImport } from './routes/api/public/webhooks/crm'
 import { Route as AuthenticatedEspaceSinistresIdRouteImport } from './routes/_authenticated/espace.sinistres.$id'
+import { Route as AuthenticatedEspaceRecueilSanteDossierIdRouteImport } from './routes/_authenticated/espace.recueil-sante.$dossierId'
 import { Route as AuthenticatedEspaceDossiersIdRouteImport } from './routes/_authenticated/espace.dossiers.$id'
 import { Route as AuthenticatedEspaceContratsIdRouteImport } from './routes/_authenticated/espace.contrats.$id'
 import { Route as AuthenticatedEspaceCompagniesIdRouteImport } from './routes/_authenticated/espace.compagnies.$id'
@@ -521,6 +522,12 @@ const AuthenticatedEspaceSinistresIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedEspaceSinistresRoute,
   } as any)
+const AuthenticatedEspaceRecueilSanteDossierIdRoute =
+  AuthenticatedEspaceRecueilSanteDossierIdRouteImport.update({
+    id: '/recueil-sante/$dossierId',
+    path: '/recueil-sante/$dossierId',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
 const AuthenticatedEspaceDossiersIdRoute =
   AuthenticatedEspaceDossiersIdRouteImport.update({
     id: '/dossiers/$id',
@@ -616,6 +623,7 @@ export interface FileRoutesByFullPath {
   '/espace/compagnies/$id': typeof AuthenticatedEspaceCompagniesIdRoute
   '/espace/contrats/$id': typeof AuthenticatedEspaceContratsIdRoute
   '/espace/dossiers/$id': typeof AuthenticatedEspaceDossiersIdRoute
+  '/espace/recueil-sante/$dossierId': typeof AuthenticatedEspaceRecueilSanteDossierIdRoute
   '/espace/sinistres/$id': typeof AuthenticatedEspaceSinistresIdRoute
   '/api/public/webhooks/crm': typeof ApiPublicWebhooksCrmRoute
   '/api/public/webhooks/neoliane': typeof ApiPublicWebhooksNeolianeRoute
@@ -696,6 +704,7 @@ export interface FileRoutesByTo {
   '/espace/compagnies/$id': typeof AuthenticatedEspaceCompagniesIdRoute
   '/espace/contrats/$id': typeof AuthenticatedEspaceContratsIdRoute
   '/espace/dossiers/$id': typeof AuthenticatedEspaceDossiersIdRoute
+  '/espace/recueil-sante/$dossierId': typeof AuthenticatedEspaceRecueilSanteDossierIdRoute
   '/espace/sinistres/$id': typeof AuthenticatedEspaceSinistresIdRoute
   '/api/public/webhooks/crm': typeof ApiPublicWebhooksCrmRoute
   '/api/public/webhooks/neoliane': typeof ApiPublicWebhooksNeolianeRoute
@@ -779,6 +788,7 @@ export interface FileRoutesById {
   '/_authenticated/espace/compagnies/$id': typeof AuthenticatedEspaceCompagniesIdRoute
   '/_authenticated/espace/contrats/$id': typeof AuthenticatedEspaceContratsIdRoute
   '/_authenticated/espace/dossiers/$id': typeof AuthenticatedEspaceDossiersIdRoute
+  '/_authenticated/espace/recueil-sante/$dossierId': typeof AuthenticatedEspaceRecueilSanteDossierIdRoute
   '/_authenticated/espace/sinistres/$id': typeof AuthenticatedEspaceSinistresIdRoute
   '/api/public/webhooks/crm': typeof ApiPublicWebhooksCrmRoute
   '/api/public/webhooks/neoliane': typeof ApiPublicWebhooksNeolianeRoute
@@ -862,6 +872,7 @@ export interface FileRouteTypes {
     | '/espace/compagnies/$id'
     | '/espace/contrats/$id'
     | '/espace/dossiers/$id'
+    | '/espace/recueil-sante/$dossierId'
     | '/espace/sinistres/$id'
     | '/api/public/webhooks/crm'
     | '/api/public/webhooks/neoliane'
@@ -942,6 +953,7 @@ export interface FileRouteTypes {
     | '/espace/compagnies/$id'
     | '/espace/contrats/$id'
     | '/espace/dossiers/$id'
+    | '/espace/recueil-sante/$dossierId'
     | '/espace/sinistres/$id'
     | '/api/public/webhooks/crm'
     | '/api/public/webhooks/neoliane'
@@ -1024,6 +1036,7 @@ export interface FileRouteTypes {
     | '/_authenticated/espace/compagnies/$id'
     | '/_authenticated/espace/contrats/$id'
     | '/_authenticated/espace/dossiers/$id'
+    | '/_authenticated/espace/recueil-sante/$dossierId'
     | '/_authenticated/espace/sinistres/$id'
     | '/api/public/webhooks/crm'
     | '/api/public/webhooks/neoliane'
@@ -1615,6 +1628,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEspaceSinistresIdRouteImport
       parentRoute: typeof AuthenticatedEspaceSinistresRoute
     }
+    '/_authenticated/espace/recueil-sante/$dossierId': {
+      id: '/_authenticated/espace/recueil-sante/$dossierId'
+      path: '/recueil-sante/$dossierId'
+      fullPath: '/espace/recueil-sante/$dossierId'
+      preLoaderRoute: typeof AuthenticatedEspaceRecueilSanteDossierIdRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
     '/_authenticated/espace/dossiers/$id': {
       id: '/_authenticated/espace/dossiers/$id'
       path: '/dossiers/$id'
@@ -1693,6 +1713,7 @@ interface AuthenticatedEspaceRouteChildren {
   AuthenticatedEspaceCompagniesIdRoute: typeof AuthenticatedEspaceCompagniesIdRoute
   AuthenticatedEspaceContratsIdRoute: typeof AuthenticatedEspaceContratsIdRoute
   AuthenticatedEspaceDossiersIdRoute: typeof AuthenticatedEspaceDossiersIdRoute
+  AuthenticatedEspaceRecueilSanteDossierIdRoute: typeof AuthenticatedEspaceRecueilSanteDossierIdRoute
   AuthenticatedEspaceClientsIndexRoute: typeof AuthenticatedEspaceClientsIndexRoute
   AuthenticatedEspaceCompagniesIndexRoute: typeof AuthenticatedEspaceCompagniesIndexRoute
   AuthenticatedEspaceContratsIndexRoute: typeof AuthenticatedEspaceContratsIndexRoute
@@ -1743,6 +1764,8 @@ const AuthenticatedEspaceRouteChildren: AuthenticatedEspaceRouteChildren = {
   AuthenticatedEspaceCompagniesIdRoute: AuthenticatedEspaceCompagniesIdRoute,
   AuthenticatedEspaceContratsIdRoute: AuthenticatedEspaceContratsIdRoute,
   AuthenticatedEspaceDossiersIdRoute: AuthenticatedEspaceDossiersIdRoute,
+  AuthenticatedEspaceRecueilSanteDossierIdRoute:
+    AuthenticatedEspaceRecueilSanteDossierIdRoute,
   AuthenticatedEspaceClientsIndexRoute: AuthenticatedEspaceClientsIndexRoute,
   AuthenticatedEspaceCompagniesIndexRoute:
     AuthenticatedEspaceCompagniesIndexRoute,
