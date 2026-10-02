@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { authorizePublicJob } from "@/lib/public-job-auth";
 
 /**
  * Reconstitution du recueil des dossiers emprunteur DÉJÀ EN COURS au format
@@ -11,12 +12,7 @@ export const Route = createFileRoute("/api/public/recueil-emprunteur-reconstitut
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const token = process.env["RELANCE_PIECES_TOKEN"];
-        const anon =
-          process.env["SUPABASE_PUBLISHABLE_KEY"] || process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] || null;
-        const parToken = !!token && request.headers.get("x-relance-token") === token;
-        const parApiKey = !!anon && request.headers.get("apikey") === anon;
-        if (!parToken && !parApiKey) return new Response("Unauthorized", { status: 401 });
+        if (!authorizePublicJob(request)) return new Response("Unauthorized", { status: 401 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { reconstituerRecueilEmprunteur, reconstituerRecueilsEmprunteurEnCours } = await import(
