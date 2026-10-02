@@ -240,3 +240,44 @@ export const getSyntheseAnneeCommissions = createServerFn({ method: "GET" })
     ];
     return syntheseAnnee(toutes, encaissees);
   });
+
+
+export type PilotageCounts = {
+  tachesOuvertes: number;
+  dossiersBloques: number;
+  dossiersAValider: number;
+  dossiersSuiviCompagnie: number;
+  escaladesAgent: number;
+};
+
+/** Vue synthétique orientée action pour le cockpit du cabinet. */
+export const getPilotageCounts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<PilotageCounts> => {
+    const db = context.supabase as any;
+    const [taches, bloques, validations, suivi, escalades] = await Promise.all([
+      db.from("taches")
+        .select("id", { count: "exact", head: true })
+        .in("statut", ["a_faire", "en_cours", "a_qualifier"])
+        .eq("legacy_orpheline", false),
+      db.from("dossiers")
+        .select("id", { count: "exact", head: true })
+        .eq("blocage_actif", true),
+      db.from("dossiers")
+        .select("id", { count: "exact", head: true })
+        .eq("pipeline_etape", "fic_a_valider"),
+      db.from("dossiers")
+        .select("id", { count: "exact", head: true })
+        .eq("pipeline_etape", "suivi_compagnie"),
+      db.from("agent_escalations")
+        .select("id", { count: "exact", head: true })
+        .in("statut", ["a_traiter", "en_cours"]),
+    ]);
+    return {
+      tachesOuvertes: taches.count ?? 0,
+      dossiersBloques: bloques.count ?? 0,
+      dossiersAValider: validations.count ?? 0,
+      dossiersSuiviCompagnie: suivi.count ?? 0,
+      escaladesAgent: escalades.count ?? 0,
+    };
+  });
