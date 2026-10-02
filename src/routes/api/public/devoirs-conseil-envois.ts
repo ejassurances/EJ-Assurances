@@ -14,7 +14,7 @@ export const Route = createFileRoute("/api/public/devoirs-conseil-envois")({
       POST: async ({ request }) => {
         const anon =
           process.env["SUPABASE_PUBLISHABLE_KEY"] || process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] || null;
-        if (!authorizePublicJob(request)) return new Response("Unauthorized", { status: 401 });
+        if (!(await authorizePublicJob(request))) return new Response("Unauthorized", { status: 401 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { envoyerDevoirsConseilValidesDus } = await import("@/lib/devoir-conseil.server");
