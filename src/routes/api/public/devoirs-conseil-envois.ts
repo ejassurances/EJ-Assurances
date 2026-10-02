@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { authorizePublicJob } from "@/lib/public-job-auth";
 
 /**
  * Job d'envoi automatique des devoirs de conseil VALIDÉS par le cabinet dont le
@@ -13,11 +14,7 @@ export const Route = createFileRoute("/api/public/devoirs-conseil-envois")({
       POST: async ({ request }) => {
         const anon =
           process.env["SUPABASE_PUBLISHABLE_KEY"] || process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] || null;
-        const token = process.env["RELANCE_PIECES_TOKEN"];
-        const ok =
-          (!!anon && request.headers.get("apikey") === anon) ||
-          (!!token && request.headers.get("x-relance-token") === token);
-        if (!ok) return new Response("Unauthorized", { status: 401 });
+        if (!authorizePublicJob(request)) return new Response("Unauthorized", { status: 401 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { envoyerDevoirsConseilValidesDus } = await import("@/lib/devoir-conseil.server");

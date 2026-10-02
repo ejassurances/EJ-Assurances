@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { authorizePublicJob } from "@/lib/public-job-auth";
 
 /**
  * Surveillance quotidienne des dossiers bloqués (statut inchangé depuis plus de
@@ -9,13 +10,7 @@ export const Route = createFileRoute("/api/public/dossiers-bloques")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const token = process.env["RELANCE_PIECES_TOKEN"];
-        const apiKey =
-          process.env["SUPABASE_PUBLISHABLE_KEY"] || process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] || null;
-        const ok =
-          (!!apiKey && request.headers.get("apikey") === apiKey) ||
-          (!!token && request.headers.get("x-relance-token") === token);
-        if (!ok) return new Response("Unauthorized", { status: 401 });
+        if (!authorizePublicJob(request)) return new Response("Unauthorized", { status: 401 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { surveillerDossiersBloques } = await import("@/lib/dossiers-bloques.server");
