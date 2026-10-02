@@ -153,3 +153,57 @@ export function etapeSuivante(key: string): EtapeDef | null {
 export function estFinalisee(key: string): boolean {
   return key === "contrat_actif" || key === "cloture" || key === "perdu";
 }
+
+
+/**
+ * Lot B — pipeline cible. Le champ dossiers.statut reste temporairement
+ * compatible avec l'historique ; dossiers.pipeline_etape porte désormais
+ * l'étape métier cible et dossiers.blocage_* porte l'état de blocage séparé.
+ */
+export type PipelineEtapeCible =
+  | "nouveau"
+  | "qualification"
+  | "pieces_en_cours"
+  | "conformite_a_verifier"
+  | "lettre_mission"
+  | "recherche_devis"
+  | "analyse_recommandation"
+  | "fic_a_valider"
+  | "fic_envoye"
+  | "souscription_a_lancer"
+  | "suivi_compagnie"
+  | "contrat_actif"
+  | "post_vente"
+  | "termine_archive";
+
+export type PipelineEtapeCibleDef = {
+  key: PipelineEtapeCible;
+  label: string;
+  responsable: "agent" | "humain" | "client" | "compagnie";
+};
+
+export const PIPELINE_CIBLE: PipelineEtapeCibleDef[] = [
+  { key: "nouveau", label: "Nouveau / à qualifier", responsable: "agent" },
+  { key: "qualification", label: "Qualification", responsable: "agent" },
+  { key: "pieces_en_cours", label: "Pièces / recueil en cours", responsable: "agent" },
+  { key: "conformite_a_verifier", label: "Conformité à vérifier", responsable: "humain" },
+  { key: "lettre_mission", label: "Lettre de mission", responsable: "client" },
+  { key: "recherche_devis", label: "Recherche / demandes de devis", responsable: "agent" },
+  { key: "analyse_recommandation", label: "Analyse / recommandation", responsable: "humain" },
+  { key: "fic_a_valider", label: "FIC à valider humainement", responsable: "humain" },
+  { key: "fic_envoye", label: "FIC envoyé / signature en attente", responsable: "client" },
+  { key: "souscription_a_lancer", label: "Souscription à lancer", responsable: "humain" },
+  { key: "suivi_compagnie", label: "Suivi compagnie", responsable: "compagnie" },
+  { key: "contrat_actif", label: "Contrat validé / actif", responsable: "compagnie" },
+  { key: "post_vente", label: "Post-vente / suivi", responsable: "agent" },
+  { key: "termine_archive", label: "Terminé / archivé", responsable: "agent" },
+];
+
+export type BlocageDossier = {
+  actif: boolean;
+  code?: string | null;
+  motif?: string | null;
+  elementAttendu?: string | null;
+  responsable?: string | null;
+  depuis?: string | null;
+};
