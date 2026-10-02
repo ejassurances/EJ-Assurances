@@ -10,7 +10,7 @@ export const Route = createFileRoute("/api/public/lettres-mission-envois")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        if (!authorizePublicJob(request)) return new Response("Unauthorized", { status: 401 });
+        if (!(await authorizePublicJob(request))) return new Response("Unauthorized", { status: 401 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { envoyerLettresMissionDues } = await import("@/lib/lettres-mission.server");
