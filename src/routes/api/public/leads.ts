@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 
 const leadSchema = z.object({
   source: z.enum(["contact", "simulateur", "facebook"]),
@@ -49,6 +50,17 @@ export const Route = createFileRoute("/api/public/leads")({
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: corsHeaders() }),
       POST: async ({ request }) => {
+        const MAX_BODY_BYTES = 40 * 1024 * 1024;
+        const contentLength = Number(request.headers.get("content-length") || 0);
+        if (contentLength > MAX_BODY_BYTES) {
+          return Response.json({ error: "Payload too large" }, { status: 413, headers: corsHeaders() });
+        }
+
+        const ip = getClientIp(request);
+        if (isRateLimited(`leads:ip:${ip}`, 5, 10 * 60 * 1000)) {
+          return Response.json({ error: "Too many requests" }, { status: 429, headers: corsHeaders() });
+        }
+
         let payload: unknown;
         try {
           payload = await request.json();
@@ -63,6 +75,15 @@ export const Route = createFileRoute("/api/public/leads")({
           );
         }
         const d = parsed.data;
+        if (d.email && isRateLimited(`leads:email:${d.email.toLowerCase()}`, 3, 10 * 60 * 1000)) {
+          return Response.json({ error: "Too many requests" }, { status: 429, headers: corsHeaders() });
+        }
+
+        const idempotencyKey = request.headers.get("Idempotency-Key")?.trim() || null;
+        if (idempotencyKey && !/^[A-Za-z0-9._:-]{8,128}$/.test(idempotencyKey)) {
+          return Response.json({ error: "Invalid Idempotency-Key" }, { status: 400, headers: corsHeaders() });
+        }
+
         if (!d.consent_contact || !d.consent_rgpd) {
           return Response.json({ error: "Consentements requis" }, { status: 400, headers: corsHeaders() });
         }
@@ -73,6 +94,56 @@ export const Route = createFileRoute("/api/public/leads")({
         const isFacebook = d.source === "facebook" || sourceFromQuery === "facebook";
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+        if (idempotencyKey) {
+          const endpoint = "public-leads";
+          const { data: existingKey } = await supabaseAdmin
+            .from("public_intake_idempotency")
+            .select("status, client_id, dossier_ref, created_at")
+            .eq("endpoint", endpoint)
+            .eq("idempotency_key", idempotencyKey)
+            .maybeSingle();
+
+          if (existingKey?.status === "completed") {
+            return Response.json(
+              { ok: true, client_id: existingKey.client_id, invite_sent: false, dossier_ref: existingKey.dossier_ref, replay: true },
+              { headers: corsHeaders() },
+            );
+          }
+
+          if (existingKey?.status === "pending") {
+            const ageMs = Date.now() - new Date(existingKey.created_at).getTime();
+            if (ageMs < 15 * 60 * 1000) {
+              return Response.json({ error: "Request already in progress" }, { status: 409, headers: corsHeaders() });
+            }
+            await supabaseAdmin
+              .from("public_intake_idempotency")
+              .delete()
+              .eq("endpoint", endpoint)
+              .eq("idempotency_key", idempotencyKey);
+          }
+
+          const { error: claimError } = await supabaseAdmin
+            .from("public_intake_idempotency")
+            .insert({ endpoint, idempotency_key: idempotencyKey, status: "pending" });
+
+          if (claimError) {
+            const { data: race } = await supabaseAdmin
+              .from("public_intake_idempotency")
+              .select("status, client_id, dossier_ref, created_at")
+              .eq("endpoint", endpoint)
+              .eq("idempotency_key", idempotencyKey)
+              .maybeSingle();
+
+            if (race?.status === "completed") {
+              return Response.json(
+                { ok: true, client_id: race.client_id, invite_sent: false, dossier_ref: race.dossier_ref, replay: true },
+                { headers: corsHeaders() },
+              );
+            }
+            return Response.json({ error: "Request already in progress" }, { status: 409, headers: corsHeaders() });
+          }
+        }
 
         // Reuse an existing client for the same email (avoids duplicate cards
         // when a prospect submits both the contact form and the simulator).
@@ -285,6 +356,23 @@ export const Route = createFileRoute("/api/public/leads")({
           })),
           source_reseau: isFacebook ? "facebook" : null,
         } as any);
+
+        if (idempotencyKey) {
+          const { error: completionError } = await supabaseAdmin
+            .from("public_intake_idempotency")
+            .update({
+              status: "completed",
+              client_id: clientId,
+              dossier_ref: dossierRef,
+              completed_at: new Date().toISOString(),
+            })
+            .eq("endpoint", "public-leads")
+            .eq("idempotency_key", idempotencyKey);
+
+          if (completionError) {
+            console.error("[public-leads] idempotency completion failed", completionError);
+          }
+        }
 
         return Response.json(
           { ok: true, client_id: clientId, invite_sent: espace.email_sent, dossier_ref: dossierRef, webhook_ok: webhook.ok },
