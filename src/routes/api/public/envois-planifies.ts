@@ -1,4 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { timingSafeEqual } from "node:crypto";
+
+function secureTokenEqual(expected: string | null, provided: string | null): boolean {
+  if (!expected || !provided) return false;
+  const a = Buffer.from(expected);
+  const b = Buffer.from(provided);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
 
 /**
  * Job d'envoi de la file d'attente d'emails : envoie tout ce qui est dû
@@ -14,7 +22,7 @@ export const Route = createFileRoute("/api/public/envois-planifies")({
         const token = process.env["RELANCE_PIECES_TOKEN"];
         const ok =
           (!!anon && request.headers.get("apikey") === anon) ||
-          (!!token && request.headers.get("x-relance-token") === token);
+          secureTokenEqual(token, request.headers.get("x-relance-token"));
         if (!ok) return new Response("Unauthorized", { status: 401 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
