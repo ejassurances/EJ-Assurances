@@ -1,14 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { authorizePublicJob } from "@/lib/public-job-auth";
-import { timingSafeEqual } from "node:crypto";
-
-function secureTokenEqual(expected: string | null, provided: string | null): boolean {
-  if (!expected || !provided) return false;
-  const a = Buffer.from(expected);
-  const b = Buffer.from(provided);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
-
 /**
  * Job d'envoi de la file d'attente d'emails : envoie tout ce qui est dû
  * (voir src/lib/emails-file-attente.server.ts). Appelé toutes les 5 minutes
@@ -18,8 +9,6 @@ export const Route = createFileRoute("/api/public/envois-planifies")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const anon =
-          process.env["SUPABASE_PUBLISHABLE_KEY"] || process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] || null;
         if (!authorizePublicJob(request)) return new Response("Unauthorized", { status: 401 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
