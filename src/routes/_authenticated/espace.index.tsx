@@ -11,6 +11,8 @@ import {
   getRepartitionTypeAssurance,
   getRepartitionDepartements,
   getSyntheseAnneeCommissions,
+  getPilotageCounts,
+  type PilotageCounts,
   type CaRealSummary,
   type CaMensuelPoint,
   type RepartitionPoint,
@@ -99,6 +101,7 @@ function Dashboard() {
   const [taches, setTaches] = useState<Tache[]>([]);
   const [caReal, setCaReal] = useState<CaRealSummary | null>(null);
   const [caMensuel, setCaMensuel] = useState<CaMensuelPoint[]>([]);
+  const [pilotage, setPilotage] = useState<PilotageCounts | null>(null);
   const [repartitionCompagnies, setRepartitionCompagnies] = useState<RepartitionPoint[]>([]);
   const [repartitionType, setRepartitionType] = useState<RepartitionPoint[]>([]);
   const [repartitionDepartements, setRepartitionDepartements] = useState<DepartementPoint[]>([]);
@@ -109,10 +112,11 @@ function Dashboard() {
   const fetchRepartitionType = useServerFn(getRepartitionTypeAssurance);
   const fetchRepartitionDepartements = useServerFn(getRepartitionDepartements);
   const fetchSynthese = useServerFn(getSyntheseAnneeCommissions);
+  const fetchPilotage = useServerFn(getPilotageCounts);
 
   useEffect(() => {
     (async () => {
-      const [c, p, tot, ec, si, com, tch, ca, caMens, repCompagnies, repType, repDept] = await Promise.all([
+      const [c, p, tot, ec, si, com, tch, ca, caMens, repCompagnies, repType, repDept, pilotageCounts] = await Promise.all([
         supabase.from("clients").select("*", { count: "exact", head: true }),
         supabase.from("clients").select("*", { count: "exact", head: true }).eq("statut", "prospect"),
         supabase.from("dossiers").select("*", { count: "exact", head: true }),
@@ -130,6 +134,7 @@ function Dashboard() {
         fetchRepartitionCompagnies(),
         fetchRepartitionType(),
         fetchRepartitionDepartements(),
+        fetchPilotage(),
       ]);
       setStats({
         clients: c.count ?? 0,
@@ -145,6 +150,7 @@ function Dashboard() {
       setRepartitionCompagnies(repCompagnies);
       setRepartitionType(repType);
       setRepartitionDepartements(repDept);
+      setPilotage(pilotageCounts);
     })();
   }, [
     fetchCaReal,
@@ -153,6 +159,7 @@ function Dashboard() {
     fetchRepartitionType,
     fetchRepartitionDepartements,
     fetchSynthese,
+    fetchPilotage,
   ]);
 
   return (
@@ -291,6 +298,16 @@ function Dashboard() {
 }
 
 const Card = StatCard;
+
+function PilotageCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="crm-card p-5">
+      <p className="crm-eyebrow">{label}</p>
+      <p className="mt-2 font-serif text-3xl font-semibold text-ink">{value}</p>
+    </div>
+  );
+}
+
 
 
 function CaRealCard({ data }: { data: CaRealSummary }) {
