@@ -34,6 +34,11 @@ export const majTache = createServerFn({ method: "POST" })
     const patch: Record<string, unknown> = {};
     if (data.statut) patch.statut = data.statut;
     if (data.priorite) patch.priorite = data.priorite;
+    if (data.statut === "terminee" || data.statut === "annulee") {
+      patch.terminee_le = new Date().toISOString();
+    } else if (data.statut) {
+      patch.terminee_le = null;
+    }
     if (Object.keys(patch).length === 0) return { ok: true as const };
     const { error } = await (context.supabase as any).from("taches").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);

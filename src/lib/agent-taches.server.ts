@@ -81,9 +81,24 @@ export async function creerTacheAdmin(
     created_by?: string | null;
     /** Décalage de l'échéance en jours (0 = aujourd'hui, par défaut). */
     echeance_jours?: number;
+    /** Clé métier unique empêchant la création de doublons. */
+    idempotency_key?: string | null;
+    /** Événement/règle ayant déclenché la tâche. */
+    source?: string | null;
+    source_event_id?: string | null;
+    resultat_attendu?: string | null;
   },
 ): Promise<string | null> {
   try {
+    if (params.idempotency_key) {
+      const { data: existing } = await (admin as any)
+        .from("taches")
+        .select("id")
+        .eq("idempotency_key", params.idempotency_key)
+        .maybeSingle();
+      if (existing?.id) return existing.id as string;
+    }
+
     const assignee = params.assignee_id ?? (await adminParDefaut(admin));
     const echeance = new Date();
     echeance.setDate(echeance.getDate() + Math.max(0, Math.min(180, params.echeance_jours ?? 0)));
@@ -100,11 +115,27 @@ export async function creerTacheAdmin(
         assignee_id: assignee,
         created_by: params.created_by ?? assignee,
         echeance: echeance.toISOString().slice(0, 10),
-      })
+        idempotency_key: params.idempotency_key ?? null,
+        source: params.source ?? "agent",
+        source_event_id: params.source_event_id ?? null,
+        resultat_attendu: params.resultat_attendu ?? null,
+        cree_par_agent: true,
+        orchestration_version: 1,
+      } as any)
       .select("id")
       .maybeSingle();
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (params.idempotency_key && error.code === "23505") {
+        const { data: existing } = await (admin as any)
+          .from("taches")
+          .select("id")
+          .eq("idempotency_key", params.idempotency_key)
+          .maybeSingle();
+        return (existing as { id: string } | null)?.id ?? null;
+      }
+      throw new Error(error.message);
+    }
     return (data as { id: string } | null)?.id ?? null;
   } catch (e) {
     console.error("[agent-commercial] création de tâche impossible", e);
