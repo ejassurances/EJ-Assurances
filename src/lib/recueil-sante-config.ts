@@ -167,7 +167,7 @@ export const REGLES_SANTE = {
     hosp_etablissement: { public: 0, mixte: 2, prive: 4 },
     hosp_arbitrage: { cotisation: 0, equilibre: 1, remboursement: 2 },
     hosp_chambre: { oui: 1, non: 0 },
-    soins_specialistes: { rare: 0, parcoure: 0, parfois: 2, souvent: 4 },
+    soins_specialistes: { rare: 0, parfois: 2, souvent: 4 },
     opt_lunettes: { oui: 1, non: 0 },
     opt_verres: { simples: 0, complexes: 2, tres_complexes: 3 },
     opt_lentilles: { oui: 1, non: 0 },
