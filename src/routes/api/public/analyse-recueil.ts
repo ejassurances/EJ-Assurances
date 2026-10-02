@@ -13,7 +13,7 @@ export const Route = createFileRoute("/api/public/analyse-recueil")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        if (!authorizePublicJob(request)) return new Response("Unauthorized", { status: 401 });
+        if (!(await authorizePublicJob(request))) return new Response("Unauthorized", { status: 401 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { analyserRecueilDossier } = await import("@/lib/analyse-recueil.server");

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { authorizePublicJob } from "@/lib/public-job-auth";
 
 /**
  * Relance automatique des compagnies sans retour sur une demande de
@@ -12,10 +13,7 @@ export const Route = createFileRoute("/api/public/relance-souscription")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const token = process.env["RELANCE_PIECES_TOKEN"];
-        if (!token || request.headers.get("x-relance-token") !== token) {
-          return new Response("Unauthorized", { status: 401 });
-        }
+        if (!authorizePublicJob(request)) return new Response("Unauthorized", { status: 401 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { relancerSouscriptionsEnAttente } = await import("@/lib/souscription.server");

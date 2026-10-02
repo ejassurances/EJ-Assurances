@@ -14,7 +14,7 @@ export const Route = createFileRoute("/api/public/controle-interne-rappel")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        if (!authorizePublicJob(request)) return new Response("Unauthorized", { status: 401 });
+        if (!(await authorizePublicJob(request))) return new Response("Unauthorized", { status: 401 });
 
         const jours = joursAvantFinTrimestre();
         if (jours > 7) return Response.json({ ok: true, ignore: "trimestre en cours", jours });

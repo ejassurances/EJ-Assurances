@@ -13,7 +13,7 @@ export const Route = createFileRoute("/api/public/regles-agent")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        if (!authorizePublicJob(request)) return new Response("Unauthorized", { status: 401 });
+        if (!(await authorizePublicJob(request))) return new Response("Unauthorized", { status: 401 });
 
         try {
           const { assurerDocumentsRegles, chargerReglesDeTon, invaliderCacheRegles } = await import(

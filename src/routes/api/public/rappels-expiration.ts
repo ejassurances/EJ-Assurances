@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { authorizePublicJob } from "@/lib/public-job-auth";
 import { appUrl } from "@/lib/app-url";
 
 /**
@@ -15,14 +16,7 @@ export const Route = createFileRoute("/api/public/rappels-expiration")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const token = process.env["RELANCE_PIECES_TOKEN"];
-        const apiKey = process.env["SUPABASE_PUBLISHABLE_KEY"];
-        const parToken = Boolean(token) && request.headers.get("x-relance-token") === token;
-        const parApiKey = Boolean(apiKey) && request.headers.get("apikey") === apiKey;
-        if (!parToken && !parApiKey) {
-          return new Response("Unauthorized", { status: 401 });
-        }
-
+        if (!authorizePublicJob(request)) return new Response("Unauthorized", { status: 401 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");

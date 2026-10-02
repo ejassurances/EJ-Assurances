@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { authorizePublicJob } from "@/lib/public-job-auth";
 import { STATUTS_DOSSIER_AVANT_LM } from "@/lib/referentiels";
 import { appUrl } from "@/lib/app-url";
 
@@ -16,12 +17,7 @@ export const Route = createFileRoute("/api/public/relance-pieces")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const token = process.env["RELANCE_PIECES_TOKEN"];
-        const anon =
-          process.env["SUPABASE_PUBLISHABLE_KEY"] || process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] || null;
-        const parToken = !!token && request.headers.get("x-relance-token") === token;
-        const parApiKey = !!anon && request.headers.get("apikey") === anon;
-        if (!parToken && !parApiKey) return new Response("Unauthorized", { status: 401 });
+        if (!authorizePublicJob(request)) return new Response("Unauthorized", { status: 401 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { planifierLotEmails } = await import("@/lib/emails-file-attente.server");
