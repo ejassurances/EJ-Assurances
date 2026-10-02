@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      public_intake_idempotency: {
+        Row: {
+          endpoint: string
+          idempotency_key: string
+          status: string
+          client_id: string | null
+          dossier_ref: string | null
+          created_at: string
+          completed_at: string | null
+        }
+        Insert: {
+          endpoint: string
+          idempotency_key: string
+          status?: string
+          client_id?: string | null
+          dossier_ref?: string | null
+          created_at?: string
+          completed_at?: string | null
+        }
+        Update: {
+          endpoint?: string
+          idempotency_key?: string
+          status?: string
+          client_id?: string | null
+          dossier_ref?: string | null
+          created_at?: string
+          completed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "public_intake_idempotency_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activites: {
         Row: {
           client_id: string
