@@ -123,10 +123,11 @@ function Dashboard() {
         supabase.from("dossiers").select("*", { count: "exact", head: true }).eq("statut", "en_cours"),
         supabase.from("dossiers").select("*", { count: "exact", head: true }).eq("statut", "signe"),
         fetchSynthese(),
-        supabase
+        (supabase as any)
           .from("taches")
           .select("id,titre,echeance,priorite,client_id,clients(prenom,nom,conformite_score,conformite_niveau)")
           .neq("statut", "terminee")
+          .eq("legacy_orpheline", false)
           .order("echeance", { ascending: true, nullsFirst: false })
           .limit(6),
         fetchCaReal(),
