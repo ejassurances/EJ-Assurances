@@ -45,3 +45,6 @@ CREATE INDEX IF NOT EXISTS dossier_devis_reference_idx
   ON public.dossier_devis (dossier_id, est_reference_recommandation);
 CREATE INDEX IF NOT EXISTS documents_exploitabilite_idx
   ON public.documents (dossier_id, statut_exploitabilite);
+CREATE UNIQUE INDEX IF NOT EXISTS dossier_devis_one_reference_idx
+  ON public.dossier_devis (dossier_id)
+  WHERE est_reference_recommandation = true;
