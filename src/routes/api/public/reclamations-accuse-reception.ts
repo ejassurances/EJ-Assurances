@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { authorizePublicJob } from "@/lib/public-job-auth";
 
 /**
  * Accusé de réception automatique des réclamations à J+4.
@@ -21,11 +22,7 @@ export const Route = createFileRoute("/api/public/reclamations-accuse-reception"
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const token = process.env["RELANCE_PIECES_TOKEN"];
-        const apiKey = process.env["SUPABASE_PUBLISHABLE_KEY"];
-        const parToken = Boolean(token) && request.headers.get("x-relance-token") === token;
-        const parApiKey = Boolean(apiKey) && request.headers.get("apikey") === apiKey;
-        if (!parToken && !parApiKey) return new Response("Unauthorized", { status: 401 });
+        if (!authorizePublicJob(request)) return new Response("Unauthorized", { status: 401 });
 
         if (!dansHorairesOuverture()) return Response.json({ ok: true, reporte: true, envois: 0 });
 
