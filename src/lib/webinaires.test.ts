@@ -4,6 +4,7 @@ import {
   estFunnelEtape,
   funnelEtapeSuivante,
   funnelProgression,
+  peutAvancerVers,
 } from "./webinaires";
 
 describe("funnel webinaire — Lot G", () => {
@@ -27,5 +28,11 @@ describe("funnel webinaire — Lot G", () => {
   it("calcule la progression", () => {
     expect(funnelProgression("inscription")).toBe(0);
     expect(funnelProgression("ca")).toBe(1);
+  });
+
+  it("n'avance que vers l'avant", () => {
+    expect(peutAvancerVers("inscription", "clic")).toBe(true);
+    expect(peutAvancerVers("clic", "inscription")).toBe(false);
+    expect(peutAvancerVers("clic", "clic")).toBe(false);
   });
 });

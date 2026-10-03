@@ -52,3 +52,8 @@ export function funnelProgression(etape: FunnelEtape): number {
   const i = funnelIndex(etape);
   return i < 0 ? 0 : i / (FUNNEL_ETAPES.length - 1);
 }
+
+/** Avancer uniquement : la cible est-elle strictement après l'étape actuelle ? */
+export function peutAvancerVers(actuelle: FunnelEtape, cible: FunnelEtape): boolean {
+  return funnelIndex(cible) > funnelIndex(actuelle);
+}
