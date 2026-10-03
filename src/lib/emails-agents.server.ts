@@ -151,6 +151,22 @@ export async function executerAgents(
   const limite = Math.max(1, Math.min(params.limite ?? 5, 30));
   const rattrapage = new Set(params.rattrapage ?? []);
 
+  // Lot 7 — session parente de journalisation de l'orchestrateur emails
+  // (best-effort, jamais bloquant). Les sous-agents (finance, réclamations,
+  // sinistres) journalisent déjà leurs actions avec leur propre idempotence.
+  let agentRunId: string | null = null;
+  try {
+    const { demarrerRun } = await import("@/lib/agent-gouvernance.server");
+    agentRunId = await demarrerRun(admin, {
+      agentName: "emails-orchestrateur",
+      triggerType: "batch",
+      triggerRef: params.ids[0] ?? null,
+      context: { nb_messages: params.messages.length, limite },
+    });
+  } catch (e) {
+    console.error("[agents-emails] run non démarré", e);
+  }
+
 
     // Agent commercial : les messages entrants qui ne correspondent à aucun
     // client sont analysés par l'IA. Classification confiante -> prospect,
@@ -906,7 +922,7 @@ export async function executerAgents(
         }
       }
     }
-  return {
+  const resultat: ResultatAgents = {
     dossiers_crees: dossiersCrees,
     factures_creees: facturesCreees,
     bordereaux_crees: bordereauxCrees,
@@ -923,8 +939,34 @@ export async function executerAgents(
     compagnies_creees: compagniesCreees,
     produits_crees: produitsCrees,
     contexte: metriquesContexte,
-
-
-
   };
+
+  // Lot 7 — synthèse journalisée + clôture de session (best-effort).
+  try {
+    const { journaliserAction, terminerRun } = await import("@/lib/agent-gouvernance.server");
+    await journaliserAction(admin, {
+      runId: agentRunId,
+      actionType: "traitement_emails",
+      status: "executed",
+      outputSummary: [
+        `dossiers=${resultat.dossiers_crees}`,
+        `factures=${resultat.factures_creees}`,
+        `bordereaux=${resultat.bordereaux_crees}`,
+        `reponses_auto=${resultat.reponses_auto}`,
+        `brouillons=${resultat.brouillons_reponses}`,
+        `partenaires=${resultat.partenaires_routes}`,
+        `erreurs=${resultat.erreurs}`,
+      ].join(" · "),
+    });
+    if (agentRunId) {
+      await terminerRun(admin, agentRunId, {
+        status: "completed",
+        summary: `Passage emails : ${resultat.dossiers_crees} dossier(s), ${resultat.reponses_auto} réponse(s) auto, ${resultat.erreurs} erreur(s)`,
+      });
+    }
+  } catch (e) {
+    console.error("[agents-emails] journalisation agent échouée", e);
+  }
+
+  return resultat;
 }
