@@ -113,6 +113,29 @@ function CommissionsPage() {
     }
   };
 
+  /*
+   * Règle Lot 5 : « encaissé » = virement bancaire confirmé. L'état
+   * d'encaissement pilote donc le statut : seul « encaissé banque » rend la
+   * commission « versée » (avec sa date de versement) ; revenir en amont la
+   * repasse « prévue » et efface la date. Une commission annulée n'est pas
+   * réactivée par ce contrôle.
+   */
+  const majEtatEncaissement = (r: Row, etat: EtatEncaissement) => {
+    if (r.statut === "annulee") {
+      majLigne(r, { etat_encaissement: etat });
+      return;
+    }
+    if (etat === "encaisse_banque") {
+      majLigne(r, {
+        etat_encaissement: etat,
+        statut: "versee",
+        date_versement: r.date_versement ?? new Date().toISOString().slice(0, 10),
+      });
+    } else {
+      majLigne(r, { etat_encaissement: etat, statut: "prevue", date_versement: null });
+    }
+  };
+
   /* Comptabilisation d'une commission encaissée : journal Ventes, banque au débit. */
   const comptabiliser = async (r: Row) => {
     if (r.ecriture_id) return;
@@ -254,7 +277,7 @@ function CommissionsPage() {
                     {role === "admin" ? (
                       <select
                         value={r.etat_encaissement ?? "en_attente_bordereau"}
-                        onChange={(e) => majLigne(r, { etat_encaissement: e.target.value as EtatEncaissement })}
+                        onChange={(e) => majEtatEncaissement(r, e.target.value as EtatEncaissement)}
                         className="rounded-md border border-line bg-background px-2 py-1 text-xs"
                       >
                         {ETATS.map((e) => (
@@ -385,12 +408,19 @@ function AddCommissionForm({ onCreated }: { onCreated: () => void }) {
     e.preventDefault();
     setSaving(true);
     setError(null);
-    const { error } = await supabase.from("commissions").insert({
+    // Cohérence règle Lot 5 : créer directement « versée » signifie un
+    // encaissement bancaire réel (état « encaissé banque » + date du jour).
+    const payload: Record<string, unknown> = {
       dossier_id: dossier,
       beneficiaire_id: beneficiaire,
       montant: Number(montant),
       statut,
-    });
+    };
+    if (statut === "versee") {
+      payload["etat_encaissement"] = "encaisse_banque";
+      payload["date_versement"] = new Date().toISOString().slice(0, 10);
+    }
+    const { error } = await supabase.from("commissions").insert(payload as never);
     setSaving(false);
     if (error) {
       setError(error.message);

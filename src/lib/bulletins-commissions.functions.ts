@@ -24,7 +24,7 @@ async function exigerStaff(supabase: unknown, userId: string) {
 const normaliser = (v: string) =>
   v
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "");
 
@@ -225,8 +225,11 @@ export const genererCommissionsBulletin = createServerFn({ method: "POST" })
           bordereau_id: data.bordereau_id,
           beneficiaire_id: data.beneficiaire_id,
           montant: Number(l.montant),
-          statut: "versee",
-          date_versement: new Date().toISOString().slice(0, 10),
+          // Règle Lot 5 : le bordereau rapproché est un relevé REÇU, pas un
+          // encaissement. La commission reste « prévue » / « validé bordereau »
+          // jusqu'à confirmation du virement bancaire.
+          statut: "prevue",
+          etat_encaissement: "valide_bordereau",
           notes: `Bulletin de commissions — ${l.client_nom_detecte ?? "client"}${
             l.numero_contrat_detecte ? ` / contrat ${l.numero_contrat_detecte}` : ""
           }`,

@@ -514,7 +514,6 @@ async function traiterBordereau(
     if (c.numero) parNumero.set(normaliser(c.numero), c);
   }
 
-  const aujourdhui = new Date().toISOString().slice(0, 10);
   let commissionsCreees = 0;
   const nonRapprochees: string[] = [];
 
@@ -548,8 +547,11 @@ async function traiterBordereau(
       dossier_id: contrat.dossier_id,
       beneficiaire_id: contrat.mandataire_id ?? params.userId,
       montant: l.montant ?? 0,
-      statut: "versee",
-      date_versement: aujourdhui,
+      // Règle Lot 5 : un bordereau est un relevé REÇU, pas un encaissement.
+      // La commission reste « prévue » (état « validé bordereau ») et ne passe
+      // « versée » / « encaissée banque » qu'après confirmation du virement.
+      statut: "prevue",
+      etat_encaissement: "valide_bordereau",
       notes: `Bordereau agent finance — ${libelle}`,
     });
     if (cErr) {
