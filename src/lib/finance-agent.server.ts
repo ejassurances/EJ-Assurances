@@ -148,7 +148,7 @@ const octetsDe = (base64: string) => Uint8Array.from(atob(base64), (c) => c.char
 const normaliser = (v: string) =>
   v
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "");
 
@@ -179,6 +179,52 @@ export async function traiterEmailFinance(
   const { email } = params;
   const classification = await classifierEmailFinance(email);
   if (classification.categorie === "autre") return { categorie: "autre", action: "ignore" };
+
+  // Lot 7 — session de journalisation de l'Agent (best-effort, jamais bloquant).
+  let agentRunId: string | null = null;
+  try {
+    const { demarrerRun } = await import("@/lib/agent-gouvernance.server");
+    agentRunId = await demarrerRun(admin, {
+      agentName: "finance",
+      triggerType: "email",
+      triggerRef: params.gmail_message_id,
+      context: { categorie: classification.categorie },
+    });
+  } catch (e) {
+    console.error("[agent-finance] run non démarré", e);
+  }
+
+  // Journalise l'issue du traitement puis clôt la session. Idempotent sur le
+  // message Gmail : un email retraité ne crée pas de doublon dans le journal.
+  const tracerFinance = async (resultat: ResultatFinance): Promise<ResultatFinance> => {
+    try {
+      const { journaliserAction, terminerRun } = await import("@/lib/agent-gouvernance.server");
+      await journaliserAction(admin, {
+        runId: agentRunId,
+        actionType: "traitement_finance",
+        status: resultat.action === "tache_anomalie" ? "skipped" : "executed",
+        targetType: resultat.categorie,
+        idempotencyKey: `finance:${params.gmail_message_id}`,
+        outputSummary: [
+          `action=${resultat.action}`,
+          resultat.commissions_creees != null ? `commissions=${resultat.commissions_creees}` : null,
+          resultat.lignes_non_rapprochees != null ? `non_rapprochees=${resultat.lignes_non_rapprochees}` : null,
+          "aucun rapprochement de paiement automatique",
+        ]
+          .filter(Boolean)
+          .join(" · "),
+      });
+      if (agentRunId) {
+        await terminerRun(admin, agentRunId, {
+          status: "completed",
+          summary: `Email finance traité (${resultat.categorie}) — ${resultat.action}`,
+        });
+      }
+    } catch (e) {
+      console.error("[agent-finance] journalisation agent échouée", e);
+    }
+    return resultat;
+  };
 
   const piece = choisirPiece(email, classification.piece);
   if (!piece || !piece.attachment_id) {
@@ -211,11 +257,11 @@ export async function traiterEmailFinance(
       priorite: "normale",
       created_by: params.userId,
     });
-    return {
+    return tracerFinance({
       categorie: classification.categorie,
       action: "tache_anomalie",
       message: "Document non exploitable — saisie manuelle requise",
-    };
+    });
   }
 
 
@@ -233,7 +279,7 @@ export async function traiterEmailFinance(
   const archive = classification.categorie === "facture_fournisseur" ? "achat_archive" : "commission_archive";
   await poserLabelCabinet(params.gmail_message_id, archive, { retirer: [aTraiter] });
 
-  return resultat;
+  return tracerFinance(resultat);
 }
 
 
