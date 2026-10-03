@@ -6,7 +6,7 @@
  * (src/lib/webinaires.ts) et un clic Brevo ne fait qu'avancer jusqu'à « clic ».
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { type FunnelEtape, peutAvancerVers } from "./webinaires";
+import { type FunnelEtape, estFunnelEtape, peutAvancerVers } from "./webinaires";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Admin = SupabaseClient<any, any, any>;
@@ -104,4 +104,71 @@ export async function enregistrerEvenementBrevo(admin: Admin, ev: BrevoEvent): P
   }
 
   return !error;
+}
+
+export type InscriptionParticipant = {
+  sessionId: string;
+  email: string;
+  nom?: string | null;
+  telephone?: string | null;
+  source?: string | null;
+  audience?: string | null;
+  campagneId?: string | null;
+};
+
+/**
+ * Inscrit un participant à une session (étape « inscription »), idempotent sur
+ * (session_id, email). Renvoie l'id du participant (créé ou existant).
+ */
+export async function inscrireParticipant(admin: Admin, p: InscriptionParticipant): Promise<string | null> {
+  const { data: existant } = await admin
+    .from("webinaire_participants")
+    .select("id")
+    .eq("session_id", p.sessionId)
+    .eq("email", p.email)
+    .maybeSingle();
+  if (existant) return existant.id;
+
+  const { data, error } = await admin
+    .from("webinaire_participants")
+    .insert({
+      session_id: p.sessionId,
+      email: p.email,
+      nom: p.nom ?? null,
+      telephone: p.telephone ?? null,
+      source: p.source ?? null,
+      audience: p.audience ?? null,
+      campagne_id: p.campagneId ?? null,
+      etape_courante: "inscription",
+    })
+    .select("id")
+    .single();
+  // Course possible sur la contrainte unique : on relit.
+  if (error) {
+    const { data: deja } = await admin
+      .from("webinaire_participants")
+      .select("id")
+      .eq("session_id", p.sessionId)
+      .eq("email", p.email)
+      .maybeSingle();
+    return deja?.id ?? null;
+  }
+  return data.id;
+}
+
+/**
+ * Enregistre une étape du funnel pour un (session, email) : crée le participant
+ * au besoin, puis avance jusqu'à l'étape fournie (jamais en arrière).
+ */
+export async function enregistrerEtapeFunnel(
+  admin: Admin,
+  p: InscriptionParticipant & { etape: string },
+): Promise<{ ok: boolean; participantId: string | null }> {
+  if (!estFunnelEtape(p.etape)) return { ok: false, participantId: null };
+  const participantId = await inscrireParticipant(admin, p);
+  if (!participantId) return { ok: false, participantId: null };
+  if (p.etape !== "inscription") {
+    await avancerFunnel(admin, participantId, p.etape);
+  }
+  return { ok: true, participantId };
 }

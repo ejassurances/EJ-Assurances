@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   FUNNEL_ETAPES,
+  compterFunnelCumulatif,
   estFunnelEtape,
   funnelEtapeSuivante,
   funnelProgression,
   peutAvancerVers,
+  tauxConversion,
 } from "./webinaires";
 
 describe("funnel webinaire — Lot G", () => {
@@ -34,5 +36,15 @@ describe("funnel webinaire — Lot G", () => {
     expect(peutAvancerVers("inscription", "clic")).toBe(true);
     expect(peutAvancerVers("clic", "inscription")).toBe(false);
     expect(peutAvancerVers("clic", "clic")).toBe(false);
+  });
+
+  it("compte le funnel de façon cumulative et calcule un taux", () => {
+    // 3 participants : l'un à 'clic', un à 'contrat', un à 'inscription'.
+    const cumul = compterFunnelCumulatif(["clic", "contrat", "inscription"]);
+    expect(cumul.inscription).toBe(3); // tous ont au moins l'inscription
+    expect(cumul.clic).toBe(2); // 'clic' et 'contrat'
+    expect(cumul.contrat).toBe(1);
+    expect(cumul.ca).toBe(0);
+    expect(tauxConversion(cumul, "inscription", "clic")).toBeCloseTo(2 / 3);
   });
 });

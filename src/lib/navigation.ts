@@ -209,6 +209,7 @@ export const NAV_DOMAINS: NavDomain[] = [
         module: "Reporting et analyses",
         items: [
           { label: "Vision direction", to: "/espace/pilotage", roles: STAFF },
+          { label: "Webinaires & funnel", to: "/espace/webinaires", roles: STAFF },
           { label: "Production & transformation", soon: true, roles: STAFF },
           { label: "Portefeuille", soon: true, roles: STAFF },
           { label: "Finance", soon: true, roles: STAFF },
