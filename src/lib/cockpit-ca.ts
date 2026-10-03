@@ -52,7 +52,10 @@ export type ComparatifCa = {
 };
 
 /** Construit le comparatif complet à partir des commissions versées. */
-export function comparatifCa(commissions: CommissionVersee[], maintenant: Date = new Date()): ComparatifCa {
+export function comparatifCa(
+  commissions: CommissionVersee[],
+  maintenant: Date = new Date(),
+): ComparatifCa {
   const annee = maintenant.getUTCFullYear();
   const mc = cleMois(maintenant, 0);
   const mp = cleMois(maintenant, -1);
