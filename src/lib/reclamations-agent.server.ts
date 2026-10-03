@@ -122,6 +122,21 @@ export async function ouvrirReclamationDepuisEmail(
   }
   const reclamationId = (insere as { id: string }).id;
 
+  // Lot 7 — ouverture d'une session de journalisation de l'Agent (best-effort,
+  // jamais bloquant : un échec de trace ne doit pas affecter la réclamation).
+  let agentRunId: string | null = null;
+  try {
+    const { demarrerRun } = await import("@/lib/agent-gouvernance.server");
+    agentRunId = await demarrerRun(admin, {
+      agentName: "reclamations",
+      triggerType: "email",
+      triggerRef: params.gmail_message_id,
+      context: { client_id: params.client_id, reclamation_id: reclamationId },
+    });
+  } catch (e) {
+    console.error("[agent-reclamation] run non démarré", e);
+  }
+
   // Aucun libellé de service posé ici : le staff l'a déjà fait manuellement.
 
   let concerne: ConcerneReclamation = "incertain";
@@ -226,6 +241,29 @@ export async function ouvrirReclamationDepuisEmail(
   if (params.gmail_message_id) {
     const { poserLabelCabinet } = await import("@/lib/gmail.server");
     await poserLabelCabinet(params.gmail_message_id, "rec_attente_validation", { retirer: ["rec_a_traiter"] });
+  }
+
+  // Lot 7 — trace de l'action significative + clôture de session. Idempotent sur
+  // le message Gmail : un email retraité ne crée pas de doublon dans le journal.
+  try {
+    const { journaliserAction, terminerRun } = await import("@/lib/agent-gouvernance.server");
+    await journaliserAction(admin, {
+      runId: agentRunId,
+      actionType: "ouverture_reclamation",
+      status: "executed",
+      targetType: "reclamation",
+      targetId: reclamationId,
+      idempotencyKey: params.gmail_message_id ? `reclamation:${params.gmail_message_id}` : null,
+      outputSummary: `concerne=${concerne}${solution ? " · proposition préparée" : ""} · validation humaine requise`,
+    });
+    if (agentRunId) {
+      await terminerRun(admin, agentRunId, {
+        status: "completed",
+        summary: `Réclamation ${reclamationId} ouverte (${concerne}) — tâche humaine créée`,
+      });
+    }
+  } catch (e) {
+    console.error("[agent-reclamation] journalisation agent échouée", e);
   }
 
   return { reclamation_id: reclamationId, concerne, solution_proposee: solution };
