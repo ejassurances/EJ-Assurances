@@ -154,6 +154,20 @@ export async function ouvrirSinistreDepuisEmail(
   }
   const sinistreId = (insere as { id: string }).id;
 
+  // Lot 7 — session de journalisation de l'Agent (best-effort, jamais bloquant).
+  let agentRunId: string | null = null;
+  try {
+    const { demarrerRun } = await import("@/lib/agent-gouvernance.server");
+    agentRunId = await demarrerRun(admin, {
+      agentName: "sinistres",
+      triggerType: "email",
+      triggerRef: params.gmail_message_id,
+      context: { client_id: params.client_id, sinistre_id: sinistreId },
+    });
+  } catch (e) {
+    console.error("[agent-sinistre] run non démarré", e);
+  }
+
   let action: ActionSinistre = "escalade_humaine";
   let analyse = "";
   try {
@@ -216,6 +230,28 @@ export async function ouvrirSinistreDepuisEmail(
     });
   }
 
+  // Lot 7 — trace de l'action + clôture de session. Idempotent sur le message
+  // Gmail : un email retraité ne crée pas de doublon dans le journal.
+  try {
+    const { journaliserAction, terminerRun } = await import("@/lib/agent-gouvernance.server");
+    await journaliserAction(admin, {
+      runId: agentRunId,
+      actionType: "ouverture_sinistre",
+      status: "executed",
+      targetType: "sinistre",
+      targetId: sinistreId,
+      idempotencyKey: params.gmail_message_id ? `sinistre:${params.gmail_message_id}` : null,
+      outputSummary: `action_recommandee=${action} · aide à la décision, aucun envoi automatique`,
+    });
+    if (agentRunId) {
+      await terminerRun(admin, agentRunId, {
+        status: "completed",
+        summary: `Sinistre ${sinistreId} ouvert — recommandation ${action}`,
+      });
+    }
+  } catch (e) {
+    console.error("[agent-sinistre] journalisation agent échouée", e);
+  }
+
   return { sinistre_id: sinistreId, action_recommandee: action, analyse_couverture: analyse };
 }
-
