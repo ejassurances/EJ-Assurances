@@ -78,3 +78,55 @@ export function tauxConversion(cumul: Record<FunnelEtape, number>, de: FunnelEta
   const base = cumul[de];
   return base > 0 ? cumul[vers] / base : 0;
 }
+
+/**
+ * Étape d'une séquence de relance (CONFIGURÉE par webinaire, pas en dur) :
+ * déclenchée quand le participant a atteint `declencheur`, envoyée `delaiHeures`
+ * après, via le `template` ; annulée si le participant a atteint `arretSi`.
+ * Le contenu réel des séquences vit dans webinaires.emails_config (donnée métier).
+ */
+export type SequenceStep = {
+  cle: string;
+  declencheur: FunnelEtape;
+  delaiHeures: number;
+  template: string;
+  arretSi?: FunnelEtape;
+};
+
+/** Décide si un step de séquence doit être planifié pour `etapeCourante`. */
+export function doitPlanifierStep(etapeCourante: string, step: SequenceStep): boolean {
+  const iCur = funnelIndex(etapeCourante);
+  const iTrig = funnelIndex(step.declencheur);
+  if (iCur < 0 || iTrig < 0 || iCur < iTrig) return false; // déclencheur non atteint
+  if (step.arretSi) {
+    const iStop = funnelIndex(step.arretSi);
+    if (iStop >= 0 && iCur >= iStop) return false; // objectif atteint → on n'envoie plus
+  }
+  return true;
+}
+
+/** Lit/valide la config séquences d'un webinaire (jsonb). Tolérant : [] si invalide. */
+export function lireSequences(emailsConfig: unknown): SequenceStep[] {
+  const raw = (emailsConfig as { sequences?: unknown })?.sequences;
+  if (!Array.isArray(raw)) return [];
+  const steps: SequenceStep[] = [];
+  for (const s of raw) {
+    if (
+      s &&
+      typeof s.cle === "string" &&
+      estFunnelEtape(s.declencheur) &&
+      typeof s.delaiHeures === "number" &&
+      typeof s.template === "string" &&
+      (s.arretSi === undefined || estFunnelEtape(s.arretSi))
+    ) {
+      steps.push({
+        cle: s.cle,
+        declencheur: s.declencheur,
+        delaiHeures: s.delaiHeures,
+        template: s.template,
+        arretSi: s.arretSi,
+      });
+    }
+  }
+  return steps;
+}

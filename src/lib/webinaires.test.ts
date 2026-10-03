@@ -7,6 +7,8 @@ import {
   funnelProgression,
   peutAvancerVers,
   tauxConversion,
+  doitPlanifierStep,
+  lireSequences,
 } from "./webinaires";
 
 describe("funnel webinaire — Lot G", () => {
@@ -46,5 +48,25 @@ describe("funnel webinaire — Lot G", () => {
     expect(cumul.contrat).toBe(1);
     expect(cumul.ca).toBe(0);
     expect(tauxConversion(cumul, "inscription", "clic")).toBeCloseTo(2 / 3);
+  });
+
+  it("planifie un step seulement si déclenché et objectif non atteint", () => {
+    const step = { cle: "relance1", declencheur: "inscription" as const, delaiHeures: 24, template: "relance_webinaire", arretSi: "presence" as const };
+    expect(doitPlanifierStep("inscription", step)).toBe(true); // déclenché, pas encore présent
+    expect(doitPlanifierStep("presence", step)).toBe(false); // objectif atteint → stop
+    expect(doitPlanifierStep("inscription", { ...step, declencheur: "clic" })).toBe(false); // déclencheur non atteint
+  });
+
+  it("lit la config séquences de façon tolérante", () => {
+    expect(lireSequences(null)).toEqual([]);
+    expect(lireSequences({ sequences: "x" })).toEqual([]);
+    const ok = lireSequences({
+      sequences: [
+        { cle: "r1", declencheur: "inscription", delaiHeures: 24, template: "t", arretSi: "presence" },
+        { cle: "invalide", declencheur: "pas_une_etape", delaiHeures: 1, template: "t" },
+      ],
+    });
+    expect(ok).toHaveLength(1);
+    expect(ok[0].cle).toBe("r1");
   });
 });
