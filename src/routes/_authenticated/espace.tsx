@@ -1,22 +1,14 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { IconChecklist, IconInbox, IconSettings } from "@tabler/icons-react";
+import { IconFolderPlus } from "@tabler/icons-react";
 
 import { GlobalSearch } from "@/components/shell/global-search";
-import { IconAction, IconActionLink } from "@/components/shell/icon-action";
+import { IconAction } from "@/components/shell/icon-action";
 import { QuickActions } from "@/components/shell/quick-actions";
 import { ModuleColumn } from "@/components/shell/module-column";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import {
-  NAV_SETTINGS,
-  domaineActif,
-  domainesVisibles,
-  filtrerDomaine,
-  premierLien,
-  type AppRole,
-  type NavDomain,
-} from "@/lib/navigation";
+import { groupesVisibles, libelleRouteActive, type AppRole } from "@/lib/navigation";
 
 export const Route = createFileRoute("/_authenticated/espace")({
   component: EspaceLayout,
@@ -35,7 +27,6 @@ function EspaceLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [mustChange, setMustChange] = useState(false);
   const [menuOuvert, setMenuOuvert] = useState(false);
-  const [domaineChoisi, setDomaineChoisi] = useState<string | null>(null);
   const [tachesOuvertes, setTachesOuvertes] = useState<number | null>(null);
 
   // Compteur de tâches à traiter affiché dans la barre supérieure (lecture seule).
@@ -50,7 +41,6 @@ function EspaceLayout() {
     })();
   }, [user]);
 
-
   const signOut = async () => {
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
@@ -60,7 +50,11 @@ function EspaceLayout() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data } = await supabase.from("profiles").select("must_change_password").eq("id", user.id).maybeSingle();
+      const { data } = await supabase
+        .from("profiles")
+        .select("must_change_password")
+        .eq("id", user.id)
+        .maybeSingle();
       setMustChange(!!(data as { must_change_password?: boolean } | null)?.must_change_password);
     })();
   }, [user]);
@@ -72,48 +66,15 @@ function EspaceLayout() {
   }, [mustChange, pathname, navigate]);
 
   const roleNav = (role ?? null) as AppRole | null;
-  const domaines = useMemo(() => domainesVisibles(roleNav), [roleNav]);
-  const reglages = useMemo(() => filtrerDomaine(NAV_SETTINGS, roleNav), [roleNav]);
-
-  // Le domaine choisi dans le rail prime s'il contient la route courante
-  // (une même page peut apparaître dans deux domaines), sinon on suit la route.
-  const domaineDeLaRoute = useMemo(() => domaineActif(pathname, roleNav), [pathname, roleNav]);
-  const tous = useMemo(() => [...domaines, ...(reglages ? [reglages] : [])], [domaines, reglages]);
-  const contientRoute = (d: NavDomain) =>
-    d.modules.some((m) =>
-      m.items.some((i) => i.to && (i.exact ? pathname === i.to : pathname === i.to || pathname.startsWith(i.to + "/"))),
-    );
-  const choisi = tous.find((d) => d.key === domaineChoisi);
-  const domaine =
-    (choisi && contientRoute(choisi) ? choisi : null) ??
-    tous.find((d) => d.key === domaineDeLaRoute?.key) ??
-    choisi ??
-    domaines[0] ??
-    reglages ??
-    null;
-
-
-  const sousModuleActif = useMemo(() => {
-    if (!domaine) return null;
-    for (const m of domaine.modules) {
-      for (const i of m.items) {
-        if (!i.to) continue;
-        const ok = i.exact ? pathname === i.to : pathname === i.to || pathname.startsWith(i.to + "/");
-        if (ok) return { module: m.module, label: i.label };
-      }
-    }
-    return null;
-  }, [domaine, pathname]);
-
-  const ouvrirDomaine = (d: NavDomain) => {
-    setDomaineChoisi(d.key);
-    const lien = premierLien(d);
-    if (lien && lien !== pathname) navigate({ to: lien });
-    setMenuOuvert(false);
-  };
+  const groupes = useMemo(() => groupesVisibles(roleNav), [roleNav]);
+  const routeActive = useMemo(() => libelleRouteActive(pathname, groupes), [pathname, groupes]);
 
   if (loading) {
-    return <div className="flex min-h-screen items-center justify-center text-ink-muted">Chargement…</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center text-ink-muted">
+        Chargement…
+      </div>
+    );
   }
 
   const initiales = (user?.email ?? "")
@@ -163,25 +124,21 @@ function EspaceLayout() {
         />
       )}
 
-      {/* Colonne unique de navigation (domaine + modules fusionnés) */}
+      {/* Navigation principale, avec le même contenu dans le drawer mobile. */}
       <div
         className={
           "fixed inset-y-0 left-0 z-40 flex transition-transform duration-200 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:translate-x-0 " +
           (menuOuvert ? "translate-x-0" : "-translate-x-full")
         }
       >
-        {domaine && (
-          <ModuleColumn
-            domaine={domaine}
-            domaines={domaines}
-            reglages={reglages}
-            pathname={pathname}
-            onSelectDomaine={ouvrirDomaine}
-            onNavigate={() => setMenuOuvert(false)}
-            header={logo}
-            footer={avatar}
-          />
-        )}
+        <ModuleColumn
+          groups={groupes}
+          pathname={pathname}
+          onNavigate={() => setMenuOuvert(false)}
+          header={logo}
+          footer={avatar}
+          taskCount={tachesOuvertes}
+        />
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -191,6 +148,8 @@ function EspaceLayout() {
               type="button"
               onClick={() => setMenuOuvert(true)}
               aria-label="Ouvrir le menu"
+              aria-expanded={menuOuvert}
+              aria-controls="crm-navigation"
               className="shrink-0 rounded-full border border-line px-3 py-2 text-ink-soft lg:hidden"
             >
               <span aria-hidden="true">☰</span>
@@ -201,19 +160,27 @@ function EspaceLayout() {
             </div>
 
             <div className="flex min-w-0 flex-1 items-center justify-end gap-2 md:flex-none">
-              <QuickActions />
-              <IconActionLink label="Tâches" to="/espace/taches" badge={tachesOuvertes}>
-                <IconChecklist size={17} aria-hidden="true" />
-              </IconActionLink>
-              <IconActionLink label="Traitement des emails" to="/espace/relation-client">
-                <IconInbox size={17} aria-hidden="true" />
-              </IconActionLink>
-              <IconActionLink label="Paramètres" to="/espace/parametres">
-                <IconSettings size={17} aria-hidden="true" />
-              </IconActionLink>
+              {role === "admin" || role === "mandataire" ? (
+                <Link
+                  to="/espace/dossiers/nouveau"
+                  aria-label="Nouveau dossier"
+                  title="Nouveau client & dossier"
+                  className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full bg-[color:var(--crm-navy)] px-3 text-xs font-semibold text-white transition-colors hover:bg-[color:var(--crm-navy)]/90 sm:gap-2 sm:px-4 sm:text-sm"
+                >
+                  <IconFolderPlus size={17} aria-hidden="true" />
+                  <span className="sm:hidden">+ Dossier</span>
+                  <span className="hidden sm:inline">+ Nouveau dossier</span>
+                </Link>
+              ) : null}
+              <QuickActions compact />
               <span className="crm-eyebrow hidden xl:inline">{role ? ROLE_LABEL[role] : ""}</span>
-              <IconAction label={`${user?.email ?? ""} — Se déconnecter`} onClick={() => void signOut()}>
-                <span className="text-[11px] font-bold text-[color:var(--crm-gold)]">{initiales || "EJ"}</span>
+              <IconAction
+                label={`${user?.email ?? ""} — Se déconnecter`}
+                onClick={() => void signOut()}
+              >
+                <span className="text-[11px] font-bold text-[color:var(--crm-gold)]">
+                  {initiales || "EJ"}
+                </span>
               </IconAction>
             </div>
           </div>
@@ -226,17 +193,15 @@ function EspaceLayout() {
             aria-label="Fil d'Ariane"
             className="min-w-0 truncate border-t border-line px-4 py-2 text-xs text-ink-muted sm:px-6"
           >
-            {domaine && <span className="font-semibold uppercase tracking-[0.14em]">{domaine.short}</span>}
-            {sousModuleActif && (
+            {routeActive && (
+              <span className="font-semibold uppercase tracking-[0.14em]">{routeActive.group}</span>
+            )}
+            {routeActive && (
               <>
                 <span aria-hidden="true" className="px-2 text-ink-muted/50">
                   ›
                 </span>
-                <span>{sousModuleActif.module}</span>
-                <span aria-hidden="true" className="px-2 text-ink-muted/50">
-                  ›
-                </span>
-                <span className="text-ink">{sousModuleActif.label}</span>
+                <span className="text-ink">{routeActive.item}</span>
               </>
             )}
           </nav>

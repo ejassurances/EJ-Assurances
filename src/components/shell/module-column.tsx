@@ -1,112 +1,113 @@
-/**
- * Colonne unique de navigation (fusion de l'ancien rail de domaines et de la
- * colonne des modules) : sélecteur de domaine en haut, puis modules et
- * sous-modules du domaine choisi. Les entrées du périmètre cible non
- * développé sont affichées désactivées.
- */
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 
-import type { NavDomain } from "@/lib/navigation";
+import type { NavGroup } from "@/lib/navigation";
 
 export function ModuleColumn({
-  domaine,
-  domaines,
-  reglages,
+  groups,
   pathname,
-  onSelectDomaine,
   onNavigate,
   header,
   footer,
+  taskCount,
 }: {
-  domaine: NavDomain;
-  domaines: NavDomain[];
-  reglages: NavDomain | null;
+  groups: NavGroup[];
   pathname: string;
-  onSelectDomaine: (domaine: NavDomain) => void;
   onNavigate?: () => void;
   header?: React.ReactNode;
   footer?: React.ReactNode;
+  taskCount?: number | null;
 }) {
-  const estActif = (to: string, exact?: boolean) =>
-    exact ? pathname === to : pathname === to || pathname.startsWith(to + "/");
+  const [collapsed, setCollapsed] = useState(false);
 
-  const toutes = reglages ? [...domaines, reglages] : domaines;
+  const estActif = (to: string, exact?: boolean) =>
+    exact ? pathname === to : pathname === to || pathname.startsWith(`${to}/`);
 
   return (
-    <div className="flex h-full w-[min(88vw,17rem)] shrink-0 flex-col overflow-y-auto border-r border-line bg-surface-elevated">
-      {header && <div className="flex justify-center px-5 pt-5">{header}</div>}
-
-      <div className="px-5 pb-5 pt-5">
-        <label htmlFor="selecteur-domaine" className="crm-eyebrow">
-          Domaine
-        </label>
-        <select
-          id="selecteur-domaine"
-          value={domaine.key}
-          onChange={(e) => {
-            const cible = toutes.find((d) => d.key === e.target.value);
-            if (cible) onSelectDomaine(cible);
-          }}
-          className="mt-1 w-full rounded-lg border border-line bg-background px-2 py-2 font-serif text-lg font-semibold text-ink"
+    <aside
+      id="crm-navigation"
+      aria-label="Navigation principale"
+      className={`flex h-dvh w-[min(86vw,19rem)] shrink-0 flex-col border-r border-line bg-surface-elevated transition-[width] duration-200 lg:sticky lg:top-0 lg:h-screen ${collapsed ? "lg:w-[4.5rem]" : "lg:w-64"}`}
+    >
+      <div
+        className={`flex min-h-16 items-center border-b border-line px-3 ${collapsed ? "justify-center lg:px-2" : "justify-between px-5"}`}
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          {header}
+          {!collapsed && (
+            <span className="truncate text-xs font-semibold uppercase tracking-[0.12em] text-ink-soft">
+              EJ Assurances
+            </span>
+          )}
+        </div>
+        <button
+          type="button"
+          aria-label={collapsed ? "Agrandir le menu" : "Réduire le menu"}
+          aria-expanded={!collapsed}
+          title={collapsed ? "Agrandir le menu" : "Réduire le menu"}
+          onClick={() => setCollapsed((value) => !value)}
+          className="hidden size-8 shrink-0 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-surface hover:text-ink lg:flex"
         >
-          {toutes.map((d) => (
-            <option key={d.key} value={d.key}>
-              {d.label}
-            </option>
-          ))}
-        </select>
+          <span aria-hidden="true">{collapsed ? "→" : "←"}</span>
+        </button>
       </div>
 
-      {domaine.modules.map((m) => (
-        <section key={m.module} className="pb-5">
-          <p className="px-5 pb-1.5 text-sm font-semibold text-ink">{m.module}</p>
-          <ul className="space-y-0.5 px-3">
-            {m.items.map((item) => {
-              if (!item.to || item.soon) {
+      <nav
+        className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 py-4"
+        aria-label="Sections du CRM"
+      >
+        {groups.map((group) => (
+          <section key={group.key} aria-label={group.label}>
+            <p
+              className={`px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-muted ${collapsed ? "lg:sr-only" : ""}`}
+            >
+              {group.label}
+            </p>
+            <ul className="space-y-1">
+              {group.items.map((item) => {
+                const active = estActif(item.to, item.exact);
+                const badge = item.label === "Tâches" && taskCount ? taskCount : null;
                 return (
-                  <li key={item.label}>
-                    <span
-                      title="Périmètre fonctionnel cible — non encore développé"
-                      className="flex cursor-not-allowed items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm text-ink-muted/45"
+                  <li key={`${item.to}-${item.label}`}>
+                    <Link
+                      to={item.to}
+                      onClick={onNavigate}
+                      aria-label={item.label}
+                      aria-current={active ? "page" : undefined}
+                      title={item.label}
+                      className={`group relative flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${collapsed ? "lg:justify-center lg:px-2" : ""} ${active ? "bg-[color:var(--crm-navy)] text-white shadow-sm" : "text-ink-soft hover:bg-surface hover:text-ink"}`}
                     >
-                      <span className="truncate">{item.label}</span>
-                      <span className="shrink-0 rounded-full border border-line px-1.5 text-[9px] font-semibold uppercase tracking-wider">
-                        cible
+                      <item.icon size={18} stroke={1.8} aria-hidden="true" className="shrink-0" />
+                      <span className={`min-w-0 flex-1 truncate ${collapsed ? "lg:sr-only" : ""}`}>
+                        {item.label}
                       </span>
-                    </span>
+                      {badge !== null && !collapsed && (
+                        <span
+                          className={`min-w-5 rounded-full px-1.5 py-0.5 text-center text-[10px] font-semibold ${active ? "bg-white/15 text-white" : "bg-[color:var(--crm-gold)]/15 text-ink"}`}
+                        >
+                          {badge > 99 ? "99+" : badge}
+                        </span>
+                      )}
+                      {badge !== null && collapsed && (
+                        <span className="absolute right-1 top-0 hidden rounded-full bg-[color:var(--crm-gold)] px-1 text-[9px] font-bold text-white lg:block">
+                          {badge > 99 ? "99+" : badge}
+                        </span>
+                      )}
+                      {active && <span className="sr-only">Page active</span>}
+                    </Link>
                   </li>
                 );
-              }
-              const on = estActif(item.to, item.exact);
-              return (
-                <li key={item.label}>
-                  <Link
-                    to={item.to}
-                    onClick={onNavigate}
-                    aria-current={on ? "page" : undefined}
-                    className={
-                      "flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm transition-colors " +
-                      (on
-                        ? "bg-surface font-semibold text-ink"
-                        : "text-ink-soft hover:bg-surface hover:text-ink")
-                    }
-                  >
-                    <span className="truncate">{item.label}</span>
-                    {on && (
-                      <span
-                        aria-hidden="true"
-                        className="h-4 w-0.5 shrink-0 rounded-full bg-[color:var(--crm-gold)]"
-                      />
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      ))}
+              })}
+            </ul>
+          </section>
+        ))}
+      </nav>
 
-      {footer && <div className="mt-auto border-t border-line px-5 py-3">{footer}</div>}
-    </div>
+      {footer && (
+        <div className={`border-t border-line px-3 py-3 ${collapsed ? "lg:px-2" : "px-5"}`}>
+          {footer}
+        </div>
+      )}
+    </aside>
   );
 }

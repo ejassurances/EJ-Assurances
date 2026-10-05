@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import {
   IconChecklist,
   IconFileText,
-  IconFolderPlus,
   IconMail,
   IconPhone,
   IconPlus,
@@ -51,7 +50,11 @@ function Modale({
             <p className="crm-eyebrow">{eyebrow}</p>
             <h2 className="truncate text-base font-semibold text-ink">{titre}</h2>
           </div>
-          <button type="button" onClick={onClose} className="shrink-0 text-sm text-ink-muted hover:underline">
+          <button
+            type="button"
+            onClick={onClose}
+            className="shrink-0 text-sm text-ink-muted hover:underline"
+          >
             Fermer
           </button>
         </div>
@@ -62,7 +65,13 @@ function Modale({
 }
 
 /** Sélecteur de client par recherche (nom, prénom, référence, e-mail, téléphone). */
-function ClientPicker({ onPick, actif }: { onPick: (c: ClientLeger) => void; actif?: ClientLeger | null }) {
+function ClientPicker({
+  onPick,
+  actif,
+}: {
+  onPick: (c: ClientLeger) => void;
+  actif?: ClientLeger | null;
+}) {
   const [terme, setTerme] = useState("");
   const [liste, setListe] = useState<ClientLeger[]>([]);
 
@@ -78,7 +87,9 @@ function ClientPicker({ onPick, actif }: { onPick: (c: ClientLeger) => void; act
       const { data } = await supabase
         .from("clients")
         .select("id, nom, prenom, reference, email, telephone")
-        .or(`nom.ilike.${motif},prenom.ilike.${motif},reference.ilike.${motif},email.ilike.${motif}`)
+        .or(
+          `nom.ilike.${motif},prenom.ilike.${motif},reference.ilike.${motif},email.ilike.${motif}`,
+        )
         .limit(8);
       if (annule) return;
       setListe(
@@ -123,7 +134,8 @@ function ClientPicker({ onPick, actif }: { onPick: (c: ClientLeger) => void; act
               >
                 <span className="truncate text-sm text-ink">{c.nom}</span>
                 <span className="truncate text-xs text-ink-muted">
-                  {[c.reference, c.email, c.telephone].filter(Boolean).join(" · ") || "Coordonnées à compléter"}
+                  {[c.reference, c.email, c.telephone].filter(Boolean).join(" · ") ||
+                    "Coordonnées à compléter"}
                 </span>
               </button>
             </li>
@@ -229,7 +241,11 @@ function ModaleTache({ onClose }: { onClose: () => void }) {
         </div>
         <ClientPicker onPick={setClient} actif={client} />
         <div className="flex flex-wrap justify-end gap-2">
-          <button type="button" onClick={onClose} className="rounded-full border border-line px-4 py-1.5 text-sm">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-line px-4 py-1.5 text-sm"
+          >
             Annuler
           </button>
           <button
@@ -294,7 +310,11 @@ function ModaleAppel({ onClose }: { onClose: () => void }) {
           className="w-full rounded-md border border-line bg-background px-3 py-2 text-sm"
         />
         <div className="flex flex-wrap justify-end gap-2">
-          <button type="button" onClick={onClose} className="rounded-full border border-line px-4 py-1.5 text-sm">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border border-line px-4 py-1.5 text-sm"
+          >
             Annuler
           </button>
           <button
@@ -312,15 +332,21 @@ function ModaleAppel({ onClose }: { onClose: () => void }) {
 
 const AJOUTS = [
   { label: "Nouveau client", to: "/espace/clients", icon: IconUserPlus },
-  { label: "Nouveau client & dossier", to: "/espace/dossiers/nouveau", icon: IconFolderPlus },
-  { label: "Nouveau dossier", to: "/espace/dossiers", icon: IconFolderPlus },
   { label: "Pré-qualification rapide", to: "/espace/prequalification", icon: IconMail },
   { label: "Nouveau sinistre", to: "/espace/sinistres", icon: IconShieldExclamation },
   { label: "Nouveau contrat suivi", to: "/espace/clients", icon: IconFileText },
 ] as const;
 
+type ActionModale = "email" | "tache" | "appel";
+
 /** Menu d'ajout rapide. */
-function MenuAjout({ onClose }: { onClose: () => void }) {
+function MenuAjout({
+  onClose,
+  onOpenModal,
+}: {
+  onClose: () => void;
+  onOpenModal?: (action: ActionModale) => void;
+}) {
   const boite = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -331,7 +357,30 @@ function MenuAjout({ onClose }: { onClose: () => void }) {
   }, [onClose]);
 
   return (
-    <div ref={boite} className="crm-card absolute right-0 top-full z-40 mt-2 w-56 p-1">
+    <div ref={boite} className="crm-card absolute right-0 top-full z-40 mt-2 w-64 p-1 shadow-lg">
+      {onOpenModal && (
+        <>
+          {[
+            { label: "Écrire un e-mail", icon: IconMail, action: "email" as const },
+            { label: "Créer une tâche", icon: IconChecklist, action: "tache" as const },
+            { label: "Appeler un client", icon: IconPhone, action: "appel" as const },
+          ].map((item) => (
+            <button
+              key={item.action}
+              type="button"
+              onClick={() => {
+                onOpenModal(item.action);
+                onClose();
+              }}
+              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-ink-soft hover:bg-surface hover:text-ink"
+            >
+              <item.icon size={16} aria-hidden="true" />
+              {item.label}
+            </button>
+          ))}
+          <div className="my-1 border-t border-line" />
+        </>
+      )}
       {AJOUTS.map((a) => (
         <Link
           key={a.label}
@@ -349,12 +398,12 @@ function MenuAjout({ onClose }: { onClose: () => void }) {
 
 /** Groupe des quatre boutons ronds d'action rapide. */
 export function QuickActions({ compact = false }: { compact?: boolean }) {
-  const [modale, setModale] = useState<"email" | "tache" | "appel" | null>(null);
+  const [modale, setModale] = useState<ActionModale | null>(null);
   const [ajout, setAjout] = useState(false);
 
   return (
     <>
-      <div className={compact ? "flex flex-wrap items-center gap-2" : "flex items-center gap-2"}>
+      <div className={`${compact ? "hidden md:flex" : "flex"} items-center gap-2`}>
         <IconAction label="Écrire un e-mail" onClick={() => setModale("email")}>
           <IconMail size={17} aria-hidden="true" />
         </IconAction>
@@ -371,6 +420,20 @@ export function QuickActions({ compact = false }: { compact?: boolean }) {
           <IconPhone size={17} aria-hidden="true" />
         </IconAction>
       </div>
+
+      {compact && (
+        <div className="relative md:hidden">
+          <IconAction label="Actions rapides" onClick={() => setAjout((value) => !value)}>
+            <IconPlus size={17} aria-hidden="true" />
+          </IconAction>
+          {ajout && (
+            <MenuAjout
+              onClose={() => setAjout(false)}
+              onOpenModal={(action) => setModale(action)}
+            />
+          )}
+        </div>
+      )}
 
       {modale === "email" && <ModaleEmail onClose={() => setModale(null)} />}
       {modale === "tache" && <ModaleTache onClose={() => setModale(null)} />}
