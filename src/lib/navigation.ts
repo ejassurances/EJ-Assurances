@@ -105,7 +105,11 @@ export const NAV_DOMAINS: NavDomain[] = [
         module: "Portail clients et espace partenaires",
         items: [
           { label: "Mon espace", to: "/espace/mon-espace", roles: ["client"] },
-          { label: "Mes recommandations", to: "/espace/mes-recommandations", roles: ["prescripteur"] },
+          {
+            label: "Mes recommandations",
+            to: "/espace/mes-recommandations",
+            roles: ["prescripteur"],
+          },
           { label: "Accès des clients", to: "/espace/clients", roles: STAFF },
           { label: "Portail entreprise", soon: true, roles: STAFF },
           { label: "Espace co-courtage", soon: true, roles: STAFF },
@@ -169,6 +173,7 @@ export const NAV_DOMAINS: NavDomain[] = [
           { label: "Commissions", to: "/espace/commissions", roles: STAFF },
           { label: "Comptabilité", to: "/espace/comptabilite", roles: STAFF },
           { label: "Cockpit CA (encaissé)", to: "/espace/cockpit-ca", roles: STAFF },
+          { label: "CA prévisionnel (paliers)", to: "/espace/ca-paliers", roles: STAFF },
           { label: "Diagnostic contrats & finance", to: "/espace/diagnostic", roles: STAFF },
           { label: "Fournisseurs", to: "/espace/fournisseurs", roles: STAFF },
           { label: "Bordereaux — import", soon: true, roles: STAFF },
@@ -258,7 +263,10 @@ export const NAV_SETTINGS: NavDomain = {
 /** Filtre l'arborescence selon le rôle courant (modules et domaines vides retirés). */
 export function filtrerDomaine(domaine: NavDomain, role: AppRole | null): NavDomain | null {
   const modules = domaine.modules
-    .map((m) => ({ ...m, items: m.items.filter((i) => !i.roles || (role && i.roles.includes(role))) }))
+    .map((m) => ({
+      ...m,
+      items: m.items.filter((i) => !i.roles || (role && i.roles.includes(role))),
+    }))
     .filter((m) => m.items.length > 0);
   return modules.length ? { ...domaine, modules } : null;
 }
@@ -284,7 +292,9 @@ export function domaineActif(pathname: string, role: AppRole | null): NavDomain 
     for (const m of d.modules) {
       for (const i of m.items) {
         if (!i.to) continue;
-        const ok = i.exact ? pathname === i.to : pathname === i.to || pathname.startsWith(i.to + "/");
+        const ok = i.exact
+          ? pathname === i.to
+          : pathname === i.to || pathname.startsWith(i.to + "/");
         if (ok && (!meilleur || i.to.length > meilleur.longueur)) {
           meilleur = { domaine: d, longueur: i.to.length };
         }
