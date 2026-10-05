@@ -21,7 +21,16 @@ export function normaliserIdentite(valeur: string | null | undefined): string {
     .trim();
 }
 
-export type ClientExistant = { client_id: string; via: "email" | "nom_prenom" | "nom" };
+export type ClientExistant = {
+  client_id: string;
+  via: "email" | "telephone" | "nom_prenom_date_naissance" | "nom_prenom" | "nom";
+};
+
+export function normaliserTelephone(valeur: string | null | undefined): string {
+  if (!valeur) return "";
+  const chiffres = valeur.replace(/\D/g, "");
+  return chiffres.length > 9 ? chiffres.slice(-9) : chiffres;
+}
 
 /**
  * Lecture seule : retourne la fiche client déjà connue correspondant à ces
@@ -29,7 +38,15 @@ export type ClientExistant = { client_id: string; via: "email" | "nom_prenom" | 
  */
 export async function trouverClientExistant(
   admin: SupabaseClient<Database>,
-  params: { email?: string | null; nom?: string | null; prenom?: string | null },
+  params: {
+    email?: string | null;
+    mobile?: string | null;
+    telephone?: string | null;
+    nom?: string | null;
+    prenom?: string | null;
+    date_naissance?: string | null;
+    exigerDateNaissancePourNom?: boolean;
+  },
 ): Promise<ClientExistant | null> {
   const email = params.email?.toLowerCase().trim() || null;
   if (email) {
@@ -37,20 +54,53 @@ export async function trouverClientExistant(
     if (data?.id) return { client_id: data.id, via: "email" };
   }
 
+  const telephones = [...new Set([params.mobile, params.telephone].map(normaliserTelephone))].filter(
+    (n) => n.length >= 6,
+  );
+  if (telephones.length > 0) {
+    const suffixes = [...new Set(telephones.map((n) => (n.length > 9 ? n.slice(-9) : n)))];
+    const filtres = suffixes.flatMap((suffixe) =>
+      ["mobile", "mobile2", "telephone", "telephone2"].map((champ) => `${champ}.ilike.%${suffixe}`),
+    );
+    const { data: candidatsTelephone } = await admin
+      .from("clients")
+      .select("id, mobile, mobile2, telephone, telephone2, created_at")
+      .or(filtres.join(","))
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    const cible = new Set(telephones);
+    const correspondant = (candidatsTelephone ?? []).find((client) =>
+      [client.mobile, client.mobile2, client.telephone, client.telephone2].some((numero) =>
+        cible.has(normaliserTelephone(numero)),
+      ),
+    );
+    if (correspondant) return { client_id: correspondant.id, via: "telephone" };
+  }
+
   const nom = normaliserIdentite(params.nom);
   if (!nom || nom.length < 3) return null;
   const prenom = normaliserIdentite(params.prenom);
+  if (params.exigerDateNaissancePourNom && (!prenom || !params.date_naissance)) return null;
 
   const { data: candidats } = await admin
     .from("clients")
-    .select("id, nom, prenom, created_at")
+    .select("id, nom, prenom, date_naissance, created_at")
     .ilike("nom", `%${(params.nom ?? "").trim()}%`)
+    .order("created_at", { ascending: false })
     .limit(20);
 
   const lignes = (candidats ?? []).filter((c) => normaliserIdentite(c.nom) === nom);
   if (lignes.length === 0) return null;
 
   if (prenom) {
+    if (params.date_naissance) {
+      const exact = lignes.find(
+        (c) => normaliserIdentite(c.prenom) === prenom && c.date_naissance === params.date_naissance,
+      );
+      return exact ? { client_id: exact.id, via: "nom_prenom_date_naissance" } : null;
+    }
+
     const exact = lignes.find((c) => normaliserIdentite(c.prenom) === prenom);
     if (exact) return { client_id: exact.id, via: "nom_prenom" };
     // Le nom correspond mais le prénom diffère : homonymie possible, on ne

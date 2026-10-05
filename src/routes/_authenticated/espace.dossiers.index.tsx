@@ -87,6 +87,14 @@ function DossiersList() {
         icon={IconFolders}
       >
         {canCreate && (
+          <Link
+            to="/espace/dossiers/nouveau"
+            className="rounded-full border border-white/25 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+          >
+            Nouveau client & dossier
+          </Link>
+        )}
+        {canCreate && (
           <button
             onClick={() => setShowForm((v) => !v)}
             className="rounded-full bg-[#D4AF37] px-4 py-2 text-sm font-semibold text-[#0A192F] transition hover:brightness-95"
@@ -387,7 +395,7 @@ export function NewDossierForm({
       const cible = offreCibles[index] ?? -1;
       const clientDoc = (cible >= 0 ? idsAssures[cible] : null) ?? clientDossierId;
       try {
-        const safeName = file.name.replace(/[^\w.\-]+/g, "_").slice(0, 120);
+        const safeName = file.name.replace(/[^\w.-]+/g, "_").slice(0, 120);
         const path = `${clientDoc ?? dossierId}/${Date.now()}-${safeName}`;
         const { error: upErr } = await supabase.storage
           .from("dossier-documents")

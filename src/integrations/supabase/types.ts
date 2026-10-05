@@ -6206,6 +6206,16 @@ export type Database = {
         Args: { _champs: Json; _contrat_id: string; _motif: string }
         Returns: undefined
       }
+      creer_client_dossier_rapide: {
+        Args: {
+          p_client: Json
+          p_confirmed_client_id?: string | null
+          p_dossier: Json
+          p_piece_rows: Json
+          p_user_id: string
+        }
+        Returns: Json
+      }
       current_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
@@ -6242,6 +6252,7 @@ export type Database = {
       }
       nb_assures_emprunteur: { Args: { _dossier_id: string }; Returns: number }
       neoliane_reduire_json: { Args: { _data: Json }; Returns: Json }
+      normaliser_identite_creation_rapide: { Args: { p_valeur: string }; Returns: string }
       periodicite_suivi_mois: {
         Args: { _branche: string; _recommandation: boolean }
         Returns: number
