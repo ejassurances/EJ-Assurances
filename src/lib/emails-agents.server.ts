@@ -348,7 +348,15 @@ export async function executerAgents(
               if (pieces) {
                 piecesPartenairesRattachees += pieces.rattachees;
                 piecesPartenairesAClasser += pieces.a_classer;
-                if (pieces.a_classer > 0) await poserLabelCabinet(m.id, "sp_a_traiter");
+                if (pieces.a_classer > 0) {
+                  await poserLabelCabinet(m.id, "sp_a_traiter");
+                  // Marque de traitement existante (libellé d'état « A valider ») :
+                  // sans elle le mail est relu à chaque passage du tri. La tâche
+                  // humaine (idempotente) porte la reprise en main.
+                  await marquerEtat(m.id, "a_valider").catch((e: unknown) =>
+                    console.error("[pieces-partenaire] marquage « A valider » impossible", m.id, e),
+                  );
+                }
               }
             }
 
