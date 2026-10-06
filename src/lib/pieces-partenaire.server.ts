@@ -242,10 +242,10 @@ export async function traiterPiecesJointesPartenaire(
       statut: "echec",
       detail: "",
     };
+    const nomFichier = piece.nom.replace(/[^\w.\-]+/g, "_").slice(0, 120);
     try {
       // Anti-doublon : si cette pièce de ce même mail a déjà été déposée (mail
       // retraité par le tri, retry, ou webhook dupliqué), on ne la redépose pas.
-      const nomFichier = piece.nom.replace(/[^\w.\-]+/g, "_").slice(0, 120);
       const { data: dejaPresent } = await admin
         .from("documents")
         .select("id")
@@ -256,6 +256,33 @@ export async function traiterPiecesJointesPartenaire(
         resultat.statut = "deja_traite";
         resultat.detail = "Pièce déjà déposée pour ce mail — non redéposée.";
         resultat.document_id = dejaPresent.id;
+        details.push(resultat);
+        continue;
+      }
+
+      // Pièce déjà déposée « à classer » (aucune ligne documents) pour ce mail.
+      const dejaAClasser = await objetDejaDepose(admin, `a-classer/${params.gmail_message_id}`, nomFichier);
+      if (dejaAClasser) {
+        resultat.statut = "deja_traite";
+        resultat.storage_path = dejaAClasser;
+        resultat.detail = "Pièce déjà déposée « à classer » pour ce mail — non redéposée.";
+        details.push(resultat);
+        continue;
+      }
+
+      // Pièce déjà signalée en échec ou à classer : la tâche humaine existe.
+      const { data: tacheExistante } = await admin
+        .from("taches")
+        .select("id")
+        .in("idempotency_key", [
+          clePieceAClasser(params.gmail_message_id, nomFichier),
+          clePieceEchec(params.gmail_message_id, nomFichier),
+        ])
+        .limit(1)
+        .maybeSingle();
+      if (tacheExistante) {
+        resultat.statut = "deja_traite";
+        resultat.detail = "Tâche humaine déjà ouverte pour cette pièce — non retraitée.";
         details.push(resultat);
         continue;
       }
