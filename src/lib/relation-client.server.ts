@@ -1406,6 +1406,9 @@ async function traiterEmailClientInterne(
 
     if (!reclamation) {
       await creerTacheAdmin(admin as never, {
+        idempotency_key: `relation_client:niveau0:${gmail_message_id}`,
+        source: "relation-client",
+        source_event_id: gmail_message_id,
         titre: sinistre
           ? `Sinistre déclaré — ${nomComplet(client)}`
           : classification.sous_type === "reclamation"
