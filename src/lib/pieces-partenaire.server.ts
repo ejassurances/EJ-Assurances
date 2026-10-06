@@ -184,6 +184,29 @@ function lienMail(id: string): string {
   return `https://mail.google.com/mail/u/0/#all/${id}`;
 }
 
+/** Clés d'idempotence des tâches humaines créées pour une pièce partenaire. */
+export function clePieceAClasser(gmailMessageId: string, nomFichier: string): string {
+  return `piece_partenaire:a_classer:${gmailMessageId}:${nomFichier}`;
+}
+export function clePieceEchec(gmailMessageId: string, nomFichier: string): string {
+  return `piece_partenaire:echec:${gmailMessageId}:${nomFichier}`;
+}
+
+/**
+ * Un objet existe-t-il déjà dans le stockage « à classer » pour ce mail et ce
+ * nom de fichier ? Les objets sont nommés `<Date.now()>-<nomFichier>` : on
+ * compare sur le suffixe `-<nomFichier>`.
+ */
+async function objetDejaDepose(admin: Admin, prefixe: string, nomFichier: string): Promise<string | null> {
+  const { data, error } = await admin.storage.from(BUCKET).list(prefixe, { limit: 1000 });
+  if (error) {
+    console.error("[pieces-partenaire] lecture du stockage impossible", prefixe, error.message);
+    return null;
+  }
+  const trouve = (data ?? []).find((o: { name?: string }) => (o.name ?? "").endsWith(`-${nomFichier}`));
+  return trouve ? `${prefixe}/${trouve.name}` : null;
+}
+
 /**
  * Traite les pièces jointes d'un mail partenaire : lecture IA, identification du
  * client, dépôt et rattachement. Aucune exception n'est propagée : chaque pièce
