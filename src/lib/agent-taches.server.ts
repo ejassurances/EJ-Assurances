@@ -63,6 +63,8 @@ export async function identiteTechnique(
   return null;
 }
 
+/** Sources explicitement humaines : pas d'avertissement sans clé d'idempotence. */
+const SOURCES_MANUELLES = new Set(["manuel", "humain", "utilisateur"]);
 
 export async function creerTacheAdmin(
   admin: Admin,
@@ -90,6 +92,12 @@ export async function creerTacheAdmin(
   },
 ): Promise<string | null> {
   try {
+    const source = params.source ?? "agent";
+    if (!params.idempotency_key && !SOURCES_MANUELLES.has(source)) {
+      console.warn(
+        `[agent-taches] tâche automatique sans idempotency_key (source « ${source} ») — risque de doublon : ${params.titre.slice(0, 120)}`,
+      );
+    }
     if (params.idempotency_key) {
       const { data: existing } = await (admin as any)
         .from("taches")
