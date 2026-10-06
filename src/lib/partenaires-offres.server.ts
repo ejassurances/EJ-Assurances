@@ -419,6 +419,9 @@ export async function traiterEmailPartenaireOffre(
       (m) => `• ${m.produit} — ${m.champ}\n   AVANT : ${m.avant ?? "non précisé"}\n   APRÈS : ${m.apres ?? "non précisé"}`,
     );
     await creerTacheAdmin(admin, {
+      idempotency_key: `partenaire_offre:mise_a_jour_produit:${params.gmail_message_id}`,
+      source: "partenaires-offres",
+      source_event_id: params.gmail_message_id,
       titre: `Mise à jour produit à valider — ${compagnieNom ?? "partenaire"}`.slice(0, 200),
       description: [
         `Objet de la demande : ${email.sujet ?? "(sans objet)"}`,
@@ -441,6 +444,9 @@ export async function traiterEmailPartenaireOffre(
   if (analyse.categorie === "evenement" && analyse.evenement) {
     const ev = analyse.evenement;
     await creerTacheAdmin(admin, {
+      idempotency_key: `partenaire_offre:evenement:${params.gmail_message_id}`,
+      source: "partenaires-offres",
+      source_event_id: params.gmail_message_id,
       titre: `Invitation partenaire — ${ev.intitule}`.slice(0, 200),
       description: [
         `Objet de la demande : ${email.sujet ?? "(sans objet)"}`,
@@ -464,6 +470,9 @@ export async function traiterEmailPartenaireOffre(
   // Codes courtier / convention : information contractuelle structurante.
   if (analyse.categorie === "codes_courtier") {
     await creerTacheAdmin(admin, {
+      idempotency_key: `partenaire_offre:codes_courtier:${params.gmail_message_id}`,
+      source: "partenaires-offres",
+      source_event_id: params.gmail_message_id,
       titre: `Codes courtier / convention reçus — ${compagnieNom ?? "partenaire"}`.slice(0, 200),
       description: [
         `Objet de la demande : ${email.sujet ?? "(sans objet)"}`,

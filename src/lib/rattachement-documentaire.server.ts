@@ -308,6 +308,9 @@ export async function rattacherDocument(
     try {
       const { creerTacheAdmin } = await import("@/lib/agent-taches.server");
       await creerTacheAdmin(admin as never, {
+        idempotency_key: `rattachement_documentaire:qualification:${params.documentId}`,
+        source: "rattachement-documentaire",
+        source_event_id: params.documentId,
         titre: "Document à rattacher — qualification humaine".slice(0, 200),
         description: [
           "Le moteur de rattachement documentaire n'a pas pu déterminer le dossier avec certitude.",

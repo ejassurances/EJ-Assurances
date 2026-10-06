@@ -300,6 +300,9 @@ export async function creerDossierDepuisEmail(
     if (dossierOuvert) {
       const { creerTacheAdmin } = await import("@/lib/agent-taches.server");
       await creerTacheAdmin(admin, {
+        idempotency_key: `email_triage:dossier_existant:${params.gmail_message_id}`,
+        source: "email-triage",
+        source_event_id: params.gmail_message_id,
         titre: `Email entrant sur un dossier existant — ${triage.nom ?? email.expediteur_email}`,
         description: [
           `Objet du mail : ${email.sujet ?? "(sans objet)"}`,
@@ -508,6 +511,9 @@ export async function creerFicheProspectIncertaine(
   const verdict = await verifierExpediteurClientPossible(admin, email.expediteur_email);
   if (!verdict.client_possible) {
     await creerTacheAdmin(admin, {
+      idempotency_key: `email_triage:non_client:${params.gmail_message_id}`,
+      source: "email-triage",
+      source_event_id: params.gmail_message_id,
       titre: `Email entrant à qualifier (non client) — ${nom}`,
       description: [
         `Objet du mail : ${email.sujet ?? "(sans objet)"}`,
@@ -566,6 +572,9 @@ export async function creerFicheProspectIncertaine(
   }
 
   await creerTacheAdmin(admin, {
+    idempotency_key: `email_triage:ambigu:${params.gmail_message_id}`,
+    source: "email-triage",
+    source_event_id: params.gmail_message_id,
     titre: `Email entrant ambigu à qualifier — ${nom}`,
     description: [
       `Objet du mail : ${email.sujet ?? "(sans objet)"}`,
