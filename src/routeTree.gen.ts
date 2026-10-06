@@ -21,6 +21,7 @@ import { Route as EspaceConfidentialiteRouteImport } from './routes/espace.confi
 import { Route as EspaceCguRouteImport } from './routes/espace.cgu'
 import { Route as AuthenticatedEspaceRouteImport } from './routes/_authenticated/espace'
 import { Route as AuthenticatedEspaceIndexRouteImport } from './routes/_authenticated/espace.index'
+import { Route as ApiPublicWebinaireSequencesRouteImport } from './routes/api/public/webinaire-sequences'
 import { Route as ApiPublicSuiviContratsRouteImport } from './routes/api/public/suivi-contrats'
 import { Route as ApiPublicScanEmailsRouteImport } from './routes/api/public/scan-emails'
 import { Route as ApiPublicRevueLcbftRouteImport } from './routes/api/public/revue-lcbft'
@@ -48,6 +49,7 @@ import { Route as ApiPublicCartographieRisquesRevisionRouteImport } from './rout
 import { Route as ApiPublicBrevoListesSyncRouteImport } from './routes/api/public/brevo-listes-sync'
 import { Route as ApiPublicBootstrapAdminRouteImport } from './routes/api/public/bootstrap-admin'
 import { Route as ApiPublicAnalyseRecueilRouteImport } from './routes/api/public/analyse-recueil'
+import { Route as AuthenticatedEspaceWebinairesRouteImport } from './routes/_authenticated/espace.webinaires'
 import { Route as AuthenticatedEspaceUtilisateursRouteImport } from './routes/_authenticated/espace.utilisateurs'
 import { Route as AuthenticatedEspaceTachesRouteImport } from './routes/_authenticated/espace.taches'
 import { Route as AuthenticatedEspaceSinistresRouteImport } from './routes/_authenticated/espace.sinistres'
@@ -73,6 +75,8 @@ import { Route as AuthenticatedEspaceDerModeleRouteImport } from './routes/_auth
 import { Route as AuthenticatedEspaceConformiteRouteImport } from './routes/_authenticated/espace.conformite'
 import { Route as AuthenticatedEspaceComptabiliteRouteImport } from './routes/_authenticated/espace.comptabilite'
 import { Route as AuthenticatedEspaceCommissionsRouteImport } from './routes/_authenticated/espace.commissions'
+import { Route as AuthenticatedEspaceCockpitCaRouteImport } from './routes/_authenticated/espace.cockpit-ca'
+import { Route as AuthenticatedEspaceCaPaliersRouteImport } from './routes/_authenticated/espace.ca-paliers'
 import { Route as AuthenticatedEspaceBibliothequeCgRouteImport } from './routes/_authenticated/espace.bibliotheque-cg'
 import { Route as AuthenticatedEspaceAuditLogsRouteImport } from './routes/_authenticated/espace.audit-logs'
 import { Route as AuthenticatedEspaceDossiersIndexRouteImport } from './routes/_authenticated/espace.dossiers.index'
@@ -82,8 +86,10 @@ import { Route as AuthenticatedEspaceClientsIndexRouteImport } from './routes/_a
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiPublicWebhooksWebinaireFunnelRouteImport } from './routes/api/public/webhooks/webinaire-funnel'
 import { Route as ApiPublicWebhooksNeolianeRouteImport } from './routes/api/public/webhooks/neoliane'
 import { Route as ApiPublicWebhooksCrmRouteImport } from './routes/api/public/webhooks/crm'
+import { Route as ApiPublicWebhooksBrevoRouteImport } from './routes/api/public/webhooks/brevo'
 import { Route as AuthenticatedEspaceSinistresIdRouteImport } from './routes/_authenticated/espace.sinistres.$id'
 import { Route as AuthenticatedEspaceRecueilSanteDossierIdRouteImport } from './routes/_authenticated/espace.recueil-sante.$dossierId'
 import { Route as AuthenticatedEspaceDossiersIdRouteImport } from './routes/_authenticated/espace.dossiers.$id'
@@ -150,6 +156,12 @@ const AuthenticatedEspaceIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const ApiPublicWebinaireSequencesRoute =
+  ApiPublicWebinaireSequencesRouteImport.update({
+    id: '/api/public/webinaire-sequences',
+    path: '/api/public/webinaire-sequences',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicSuiviContratsRoute = ApiPublicSuiviContratsRouteImport.update({
   id: '/api/public/suivi-contrats',
@@ -303,6 +315,12 @@ const ApiPublicAnalyseRecueilRoute = ApiPublicAnalyseRecueilRouteImport.update({
   path: '/api/public/analyse-recueil',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedEspaceWebinairesRoute =
+  AuthenticatedEspaceWebinairesRouteImport.update({
+    id: '/webinaires',
+    path: '/webinaires',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
 const AuthenticatedEspaceUtilisateursRoute =
   AuthenticatedEspaceUtilisateursRouteImport.update({
     id: '/utilisateurs',
@@ -453,6 +471,18 @@ const AuthenticatedEspaceCommissionsRoute =
     path: '/commissions',
     getParentRoute: () => AuthenticatedEspaceRoute,
   } as any)
+const AuthenticatedEspaceCockpitCaRoute =
+  AuthenticatedEspaceCockpitCaRouteImport.update({
+    id: '/cockpit-ca',
+    path: '/cockpit-ca',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceCaPaliersRoute =
+  AuthenticatedEspaceCaPaliersRouteImport.update({
+    id: '/ca-paliers',
+    path: '/ca-paliers',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
 const AuthenticatedEspaceBibliothequeCgRoute =
   AuthenticatedEspaceBibliothequeCgRouteImport.update({
     id: '/bibliotheque-cg',
@@ -505,6 +535,12 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   path: '/lovable/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWebhooksWebinaireFunnelRoute =
+  ApiPublicWebhooksWebinaireFunnelRouteImport.update({
+    id: '/api/public/webhooks/webinaire-funnel',
+    path: '/api/public/webhooks/webinaire-funnel',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicWebhooksNeolianeRoute =
   ApiPublicWebhooksNeolianeRouteImport.update({
     id: '/api/public/webhooks/neoliane',
@@ -514,6 +550,11 @@ const ApiPublicWebhooksNeolianeRoute =
 const ApiPublicWebhooksCrmRoute = ApiPublicWebhooksCrmRouteImport.update({
   id: '/api/public/webhooks/crm',
   path: '/api/public/webhooks/crm',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicWebhooksBrevoRoute = ApiPublicWebhooksBrevoRouteImport.update({
+  id: '/api/public/webhooks/brevo',
+  path: '/api/public/webhooks/brevo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedEspaceSinistresIdRoute =
@@ -566,6 +607,8 @@ export interface FileRoutesByFullPath {
   '/espace/confidentialite': typeof EspaceConfidentialiteRoute
   '/espace/audit-logs': typeof AuthenticatedEspaceAuditLogsRoute
   '/espace/bibliotheque-cg': typeof AuthenticatedEspaceBibliothequeCgRoute
+  '/espace/ca-paliers': typeof AuthenticatedEspaceCaPaliersRoute
+  '/espace/cockpit-ca': typeof AuthenticatedEspaceCockpitCaRoute
   '/espace/commissions': typeof AuthenticatedEspaceCommissionsRoute
   '/espace/comptabilite': typeof AuthenticatedEspaceComptabiliteRoute
   '/espace/conformite': typeof AuthenticatedEspaceConformiteRoute
@@ -591,6 +634,7 @@ export interface FileRoutesByFullPath {
   '/espace/sinistres': typeof AuthenticatedEspaceSinistresRouteWithChildren
   '/espace/taches': typeof AuthenticatedEspaceTachesRoute
   '/espace/utilisateurs': typeof AuthenticatedEspaceUtilisateursRoute
+  '/espace/webinaires': typeof AuthenticatedEspaceWebinairesRoute
   '/api/public/analyse-recueil': typeof ApiPublicAnalyseRecueilRoute
   '/api/public/bootstrap-admin': typeof ApiPublicBootstrapAdminRoute
   '/api/public/brevo-listes-sync': typeof ApiPublicBrevoListesSyncRoute
@@ -618,6 +662,7 @@ export interface FileRoutesByFullPath {
   '/api/public/revue-lcbft': typeof ApiPublicRevueLcbftRoute
   '/api/public/scan-emails': typeof ApiPublicScanEmailsRoute
   '/api/public/suivi-contrats': typeof ApiPublicSuiviContratsRoute
+  '/api/public/webinaire-sequences': typeof ApiPublicWebinaireSequencesRoute
   '/espace/': typeof AuthenticatedEspaceIndexRoute
   '/espace/clients/$id': typeof AuthenticatedEspaceClientsIdRoute
   '/espace/compagnies/$id': typeof AuthenticatedEspaceCompagniesIdRoute
@@ -625,8 +670,10 @@ export interface FileRoutesByFullPath {
   '/espace/dossiers/$id': typeof AuthenticatedEspaceDossiersIdRoute
   '/espace/recueil-sante/$dossierId': typeof AuthenticatedEspaceRecueilSanteDossierIdRoute
   '/espace/sinistres/$id': typeof AuthenticatedEspaceSinistresIdRoute
+  '/api/public/webhooks/brevo': typeof ApiPublicWebhooksBrevoRoute
   '/api/public/webhooks/crm': typeof ApiPublicWebhooksCrmRoute
   '/api/public/webhooks/neoliane': typeof ApiPublicWebhooksNeolianeRoute
+  '/api/public/webhooks/webinaire-funnel': typeof ApiPublicWebhooksWebinaireFunnelRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -647,6 +694,8 @@ export interface FileRoutesByTo {
   '/espace/confidentialite': typeof EspaceConfidentialiteRoute
   '/espace/audit-logs': typeof AuthenticatedEspaceAuditLogsRoute
   '/espace/bibliotheque-cg': typeof AuthenticatedEspaceBibliothequeCgRoute
+  '/espace/ca-paliers': typeof AuthenticatedEspaceCaPaliersRoute
+  '/espace/cockpit-ca': typeof AuthenticatedEspaceCockpitCaRoute
   '/espace/commissions': typeof AuthenticatedEspaceCommissionsRoute
   '/espace/comptabilite': typeof AuthenticatedEspaceComptabiliteRoute
   '/espace/conformite': typeof AuthenticatedEspaceConformiteRoute
@@ -672,6 +721,7 @@ export interface FileRoutesByTo {
   '/espace/sinistres': typeof AuthenticatedEspaceSinistresRouteWithChildren
   '/espace/taches': typeof AuthenticatedEspaceTachesRoute
   '/espace/utilisateurs': typeof AuthenticatedEspaceUtilisateursRoute
+  '/espace/webinaires': typeof AuthenticatedEspaceWebinairesRoute
   '/api/public/analyse-recueil': typeof ApiPublicAnalyseRecueilRoute
   '/api/public/bootstrap-admin': typeof ApiPublicBootstrapAdminRoute
   '/api/public/brevo-listes-sync': typeof ApiPublicBrevoListesSyncRoute
@@ -699,6 +749,7 @@ export interface FileRoutesByTo {
   '/api/public/revue-lcbft': typeof ApiPublicRevueLcbftRoute
   '/api/public/scan-emails': typeof ApiPublicScanEmailsRoute
   '/api/public/suivi-contrats': typeof ApiPublicSuiviContratsRoute
+  '/api/public/webinaire-sequences': typeof ApiPublicWebinaireSequencesRoute
   '/espace': typeof AuthenticatedEspaceIndexRoute
   '/espace/clients/$id': typeof AuthenticatedEspaceClientsIdRoute
   '/espace/compagnies/$id': typeof AuthenticatedEspaceCompagniesIdRoute
@@ -706,8 +757,10 @@ export interface FileRoutesByTo {
   '/espace/dossiers/$id': typeof AuthenticatedEspaceDossiersIdRoute
   '/espace/recueil-sante/$dossierId': typeof AuthenticatedEspaceRecueilSanteDossierIdRoute
   '/espace/sinistres/$id': typeof AuthenticatedEspaceSinistresIdRoute
+  '/api/public/webhooks/brevo': typeof ApiPublicWebhooksBrevoRoute
   '/api/public/webhooks/crm': typeof ApiPublicWebhooksCrmRoute
   '/api/public/webhooks/neoliane': typeof ApiPublicWebhooksNeolianeRoute
+  '/api/public/webhooks/webinaire-funnel': typeof ApiPublicWebhooksWebinaireFunnelRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -731,6 +784,8 @@ export interface FileRoutesById {
   '/espace/confidentialite': typeof EspaceConfidentialiteRoute
   '/_authenticated/espace/audit-logs': typeof AuthenticatedEspaceAuditLogsRoute
   '/_authenticated/espace/bibliotheque-cg': typeof AuthenticatedEspaceBibliothequeCgRoute
+  '/_authenticated/espace/ca-paliers': typeof AuthenticatedEspaceCaPaliersRoute
+  '/_authenticated/espace/cockpit-ca': typeof AuthenticatedEspaceCockpitCaRoute
   '/_authenticated/espace/commissions': typeof AuthenticatedEspaceCommissionsRoute
   '/_authenticated/espace/comptabilite': typeof AuthenticatedEspaceComptabiliteRoute
   '/_authenticated/espace/conformite': typeof AuthenticatedEspaceConformiteRoute
@@ -756,6 +811,7 @@ export interface FileRoutesById {
   '/_authenticated/espace/sinistres': typeof AuthenticatedEspaceSinistresRouteWithChildren
   '/_authenticated/espace/taches': typeof AuthenticatedEspaceTachesRoute
   '/_authenticated/espace/utilisateurs': typeof AuthenticatedEspaceUtilisateursRoute
+  '/_authenticated/espace/webinaires': typeof AuthenticatedEspaceWebinairesRoute
   '/api/public/analyse-recueil': typeof ApiPublicAnalyseRecueilRoute
   '/api/public/bootstrap-admin': typeof ApiPublicBootstrapAdminRoute
   '/api/public/brevo-listes-sync': typeof ApiPublicBrevoListesSyncRoute
@@ -783,6 +839,7 @@ export interface FileRoutesById {
   '/api/public/revue-lcbft': typeof ApiPublicRevueLcbftRoute
   '/api/public/scan-emails': typeof ApiPublicScanEmailsRoute
   '/api/public/suivi-contrats': typeof ApiPublicSuiviContratsRoute
+  '/api/public/webinaire-sequences': typeof ApiPublicWebinaireSequencesRoute
   '/_authenticated/espace/': typeof AuthenticatedEspaceIndexRoute
   '/_authenticated/espace/clients/$id': typeof AuthenticatedEspaceClientsIdRoute
   '/_authenticated/espace/compagnies/$id': typeof AuthenticatedEspaceCompagniesIdRoute
@@ -790,8 +847,10 @@ export interface FileRoutesById {
   '/_authenticated/espace/dossiers/$id': typeof AuthenticatedEspaceDossiersIdRoute
   '/_authenticated/espace/recueil-sante/$dossierId': typeof AuthenticatedEspaceRecueilSanteDossierIdRoute
   '/_authenticated/espace/sinistres/$id': typeof AuthenticatedEspaceSinistresIdRoute
+  '/api/public/webhooks/brevo': typeof ApiPublicWebhooksBrevoRoute
   '/api/public/webhooks/crm': typeof ApiPublicWebhooksCrmRoute
   '/api/public/webhooks/neoliane': typeof ApiPublicWebhooksNeolianeRoute
+  '/api/public/webhooks/webinaire-funnel': typeof ApiPublicWebhooksWebinaireFunnelRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -815,6 +874,8 @@ export interface FileRouteTypes {
     | '/espace/confidentialite'
     | '/espace/audit-logs'
     | '/espace/bibliotheque-cg'
+    | '/espace/ca-paliers'
+    | '/espace/cockpit-ca'
     | '/espace/commissions'
     | '/espace/comptabilite'
     | '/espace/conformite'
@@ -840,6 +901,7 @@ export interface FileRouteTypes {
     | '/espace/sinistres'
     | '/espace/taches'
     | '/espace/utilisateurs'
+    | '/espace/webinaires'
     | '/api/public/analyse-recueil'
     | '/api/public/bootstrap-admin'
     | '/api/public/brevo-listes-sync'
@@ -867,6 +929,7 @@ export interface FileRouteTypes {
     | '/api/public/revue-lcbft'
     | '/api/public/scan-emails'
     | '/api/public/suivi-contrats'
+    | '/api/public/webinaire-sequences'
     | '/espace/'
     | '/espace/clients/$id'
     | '/espace/compagnies/$id'
@@ -874,8 +937,10 @@ export interface FileRouteTypes {
     | '/espace/dossiers/$id'
     | '/espace/recueil-sante/$dossierId'
     | '/espace/sinistres/$id'
+    | '/api/public/webhooks/brevo'
     | '/api/public/webhooks/crm'
     | '/api/public/webhooks/neoliane'
+    | '/api/public/webhooks/webinaire-funnel'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -896,6 +961,8 @@ export interface FileRouteTypes {
     | '/espace/confidentialite'
     | '/espace/audit-logs'
     | '/espace/bibliotheque-cg'
+    | '/espace/ca-paliers'
+    | '/espace/cockpit-ca'
     | '/espace/commissions'
     | '/espace/comptabilite'
     | '/espace/conformite'
@@ -921,6 +988,7 @@ export interface FileRouteTypes {
     | '/espace/sinistres'
     | '/espace/taches'
     | '/espace/utilisateurs'
+    | '/espace/webinaires'
     | '/api/public/analyse-recueil'
     | '/api/public/bootstrap-admin'
     | '/api/public/brevo-listes-sync'
@@ -948,6 +1016,7 @@ export interface FileRouteTypes {
     | '/api/public/revue-lcbft'
     | '/api/public/scan-emails'
     | '/api/public/suivi-contrats'
+    | '/api/public/webinaire-sequences'
     | '/espace'
     | '/espace/clients/$id'
     | '/espace/compagnies/$id'
@@ -955,8 +1024,10 @@ export interface FileRouteTypes {
     | '/espace/dossiers/$id'
     | '/espace/recueil-sante/$dossierId'
     | '/espace/sinistres/$id'
+    | '/api/public/webhooks/brevo'
     | '/api/public/webhooks/crm'
     | '/api/public/webhooks/neoliane'
+    | '/api/public/webhooks/webinaire-funnel'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -979,6 +1050,8 @@ export interface FileRouteTypes {
     | '/espace/confidentialite'
     | '/_authenticated/espace/audit-logs'
     | '/_authenticated/espace/bibliotheque-cg'
+    | '/_authenticated/espace/ca-paliers'
+    | '/_authenticated/espace/cockpit-ca'
     | '/_authenticated/espace/commissions'
     | '/_authenticated/espace/comptabilite'
     | '/_authenticated/espace/conformite'
@@ -1004,6 +1077,7 @@ export interface FileRouteTypes {
     | '/_authenticated/espace/sinistres'
     | '/_authenticated/espace/taches'
     | '/_authenticated/espace/utilisateurs'
+    | '/_authenticated/espace/webinaires'
     | '/api/public/analyse-recueil'
     | '/api/public/bootstrap-admin'
     | '/api/public/brevo-listes-sync'
@@ -1031,6 +1105,7 @@ export interface FileRouteTypes {
     | '/api/public/revue-lcbft'
     | '/api/public/scan-emails'
     | '/api/public/suivi-contrats'
+    | '/api/public/webinaire-sequences'
     | '/_authenticated/espace/'
     | '/_authenticated/espace/clients/$id'
     | '/_authenticated/espace/compagnies/$id'
@@ -1038,8 +1113,10 @@ export interface FileRouteTypes {
     | '/_authenticated/espace/dossiers/$id'
     | '/_authenticated/espace/recueil-sante/$dossierId'
     | '/_authenticated/espace/sinistres/$id'
+    | '/api/public/webhooks/brevo'
     | '/api/public/webhooks/crm'
     | '/api/public/webhooks/neoliane'
+    | '/api/public/webhooks/webinaire-funnel'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -1087,8 +1164,11 @@ export interface RootRouteChildren {
   ApiPublicRevueLcbftRoute: typeof ApiPublicRevueLcbftRoute
   ApiPublicScanEmailsRoute: typeof ApiPublicScanEmailsRoute
   ApiPublicSuiviContratsRoute: typeof ApiPublicSuiviContratsRoute
+  ApiPublicWebinaireSequencesRoute: typeof ApiPublicWebinaireSequencesRoute
+  ApiPublicWebhooksBrevoRoute: typeof ApiPublicWebhooksBrevoRoute
   ApiPublicWebhooksCrmRoute: typeof ApiPublicWebhooksCrmRoute
   ApiPublicWebhooksNeolianeRoute: typeof ApiPublicWebhooksNeolianeRoute
+  ApiPublicWebhooksWebinaireFunnelRoute: typeof ApiPublicWebhooksWebinaireFunnelRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -1179,6 +1259,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/espace/'
       preLoaderRoute: typeof AuthenticatedEspaceIndexRouteImport
       parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/api/public/webinaire-sequences': {
+      id: '/api/public/webinaire-sequences'
+      path: '/api/public/webinaire-sequences'
+      fullPath: '/api/public/webinaire-sequences'
+      preLoaderRoute: typeof ApiPublicWebinaireSequencesRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/suivi-contrats': {
       id: '/api/public/suivi-contrats'
@@ -1369,6 +1456,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAnalyseRecueilRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/espace/webinaires': {
+      id: '/_authenticated/espace/webinaires'
+      path: '/webinaires'
+      fullPath: '/espace/webinaires'
+      preLoaderRoute: typeof AuthenticatedEspaceWebinairesRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
     '/_authenticated/espace/utilisateurs': {
       id: '/_authenticated/espace/utilisateurs'
       path: '/utilisateurs'
@@ -1544,6 +1638,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEspaceCommissionsRouteImport
       parentRoute: typeof AuthenticatedEspaceRoute
     }
+    '/_authenticated/espace/cockpit-ca': {
+      id: '/_authenticated/espace/cockpit-ca'
+      path: '/cockpit-ca'
+      fullPath: '/espace/cockpit-ca'
+      preLoaderRoute: typeof AuthenticatedEspaceCockpitCaRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/_authenticated/espace/ca-paliers': {
+      id: '/_authenticated/espace/ca-paliers'
+      path: '/ca-paliers'
+      fullPath: '/espace/ca-paliers'
+      preLoaderRoute: typeof AuthenticatedEspaceCaPaliersRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
     '/_authenticated/espace/bibliotheque-cg': {
       id: '/_authenticated/espace/bibliotheque-cg'
       path: '/bibliotheque-cg'
@@ -1607,6 +1715,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/webhooks/webinaire-funnel': {
+      id: '/api/public/webhooks/webinaire-funnel'
+      path: '/api/public/webhooks/webinaire-funnel'
+      fullPath: '/api/public/webhooks/webinaire-funnel'
+      preLoaderRoute: typeof ApiPublicWebhooksWebinaireFunnelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhooks/neoliane': {
       id: '/api/public/webhooks/neoliane'
       path: '/api/public/webhooks/neoliane'
@@ -1619,6 +1734,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/webhooks/crm'
       fullPath: '/api/public/webhooks/crm'
       preLoaderRoute: typeof ApiPublicWebhooksCrmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhooks/brevo': {
+      id: '/api/public/webhooks/brevo'
+      path: '/api/public/webhooks/brevo'
+      fullPath: '/api/public/webhooks/brevo'
+      preLoaderRoute: typeof ApiPublicWebhooksBrevoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/espace/sinistres/$id': {
@@ -1683,6 +1805,8 @@ const AuthenticatedEspaceSinistresRouteWithChildren =
 interface AuthenticatedEspaceRouteChildren {
   AuthenticatedEspaceAuditLogsRoute: typeof AuthenticatedEspaceAuditLogsRoute
   AuthenticatedEspaceBibliothequeCgRoute: typeof AuthenticatedEspaceBibliothequeCgRoute
+  AuthenticatedEspaceCaPaliersRoute: typeof AuthenticatedEspaceCaPaliersRoute
+  AuthenticatedEspaceCockpitCaRoute: typeof AuthenticatedEspaceCockpitCaRoute
   AuthenticatedEspaceCommissionsRoute: typeof AuthenticatedEspaceCommissionsRoute
   AuthenticatedEspaceComptabiliteRoute: typeof AuthenticatedEspaceComptabiliteRoute
   AuthenticatedEspaceConformiteRoute: typeof AuthenticatedEspaceConformiteRoute
@@ -1708,6 +1832,7 @@ interface AuthenticatedEspaceRouteChildren {
   AuthenticatedEspaceSinistresRoute: typeof AuthenticatedEspaceSinistresRouteWithChildren
   AuthenticatedEspaceTachesRoute: typeof AuthenticatedEspaceTachesRoute
   AuthenticatedEspaceUtilisateursRoute: typeof AuthenticatedEspaceUtilisateursRoute
+  AuthenticatedEspaceWebinairesRoute: typeof AuthenticatedEspaceWebinairesRoute
   AuthenticatedEspaceIndexRoute: typeof AuthenticatedEspaceIndexRoute
   AuthenticatedEspaceClientsIdRoute: typeof AuthenticatedEspaceClientsIdRoute
   AuthenticatedEspaceCompagniesIdRoute: typeof AuthenticatedEspaceCompagniesIdRoute
@@ -1724,6 +1849,8 @@ const AuthenticatedEspaceRouteChildren: AuthenticatedEspaceRouteChildren = {
   AuthenticatedEspaceAuditLogsRoute: AuthenticatedEspaceAuditLogsRoute,
   AuthenticatedEspaceBibliothequeCgRoute:
     AuthenticatedEspaceBibliothequeCgRoute,
+  AuthenticatedEspaceCaPaliersRoute: AuthenticatedEspaceCaPaliersRoute,
+  AuthenticatedEspaceCockpitCaRoute: AuthenticatedEspaceCockpitCaRoute,
   AuthenticatedEspaceCommissionsRoute: AuthenticatedEspaceCommissionsRoute,
   AuthenticatedEspaceComptabiliteRoute: AuthenticatedEspaceComptabiliteRoute,
   AuthenticatedEspaceConformiteRoute: AuthenticatedEspaceConformiteRoute,
@@ -1759,6 +1886,7 @@ const AuthenticatedEspaceRouteChildren: AuthenticatedEspaceRouteChildren = {
     AuthenticatedEspaceSinistresRouteWithChildren,
   AuthenticatedEspaceTachesRoute: AuthenticatedEspaceTachesRoute,
   AuthenticatedEspaceUtilisateursRoute: AuthenticatedEspaceUtilisateursRoute,
+  AuthenticatedEspaceWebinairesRoute: AuthenticatedEspaceWebinairesRoute,
   AuthenticatedEspaceIndexRoute: AuthenticatedEspaceIndexRoute,
   AuthenticatedEspaceClientsIdRoute: AuthenticatedEspaceClientsIdRoute,
   AuthenticatedEspaceCompagniesIdRoute: AuthenticatedEspaceCompagniesIdRoute,
@@ -1829,8 +1957,11 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicRevueLcbftRoute: ApiPublicRevueLcbftRoute,
   ApiPublicScanEmailsRoute: ApiPublicScanEmailsRoute,
   ApiPublicSuiviContratsRoute: ApiPublicSuiviContratsRoute,
+  ApiPublicWebinaireSequencesRoute: ApiPublicWebinaireSequencesRoute,
+  ApiPublicWebhooksBrevoRoute: ApiPublicWebhooksBrevoRoute,
   ApiPublicWebhooksCrmRoute: ApiPublicWebhooksCrmRoute,
   ApiPublicWebhooksNeolianeRoute: ApiPublicWebhooksNeolianeRoute,
+  ApiPublicWebhooksWebinaireFunnelRoute: ApiPublicWebhooksWebinaireFunnelRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
