@@ -9,17 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as FamillesModernesProfilRouteImport } from './routes/familles-modernes-profil'
-import { Route as DevenirPrescripteurRouteImport } from './routes/devenir-prescripteur'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AssuranceVieProfilRouteImport } from './routes/assurance-vie-profil'
-import { Route as AssuranceVieInformationRouteImport } from './routes/assurance-vie-information'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as EspaceConfidentialiteRouteImport } from './routes/espace.confidentialite'
-import { Route as EspaceCguRouteImport } from './routes/espace.cgu'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AssuranceVieInformationRouteImport } from './routes/assurance-vie-information'
+import { Route as AssuranceVieProfilRouteImport } from './routes/assurance-vie-profil'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as DevenirPrescripteurRouteImport } from './routes/devenir-prescripteur'
+import { Route as FamillesModernesProfilRouteImport } from './routes/familles-modernes-profil'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedEspaceRouteImport } from './routes/_authenticated/espace'
+import { Route as EspaceCguRouteImport } from './routes/espace.cgu'
+import { Route as EspaceConfidentialiteRouteImport } from './routes/espace.confidentialite'
 import { Route as AuthenticatedEspaceIndexRouteImport } from './routes/_authenticated/espace.index'
 import { Route as ApiPublicWebinaireSequencesRouteImport } from './routes/api/public/webinaire-sequences'
 import { Route as ApiPublicSuiviContratsRouteImport } from './routes/api/public/suivi-contrats'
@@ -79,9 +79,63 @@ import { Route as AuthenticatedEspaceCockpitCaRouteImport } from './routes/_auth
 import { Route as AuthenticatedEspaceCaPaliersRouteImport } from './routes/_authenticated/espace.ca-paliers'
 import { Route as AuthenticatedEspaceBibliothequeCgRouteImport } from './routes/_authenticated/espace.bibliotheque-cg'
 import { Route as AuthenticatedEspaceAuditLogsRouteImport } from './routes/_authenticated/espace.audit-logs'
-import { Route as AuthenticatedEspaceDossiersIndexRouteImport } from './routes/_authenticated/espace.dossiers.index'
-import { Route as AuthenticatedEspaceContratsIndexRouteImport } from './routes/_authenticated/espace.contrats.index'
-import { Route as AuthenticatedEspaceCompagniesIndexRouteImport } from './routes/_authenticated/espace.compagnies.index'
+import { Route as AuthenticatedEspaceBibliothequeCgRouteImport } from './routes/_authenticated/espace.bibliotheque-cg'
+import { Route as AuthenticatedEspaceCaPaliersRouteImport } from './routes/_authenticated/espace.ca-paliers'
+import { Route as AuthenticatedEspaceCockpitCaRouteImport } from './routes/_authenticated/espace.cockpit-ca'
+import { Route as AuthenticatedEspaceCommissionsRouteImport } from './routes/_authenticated/espace.commissions'
+import { Route as AuthenticatedEspaceComptabiliteRouteImport } from './routes/_authenticated/espace.comptabilite'
+import { Route as AuthenticatedEspaceConformiteRouteImport } from './routes/_authenticated/espace.conformite'
+import { Route as AuthenticatedEspaceDerModeleRouteImport } from './routes/_authenticated/espace.der-modele'
+import { Route as AuthenticatedEspaceDiagnosticRouteImport } from './routes/_authenticated/espace.diagnostic'
+import { Route as AuthenticatedEspaceFournisseursRouteImport } from './routes/_authenticated/espace.fournisseurs'
+import { Route as AuthenticatedEspaceGmailControleRouteImport } from './routes/_authenticated/espace.gmail-controle'
+import { Route as AuthenticatedEspaceGrillesGarantiesRouteImport } from './routes/_authenticated/espace.grilles-garanties'
+import { Route as AuthenticatedEspaceMesRecommandationsRouteImport } from './routes/_authenticated/espace.mes-recommandations'
+import { Route as AuthenticatedEspaceMonEspaceRouteImport } from './routes/_authenticated/espace.mon-espace'
+import { Route as AuthenticatedEspaceMonEspaceMandataireRouteImport } from './routes/_authenticated/espace.mon-espace-mandataire'
+import { Route as AuthenticatedEspaceNeolianeRouteImport } from './routes/_authenticated/espace.neoliane'
+import { Route as AuthenticatedEspaceParametresRouteImport } from './routes/_authenticated/espace.parametres'
+import { Route as AuthenticatedEspacePilotageRouteImport } from './routes/_authenticated/espace.pilotage'
+import { Route as AuthenticatedEspacePrequalificationRouteImport } from './routes/_authenticated/espace.prequalification'
+import { Route as AuthenticatedEspacePrescripteursRouteImport } from './routes/_authenticated/espace.prescripteurs'
+import { Route as AuthenticatedEspaceRelationClientRouteImport } from './routes/_authenticated/espace.relation-client'
+import { Route as AuthenticatedEspaceSignerContratMandataireRouteImport } from './routes/_authenticated/espace.signer-contrat-mandataire'
+import { Route as AuthenticatedEspaceSignerDerRouteImport } from './routes/_authenticated/espace.signer-der'
+import { Route as AuthenticatedEspaceSignerDevoirConseilRouteImport } from './routes/_authenticated/espace.signer-devoir-conseil'
+import { Route as AuthenticatedEspaceSignerLettreMissionRouteImport } from './routes/_authenticated/espace.signer-lettre-mission'
+import { Route as AuthenticatedEspaceSignerSouscriptionRouteImport } from './routes/_authenticated/espace.signer-souscription'
+import { Route as AuthenticatedEspaceSinistresRouteImport } from './routes/_authenticated/espace.sinistres'
+import { Route as AuthenticatedEspaceTachesRouteImport } from './routes/_authenticated/espace.taches'
+import { Route as AuthenticatedEspaceUtilisateursRouteImport } from './routes/_authenticated/espace.utilisateurs'
+import { Route as AuthenticatedEspaceWebinairesRouteImport } from './routes/_authenticated/espace.webinaires'
+import { Route as ApiPublicAnalyseRecueilRouteImport } from './routes/api/public/analyse-recueil'
+import { Route as ApiPublicBootstrapAdminRouteImport } from './routes/api/public/bootstrap-admin'
+import { Route as ApiPublicBrevoListesSyncRouteImport } from './routes/api/public/brevo-listes-sync'
+import { Route as ApiPublicCartographieRisquesRevisionRouteImport } from './routes/api/public/cartographie-risques-revision'
+import { Route as ApiPublicControleInterneRappelRouteImport } from './routes/api/public/controle-interne-rappel'
+import { Route as ApiPublicCorrigerLabelsPartenairesRouteImport } from './routes/api/public/corriger-labels-partenaires'
+import { Route as ApiPublicDdaPdfRepriseRouteImport } from './routes/api/public/dda-pdf-reprise'
+import { Route as ApiPublicDevoirsConseilEnvoisRouteImport } from './routes/api/public/devoirs-conseil-envois'
+import { Route as ApiPublicDocumentsAttendusRouteImport } from './routes/api/public/documents-attendus'
+import { Route as ApiPublicDossiersBloquesRouteImport } from './routes/api/public/dossiers-bloques'
+import { Route as ApiPublicEnvoisPlanifiesRouteImport } from './routes/api/public/envois-planifies'
+import { Route as ApiPublicFormationsRappelsRouteImport } from './routes/api/public/formations-rappels'
+import { Route as ApiPublicGmailInboxRouteImport } from './routes/api/public/gmail-inbox'
+import { Route as ApiPublicLeadsRouteImport } from './routes/api/public/leads'
+import { Route as ApiPublicLettresMissionEnvoisRouteImport } from './routes/api/public/lettres-mission-envois'
+import { Route as ApiPublicRappelsExpirationRouteImport } from './routes/api/public/rappels-expiration'
+import { Route as ApiPublicReclamationsAccuseReceptionRouteImport } from './routes/api/public/reclamations-accuse-reception'
+import { Route as ApiPublicRecueilEmprunteurReconstitutionRouteImport } from './routes/api/public/recueil-emprunteur-reconstitution'
+import { Route as ApiPublicReglesAgentRouteImport } from './routes/api/public/regles-agent'
+import { Route as ApiPublicRelancePiecesRouteImport } from './routes/api/public/relance-pieces'
+import { Route as ApiPublicRelanceSinistresRouteImport } from './routes/api/public/relance-sinistres'
+import { Route as ApiPublicRelanceSouscriptionRouteImport } from './routes/api/public/relance-souscription'
+import { Route as ApiPublicReprendreMailsAValiderRouteImport } from './routes/api/public/reprendre-mails-a-valider'
+import { Route as ApiPublicReprendreMailsIgnoresRouteImport } from './routes/api/public/reprendre-mails-ignores'
+import { Route as ApiPublicRevueLcbftRouteImport } from './routes/api/public/revue-lcbft'
+import { Route as ApiPublicScanEmailsRouteImport } from './routes/api/public/scan-emails'
+import { Route as ApiPublicSuiviContratsRouteImport } from './routes/api/public/suivi-contrats'
+import { Route as ApiPublicWebinaireSequencesRouteImport } from './routes/api/public/webinaire-sequences'
 import { Route as AuthenticatedEspaceClientsIndexRouteImport } from './routes/_authenticated/espace.clients.index'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
@@ -96,30 +150,30 @@ import { Route as AuthenticatedEspaceDossiersIdRouteImport } from './routes/_aut
 import { Route as AuthenticatedEspaceContratsIdRouteImport } from './routes/_authenticated/espace.contrats.$id'
 import { Route as AuthenticatedEspaceCompagniesIdRouteImport } from './routes/_authenticated/espace.compagnies.$id'
 import { Route as AuthenticatedEspaceClientsIdRouteImport } from './routes/_authenticated/espace.clients.$id'
+import { Route as AuthenticatedEspaceCompagniesIndexRouteImport } from './routes/_authenticated/espace.compagnies.index'
+import { Route as AuthenticatedEspaceCompagniesIdRouteImport } from './routes/_authenticated/espace.compagnies.$id'
+import { Route as AuthenticatedEspaceContratsIndexRouteImport } from './routes/_authenticated/espace.contrats.index'
+import { Route as AuthenticatedEspaceContratsIdRouteImport } from './routes/_authenticated/espace.contrats.$id'
+import { Route as AuthenticatedEspaceDossiersIndexRouteImport } from './routes/_authenticated/espace.dossiers.index'
+import { Route as AuthenticatedEspaceDossiersIdRouteImport } from './routes/_authenticated/espace.dossiers.$id'
+import { Route as AuthenticatedEspaceDossiersNouveauRouteImport } from './routes/_authenticated.espace.dossiers.nouveau'
+import { Route as AuthenticatedEspaceRecueilSanteDossierIdRouteImport } from './routes/_authenticated/espace.recueil-sante.$dossierId'
+import { Route as AuthenticatedEspaceSinistresIdRouteImport } from './routes/_authenticated/espace.sinistres.$id'
+import { Route as ApiPublicWebhooksBrevoRouteImport } from './routes/api/public/webhooks/brevo'
+import { Route as ApiPublicWebhooksCrmRouteImport } from './routes/api/public/webhooks/crm'
+import { Route as ApiPublicWebhooksNeolianeRouteImport } from './routes/api/public/webhooks/neoliane'
+import { Route as ApiPublicWebhooksWebinaireFunnelRouteImport } from './routes/api/public/webhooks/webinaire-funnel'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FamillesModernesProfilRoute = FamillesModernesProfilRouteImport.update({
-  id: '/familles-modernes-profil',
-  path: '/familles-modernes-profil',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DevenirPrescripteurRoute = DevenirPrescripteurRouteImport.update({
-  id: '/devenir-prescripteur',
-  path: '/devenir-prescripteur',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AssuranceVieProfilRoute = AssuranceVieProfilRouteImport.update({
-  id: '/assurance-vie-profil',
-  path: '/assurance-vie-profil',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssuranceVieInformationRoute = AssuranceVieInformationRouteImport.update({
@@ -127,23 +181,29 @@ const AssuranceVieInformationRoute = AssuranceVieInformationRouteImport.update({
   path: '/assurance-vie-information',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const AssuranceVieProfilRoute = AssuranceVieProfilRouteImport.update({
+  id: '/assurance-vie-profil',
+  path: '/assurance-vie-profil',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EspaceConfidentialiteRoute = EspaceConfidentialiteRouteImport.update({
-  id: '/espace/confidentialite',
-  path: '/espace/confidentialite',
+const DevenirPrescripteurRoute = DevenirPrescripteurRouteImport.update({
+  id: '/devenir-prescripteur',
+  path: '/devenir-prescripteur',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EspaceCguRoute = EspaceCguRouteImport.update({
-  id: '/espace/cgu',
-  path: '/espace/cgu',
+const FamillesModernesProfilRoute = FamillesModernesProfilRouteImport.update({
+  id: '/familles-modernes-profil',
+  path: '/familles-modernes-profil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedEspaceRoute = AuthenticatedEspaceRouteImport.update({
@@ -151,12 +211,27 @@ const AuthenticatedEspaceRoute = AuthenticatedEspaceRouteImport.update({
   path: '/espace',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const EspaceCguRoute = EspaceCguRouteImport.update({
+  id: '/espace/cgu',
+  path: '/espace/cgu',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EspaceConfidentialiteRoute = EspaceConfidentialiteRouteImport.update({
+  id: '/espace/confidentialite',
+  path: '/espace/confidentialite',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedEspaceIndexRoute =
   AuthenticatedEspaceIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedEspaceRoute,
   } as any)
+const AuthenticatedEspaceAuditLogsRoute =
+  AuthenticatedEspaceAuditLogsRouteImport.update({
+    id: '/audit-logs',
+    path: '/audit-logs',
+    getParentRoute: () => AuthenticatedEspaceRoute,
 const ApiPublicWebinaireSequencesRoute =
   ApiPublicWebinaireSequencesRouteImport.update({
     id: '/api/public/webinaire-sequences',
@@ -184,24 +259,28 @@ const ApiPublicReprendreMailsIgnoresRoute =
     path: '/api/public/reprendre-mails-ignores',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicReprendreMailsAValiderRoute =
-  ApiPublicReprendreMailsAValiderRouteImport.update({
-    id: '/api/public/reprendre-mails-a-valider',
-    path: '/api/public/reprendre-mails-a-valider',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedEspaceBibliothequeCgRoute =
+  AuthenticatedEspaceBibliothequeCgRouteImport.update({
+    id: '/bibliotheque-cg',
+    path: '/bibliotheque-cg',
+    getParentRoute: () => AuthenticatedEspaceRoute,
   } as any)
-const ApiPublicRelanceSouscriptionRoute =
-  ApiPublicRelanceSouscriptionRouteImport.update({
-    id: '/api/public/relance-souscription',
-    path: '/api/public/relance-souscription',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedEspaceCaPaliersRoute =
+  AuthenticatedEspaceCaPaliersRouteImport.update({
+    id: '/ca-paliers',
+    path: '/ca-paliers',
+    getParentRoute: () => AuthenticatedEspaceRoute,
   } as any)
-const ApiPublicRelanceSinistresRoute =
-  ApiPublicRelanceSinistresRouteImport.update({
-    id: '/api/public/relance-sinistres',
-    path: '/api/public/relance-sinistres',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedEspaceCockpitCaRoute =
+  AuthenticatedEspaceCockpitCaRouteImport.update({
+    id: '/cockpit-ca',
+    path: '/cockpit-ca',
+    getParentRoute: () => AuthenticatedEspaceRoute,
   } as any)
+const AuthenticatedEspaceCommissionsRoute =
+  AuthenticatedEspaceCommissionsRouteImport.update({
+    id: '/commissions',
+    path: '/commissions',
 const ApiPublicRelancePiecesRoute = ApiPublicRelancePiecesRouteImport.update({
   id: '/api/public/relance-pieces',
   path: '/api/public/relance-pieces',
@@ -327,130 +406,10 @@ const AuthenticatedEspaceUtilisateursRoute =
     path: '/utilisateurs',
     getParentRoute: () => AuthenticatedEspaceRoute,
   } as any)
-const AuthenticatedEspaceTachesRoute =
-  AuthenticatedEspaceTachesRouteImport.update({
-    id: '/taches',
-    path: '/taches',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspaceSinistresRoute =
-  AuthenticatedEspaceSinistresRouteImport.update({
-    id: '/sinistres',
-    path: '/sinistres',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspaceSignerSouscriptionRoute =
-  AuthenticatedEspaceSignerSouscriptionRouteImport.update({
-    id: '/signer-souscription',
-    path: '/signer-souscription',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspaceSignerLettreMissionRoute =
-  AuthenticatedEspaceSignerLettreMissionRouteImport.update({
-    id: '/signer-lettre-mission',
-    path: '/signer-lettre-mission',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspaceSignerDevoirConseilRoute =
-  AuthenticatedEspaceSignerDevoirConseilRouteImport.update({
-    id: '/signer-devoir-conseil',
-    path: '/signer-devoir-conseil',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspaceSignerDerRoute =
-  AuthenticatedEspaceSignerDerRouteImport.update({
-    id: '/signer-der',
-    path: '/signer-der',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspaceSignerContratMandataireRoute =
-  AuthenticatedEspaceSignerContratMandataireRouteImport.update({
-    id: '/signer-contrat-mandataire',
-    path: '/signer-contrat-mandataire',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspaceRelationClientRoute =
-  AuthenticatedEspaceRelationClientRouteImport.update({
-    id: '/relation-client',
-    path: '/relation-client',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspacePrescripteursRoute =
-  AuthenticatedEspacePrescripteursRouteImport.update({
-    id: '/prescripteurs',
-    path: '/prescripteurs',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspacePrequalificationRoute =
-  AuthenticatedEspacePrequalificationRouteImport.update({
-    id: '/prequalification',
-    path: '/prequalification',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspacePilotageRoute =
-  AuthenticatedEspacePilotageRouteImport.update({
-    id: '/pilotage',
-    path: '/pilotage',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspaceParametresRoute =
-  AuthenticatedEspaceParametresRouteImport.update({
-    id: '/parametres',
-    path: '/parametres',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspaceNeolianeRoute =
-  AuthenticatedEspaceNeolianeRouteImport.update({
-    id: '/neoliane',
-    path: '/neoliane',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspaceMonEspaceMandataireRoute =
-  AuthenticatedEspaceMonEspaceMandataireRouteImport.update({
-    id: '/mon-espace-mandataire',
-    path: '/mon-espace-mandataire',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspaceMonEspaceRoute =
-  AuthenticatedEspaceMonEspaceRouteImport.update({
-    id: '/mon-espace',
-    path: '/mon-espace',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspaceMesRecommandationsRoute =
-  AuthenticatedEspaceMesRecommandationsRouteImport.update({
-    id: '/mes-recommandations',
-    path: '/mes-recommandations',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspaceGrillesGarantiesRoute =
-  AuthenticatedEspaceGrillesGarantiesRouteImport.update({
-    id: '/grilles-garanties',
-    path: '/grilles-garanties',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspaceGmailControleRoute =
-  AuthenticatedEspaceGmailControleRouteImport.update({
-    id: '/gmail-controle',
-    path: '/gmail-controle',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspaceFournisseursRoute =
-  AuthenticatedEspaceFournisseursRouteImport.update({
-    id: '/fournisseurs',
-    path: '/fournisseurs',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspaceDiagnosticRoute =
-  AuthenticatedEspaceDiagnosticRouteImport.update({
-    id: '/diagnostic',
-    path: '/diagnostic',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspaceDerModeleRoute =
-  AuthenticatedEspaceDerModeleRouteImport.update({
-    id: '/der-modele',
-    path: '/der-modele',
+const AuthenticatedEspaceComptabiliteRoute =
+  AuthenticatedEspaceComptabiliteRouteImport.update({
+    id: '/comptabilite',
+    path: '/comptabilite',
     getParentRoute: () => AuthenticatedEspaceRoute,
   } as any)
 const AuthenticatedEspaceConformiteRoute =
@@ -459,18 +418,142 @@ const AuthenticatedEspaceConformiteRoute =
     path: '/conformite',
     getParentRoute: () => AuthenticatedEspaceRoute,
   } as any)
-const AuthenticatedEspaceComptabiliteRoute =
-  AuthenticatedEspaceComptabiliteRouteImport.update({
-    id: '/comptabilite',
-    path: '/comptabilite',
+const AuthenticatedEspaceDerModeleRoute =
+  AuthenticatedEspaceDerModeleRouteImport.update({
+    id: '/der-modele',
+    path: '/der-modele',
     getParentRoute: () => AuthenticatedEspaceRoute,
   } as any)
-const AuthenticatedEspaceCommissionsRoute =
-  AuthenticatedEspaceCommissionsRouteImport.update({
-    id: '/commissions',
-    path: '/commissions',
+const AuthenticatedEspaceDiagnosticRoute =
+  AuthenticatedEspaceDiagnosticRouteImport.update({
+    id: '/diagnostic',
+    path: '/diagnostic',
     getParentRoute: () => AuthenticatedEspaceRoute,
   } as any)
+const AuthenticatedEspaceFournisseursRoute =
+  AuthenticatedEspaceFournisseursRouteImport.update({
+    id: '/fournisseurs',
+    path: '/fournisseurs',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceGmailControleRoute =
+  AuthenticatedEspaceGmailControleRouteImport.update({
+    id: '/gmail-controle',
+    path: '/gmail-controle',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceGrillesGarantiesRoute =
+  AuthenticatedEspaceGrillesGarantiesRouteImport.update({
+    id: '/grilles-garanties',
+    path: '/grilles-garanties',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceMesRecommandationsRoute =
+  AuthenticatedEspaceMesRecommandationsRouteImport.update({
+    id: '/mes-recommandations',
+    path: '/mes-recommandations',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceMonEspaceRoute =
+  AuthenticatedEspaceMonEspaceRouteImport.update({
+    id: '/mon-espace',
+    path: '/mon-espace',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceMonEspaceMandataireRoute =
+  AuthenticatedEspaceMonEspaceMandataireRouteImport.update({
+    id: '/mon-espace-mandataire',
+    path: '/mon-espace-mandataire',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceNeolianeRoute =
+  AuthenticatedEspaceNeolianeRouteImport.update({
+    id: '/neoliane',
+    path: '/neoliane',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceParametresRoute =
+  AuthenticatedEspaceParametresRouteImport.update({
+    id: '/parametres',
+    path: '/parametres',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspacePilotageRoute =
+  AuthenticatedEspacePilotageRouteImport.update({
+    id: '/pilotage',
+    path: '/pilotage',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspacePrequalificationRoute =
+  AuthenticatedEspacePrequalificationRouteImport.update({
+    id: '/prequalification',
+    path: '/prequalification',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspacePrescripteursRoute =
+  AuthenticatedEspacePrescripteursRouteImport.update({
+    id: '/prescripteurs',
+    path: '/prescripteurs',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceRelationClientRoute =
+  AuthenticatedEspaceRelationClientRouteImport.update({
+    id: '/relation-client',
+    path: '/relation-client',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceSignerContratMandataireRoute =
+  AuthenticatedEspaceSignerContratMandataireRouteImport.update({
+    id: '/signer-contrat-mandataire',
+    path: '/signer-contrat-mandataire',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceSignerDerRoute =
+  AuthenticatedEspaceSignerDerRouteImport.update({
+    id: '/signer-der',
+    path: '/signer-der',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceSignerDevoirConseilRoute =
+  AuthenticatedEspaceSignerDevoirConseilRouteImport.update({
+    id: '/signer-devoir-conseil',
+    path: '/signer-devoir-conseil',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceSignerLettreMissionRoute =
+  AuthenticatedEspaceSignerLettreMissionRouteImport.update({
+    id: '/signer-lettre-mission',
+    path: '/signer-lettre-mission',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceSignerSouscriptionRoute =
+  AuthenticatedEspaceSignerSouscriptionRouteImport.update({
+    id: '/signer-souscription',
+    path: '/signer-souscription',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceSinistresRoute =
+  AuthenticatedEspaceSinistresRouteImport.update({
+    id: '/sinistres',
+    path: '/sinistres',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceTachesRoute =
+  AuthenticatedEspaceTachesRouteImport.update({
+    id: '/taches',
+    path: '/taches',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceUtilisateursRoute =
+  AuthenticatedEspaceUtilisateursRouteImport.update({
+    id: '/utilisateurs',
+    path: '/utilisateurs',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceWebinairesRoute =
+  AuthenticatedEspaceWebinairesRouteImport.update({
+    id: '/webinaires',
+    path: '/webinaires',
 const AuthenticatedEspaceCockpitCaRoute =
   AuthenticatedEspaceCockpitCaRouteImport.update({
     id: '/cockpit-ca',
@@ -489,52 +572,89 @@ const AuthenticatedEspaceBibliothequeCgRoute =
     path: '/bibliotheque-cg',
     getParentRoute: () => AuthenticatedEspaceRoute,
   } as any)
-const AuthenticatedEspaceAuditLogsRoute =
-  AuthenticatedEspaceAuditLogsRouteImport.update({
-    id: '/audit-logs',
-    path: '/audit-logs',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspaceDossiersIndexRoute =
-  AuthenticatedEspaceDossiersIndexRouteImport.update({
-    id: '/dossiers/',
-    path: '/dossiers/',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspaceContratsIndexRoute =
-  AuthenticatedEspaceContratsIndexRouteImport.update({
-    id: '/contrats/',
-    path: '/contrats/',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspaceCompagniesIndexRoute =
-  AuthenticatedEspaceCompagniesIndexRouteImport.update({
-    id: '/compagnies/',
-    path: '/compagnies/',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const AuthenticatedEspaceClientsIndexRoute =
-  AuthenticatedEspaceClientsIndexRouteImport.update({
-    id: '/clients/',
-    path: '/clients/',
-    getParentRoute: () => AuthenticatedEspaceRoute,
-  } as any)
-const LovableEmailTransactionalPreviewRoute =
-  LovableEmailTransactionalPreviewRouteImport.update({
-    id: '/lovable/email/transactional/preview',
-    path: '/lovable/email/transactional/preview',
+const ApiPublicAnalyseRecueilRoute = ApiPublicAnalyseRecueilRouteImport.update({
+  id: '/api/public/analyse-recueil',
+  path: '/api/public/analyse-recueil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicBootstrapAdminRoute = ApiPublicBootstrapAdminRouteImport.update({
+  id: '/api/public/bootstrap-admin',
+  path: '/api/public/bootstrap-admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicBrevoListesSyncRoute =
+  ApiPublicBrevoListesSyncRouteImport.update({
+    id: '/api/public/brevo-listes-sync',
+    path: '/api/public/brevo-listes-sync',
     getParentRoute: () => rootRouteImport,
   } as any)
-const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
-  id: '/lovable/email/auth/webhook',
-  path: '/lovable/email/auth/webhook',
+const ApiPublicCartographieRisquesRevisionRoute =
+  ApiPublicCartographieRisquesRevisionRouteImport.update({
+    id: '/api/public/cartographie-risques-revision',
+    path: '/api/public/cartographie-risques-revision',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicControleInterneRappelRoute =
+  ApiPublicControleInterneRappelRouteImport.update({
+    id: '/api/public/controle-interne-rappel',
+    path: '/api/public/controle-interne-rappel',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCorrigerLabelsPartenairesRoute =
+  ApiPublicCorrigerLabelsPartenairesRouteImport.update({
+    id: '/api/public/corriger-labels-partenaires',
+    path: '/api/public/corriger-labels-partenaires',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicDdaPdfRepriseRoute = ApiPublicDdaPdfRepriseRouteImport.update({
+  id: '/api/public/dda-pdf-reprise',
+  path: '/api/public/dda-pdf-reprise',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
-  id: '/lovable/email/auth/preview',
-  path: '/lovable/email/auth/preview',
+const ApiPublicDevoirsConseilEnvoisRoute =
+  ApiPublicDevoirsConseilEnvoisRouteImport.update({
+    id: '/api/public/devoirs-conseil-envois',
+    path: '/api/public/devoirs-conseil-envois',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicDocumentsAttendusRoute =
+  ApiPublicDocumentsAttendusRouteImport.update({
+    id: '/api/public/documents-attendus',
+    path: '/api/public/documents-attendus',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicDossiersBloquesRoute =
+  ApiPublicDossiersBloquesRouteImport.update({
+    id: '/api/public/dossiers-bloques',
+    path: '/api/public/dossiers-bloques',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicEnvoisPlanifiesRoute =
+  ApiPublicEnvoisPlanifiesRouteImport.update({
+    id: '/api/public/envois-planifies',
+    path: '/api/public/envois-planifies',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicFormationsRappelsRoute =
+  ApiPublicFormationsRappelsRouteImport.update({
+    id: '/api/public/formations-rappels',
+    path: '/api/public/formations-rappels',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicGmailInboxRoute = ApiPublicGmailInboxRouteImport.update({
+  id: '/api/public/gmail-inbox',
+  path: '/api/public/gmail-inbox',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicLeadsRoute = ApiPublicLeadsRouteImport.update({
+  id: '/api/public/leads',
+  path: '/api/public/leads',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicLettresMissionEnvoisRoute =
+  ApiPublicLettresMissionEnvoisRouteImport.update({
+    id: '/api/public/lettres-mission-envois',
+    path: '/api/public/lettres-mission-envois',
 const ApiPublicWebhooksWebinaireFunnelRoute =
   ApiPublicWebhooksWebinaireFunnelRouteImport.update({
     id: '/api/public/webhooks/webinaire-funnel',
@@ -547,11 +667,39 @@ const ApiPublicWebhooksNeolianeRoute =
     path: '/api/public/webhooks/neoliane',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicWebhooksCrmRoute = ApiPublicWebhooksCrmRouteImport.update({
-  id: '/api/public/webhooks/crm',
-  path: '/api/public/webhooks/crm',
+const ApiPublicRappelsExpirationRoute =
+  ApiPublicRappelsExpirationRouteImport.update({
+    id: '/api/public/rappels-expiration',
+    path: '/api/public/rappels-expiration',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicReclamationsAccuseReceptionRoute =
+  ApiPublicReclamationsAccuseReceptionRouteImport.update({
+    id: '/api/public/reclamations-accuse-reception',
+    path: '/api/public/reclamations-accuse-reception',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicRecueilEmprunteurReconstitutionRoute =
+  ApiPublicRecueilEmprunteurReconstitutionRouteImport.update({
+    id: '/api/public/recueil-emprunteur-reconstitution',
+    path: '/api/public/recueil-emprunteur-reconstitution',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicReglesAgentRoute = ApiPublicReglesAgentRouteImport.update({
+  id: '/api/public/regles-agent',
+  path: '/api/public/regles-agent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRelancePiecesRoute = ApiPublicRelancePiecesRouteImport.update({
+  id: '/api/public/relance-pieces',
+  path: '/api/public/relance-pieces',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicRelanceSinistresRoute =
+  ApiPublicRelanceSinistresRouteImport.update({
+    id: '/api/public/relance-sinistres',
+    path: '/api/public/relance-sinistres',
+    getParentRoute: () => rootRouteImport,
 const ApiPublicWebhooksBrevoRoute = ApiPublicWebhooksBrevoRouteImport.update({
   id: '/api/public/webhooks/brevo',
   path: '/api/public/webhooks/brevo',
@@ -563,22 +711,61 @@ const AuthenticatedEspaceSinistresIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedEspaceSinistresRoute,
   } as any)
-const AuthenticatedEspaceRecueilSanteDossierIdRoute =
-  AuthenticatedEspaceRecueilSanteDossierIdRouteImport.update({
-    id: '/recueil-sante/$dossierId',
-    path: '/recueil-sante/$dossierId',
+const ApiPublicRelanceSouscriptionRoute =
+  ApiPublicRelanceSouscriptionRouteImport.update({
+    id: '/api/public/relance-souscription',
+    path: '/api/public/relance-souscription',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicReprendreMailsAValiderRoute =
+  ApiPublicReprendreMailsAValiderRouteImport.update({
+    id: '/api/public/reprendre-mails-a-valider',
+    path: '/api/public/reprendre-mails-a-valider',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicReprendreMailsIgnoresRoute =
+  ApiPublicReprendreMailsIgnoresRouteImport.update({
+    id: '/api/public/reprendre-mails-ignores',
+    path: '/api/public/reprendre-mails-ignores',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicRevueLcbftRoute = ApiPublicRevueLcbftRouteImport.update({
+  id: '/api/public/revue-lcbft',
+  path: '/api/public/revue-lcbft',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicScanEmailsRoute = ApiPublicScanEmailsRouteImport.update({
+  id: '/api/public/scan-emails',
+  path: '/api/public/scan-emails',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSuiviContratsRoute = ApiPublicSuiviContratsRouteImport.update({
+  id: '/api/public/suivi-contrats',
+  path: '/api/public/suivi-contrats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicWebinaireSequencesRoute =
+  ApiPublicWebinaireSequencesRouteImport.update({
+    id: '/api/public/webinaire-sequences',
+    path: '/api/public/webinaire-sequences',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedEspaceClientsIndexRoute =
+  AuthenticatedEspaceClientsIndexRouteImport.update({
+    id: '/clients/',
+    path: '/clients/',
     getParentRoute: () => AuthenticatedEspaceRoute,
   } as any)
-const AuthenticatedEspaceDossiersIdRoute =
-  AuthenticatedEspaceDossiersIdRouteImport.update({
-    id: '/dossiers/$id',
-    path: '/dossiers/$id',
+const AuthenticatedEspaceClientsIdRoute =
+  AuthenticatedEspaceClientsIdRouteImport.update({
+    id: '/clients/$id',
+    path: '/clients/$id',
     getParentRoute: () => AuthenticatedEspaceRoute,
   } as any)
-const AuthenticatedEspaceContratsIdRoute =
-  AuthenticatedEspaceContratsIdRouteImport.update({
-    id: '/contrats/$id',
-    path: '/contrats/$id',
+const AuthenticatedEspaceCompagniesIndexRoute =
+  AuthenticatedEspaceCompagniesIndexRouteImport.update({
+    id: '/compagnies/',
+    path: '/compagnies/',
     getParentRoute: () => AuthenticatedEspaceRoute,
   } as any)
 const AuthenticatedEspaceCompagniesIdRoute =
@@ -587,11 +774,85 @@ const AuthenticatedEspaceCompagniesIdRoute =
     path: '/compagnies/$id',
     getParentRoute: () => AuthenticatedEspaceRoute,
   } as any)
-const AuthenticatedEspaceClientsIdRoute =
-  AuthenticatedEspaceClientsIdRouteImport.update({
-    id: '/clients/$id',
-    path: '/clients/$id',
+const AuthenticatedEspaceContratsIndexRoute =
+  AuthenticatedEspaceContratsIndexRouteImport.update({
+    id: '/contrats/',
+    path: '/contrats/',
     getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceContratsIdRoute =
+  AuthenticatedEspaceContratsIdRouteImport.update({
+    id: '/contrats/$id',
+    path: '/contrats/$id',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceDossiersIndexRoute =
+  AuthenticatedEspaceDossiersIndexRouteImport.update({
+    id: '/dossiers/',
+    path: '/dossiers/',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceDossiersIdRoute =
+  AuthenticatedEspaceDossiersIdRouteImport.update({
+    id: '/dossiers/$id',
+    path: '/dossiers/$id',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceDossiersNouveauRoute =
+  AuthenticatedEspaceDossiersNouveauRouteImport.update({
+    id: '/dossiers/nouveau',
+    path: '/dossiers/nouveau',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceRecueilSanteDossierIdRoute =
+  AuthenticatedEspaceRecueilSanteDossierIdRouteImport.update({
+    id: '/recueil-sante/$dossierId',
+    path: '/recueil-sante/$dossierId',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceSinistresIdRoute =
+  AuthenticatedEspaceSinistresIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedEspaceSinistresRoute,
+  } as any)
+const ApiPublicWebhooksBrevoRoute = ApiPublicWebhooksBrevoRouteImport.update({
+  id: '/api/public/webhooks/brevo',
+  path: '/api/public/webhooks/brevo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicWebhooksCrmRoute = ApiPublicWebhooksCrmRouteImport.update({
+  id: '/api/public/webhooks/crm',
+  path: '/api/public/webhooks/crm',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicWebhooksNeolianeRoute =
+  ApiPublicWebhooksNeolianeRouteImport.update({
+    id: '/api/public/webhooks/neoliane',
+    path: '/api/public/webhooks/neoliane',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicWebhooksWebinaireFunnelRoute =
+  ApiPublicWebhooksWebinaireFunnelRouteImport.update({
+    id: '/api/public/webhooks/webinaire-funnel',
+    path: '/api/public/webhooks/webinaire-funnel',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -668,6 +929,7 @@ export interface FileRoutesByFullPath {
   '/espace/compagnies/$id': typeof AuthenticatedEspaceCompagniesIdRoute
   '/espace/contrats/$id': typeof AuthenticatedEspaceContratsIdRoute
   '/espace/dossiers/$id': typeof AuthenticatedEspaceDossiersIdRoute
+  '/espace/dossiers/nouveau': typeof AuthenticatedEspaceDossiersNouveauRoute
   '/espace/recueil-sante/$dossierId': typeof AuthenticatedEspaceRecueilSanteDossierIdRoute
   '/espace/sinistres/$id': typeof AuthenticatedEspaceSinistresIdRoute
   '/api/public/webhooks/brevo': typeof ApiPublicWebhooksBrevoRoute
@@ -755,6 +1017,7 @@ export interface FileRoutesByTo {
   '/espace/compagnies/$id': typeof AuthenticatedEspaceCompagniesIdRoute
   '/espace/contrats/$id': typeof AuthenticatedEspaceContratsIdRoute
   '/espace/dossiers/$id': typeof AuthenticatedEspaceDossiersIdRoute
+  '/espace/dossiers/nouveau': typeof AuthenticatedEspaceDossiersNouveauRoute
   '/espace/recueil-sante/$dossierId': typeof AuthenticatedEspaceRecueilSanteDossierIdRoute
   '/espace/sinistres/$id': typeof AuthenticatedEspaceSinistresIdRoute
   '/api/public/webhooks/brevo': typeof ApiPublicWebhooksBrevoRoute
@@ -845,6 +1108,7 @@ export interface FileRoutesById {
   '/_authenticated/espace/compagnies/$id': typeof AuthenticatedEspaceCompagniesIdRoute
   '/_authenticated/espace/contrats/$id': typeof AuthenticatedEspaceContratsIdRoute
   '/_authenticated/espace/dossiers/$id': typeof AuthenticatedEspaceDossiersIdRoute
+  '/_authenticated/espace/dossiers/nouveau': typeof AuthenticatedEspaceDossiersNouveauRoute
   '/_authenticated/espace/recueil-sante/$dossierId': typeof AuthenticatedEspaceRecueilSanteDossierIdRoute
   '/_authenticated/espace/sinistres/$id': typeof AuthenticatedEspaceSinistresIdRoute
   '/api/public/webhooks/brevo': typeof ApiPublicWebhooksBrevoRoute
@@ -935,6 +1199,7 @@ export interface FileRouteTypes {
     | '/espace/compagnies/$id'
     | '/espace/contrats/$id'
     | '/espace/dossiers/$id'
+    | '/espace/dossiers/nouveau'
     | '/espace/recueil-sante/$dossierId'
     | '/espace/sinistres/$id'
     | '/api/public/webhooks/brevo'
@@ -1022,6 +1287,7 @@ export interface FileRouteTypes {
     | '/espace/compagnies/$id'
     | '/espace/contrats/$id'
     | '/espace/dossiers/$id'
+    | '/espace/dossiers/nouveau'
     | '/espace/recueil-sante/$dossierId'
     | '/espace/sinistres/$id'
     | '/api/public/webhooks/brevo'
@@ -1111,6 +1377,7 @@ export interface FileRouteTypes {
     | '/_authenticated/espace/compagnies/$id'
     | '/_authenticated/espace/contrats/$id'
     | '/_authenticated/espace/dossiers/$id'
+    | '/_authenticated/espace/dossiers/nouveau'
     | '/_authenticated/espace/recueil-sante/$dossierId'
     | '/_authenticated/espace/sinistres/$id'
     | '/api/public/webhooks/brevo'
@@ -1176,46 +1443,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/familles-modernes-profil': {
-      id: '/familles-modernes-profil'
-      path: '/familles-modernes-profil'
-      fullPath: '/familles-modernes-profil'
-      preLoaderRoute: typeof FamillesModernesProfilRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/devenir-prescripteur': {
-      id: '/devenir-prescripteur'
-      path: '/devenir-prescripteur'
-      fullPath: '/devenir-prescripteur'
-      preLoaderRoute: typeof DevenirPrescripteurRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/assurance-vie-profil': {
-      id: '/assurance-vie-profil'
-      path: '/assurance-vie-profil'
-      fullPath: '/assurance-vie-profil'
-      preLoaderRoute: typeof AssuranceVieProfilRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/assurance-vie-information': {
-      id: '/assurance-vie-information'
-      path: '/assurance-vie-information'
-      fullPath: '/assurance-vie-information'
-      preLoaderRoute: typeof AssuranceVieInformationRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -1225,25 +1457,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/assurance-vie-information': {
+      id: '/assurance-vie-information'
+      path: '/assurance-vie-information'
+      fullPath: '/assurance-vie-information'
+      preLoaderRoute: typeof AssuranceVieInformationRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/espace/confidentialite': {
-      id: '/espace/confidentialite'
-      path: '/espace/confidentialite'
-      fullPath: '/espace/confidentialite'
-      preLoaderRoute: typeof EspaceConfidentialiteRouteImport
+    '/assurance-vie-profil': {
+      id: '/assurance-vie-profil'
+      path: '/assurance-vie-profil'
+      fullPath: '/assurance-vie-profil'
+      preLoaderRoute: typeof AssuranceVieProfilRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/espace/cgu': {
-      id: '/espace/cgu'
-      path: '/espace/cgu'
-      fullPath: '/espace/cgu'
-      preLoaderRoute: typeof EspaceCguRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/devenir-prescripteur': {
+      id: '/devenir-prescripteur'
+      path: '/devenir-prescripteur'
+      fullPath: '/devenir-prescripteur'
+      preLoaderRoute: typeof DevenirPrescripteurRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/familles-modernes-profil': {
+      id: '/familles-modernes-profil'
+      path: '/familles-modernes-profil'
+      fullPath: '/familles-modernes-profil'
+      preLoaderRoute: typeof FamillesModernesProfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/espace': {
@@ -1253,6 +1506,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEspaceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/espace/cgu': {
+      id: '/espace/cgu'
+      path: '/espace/cgu'
+      fullPath: '/espace/cgu'
+      preLoaderRoute: typeof EspaceCguRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/espace/confidentialite': {
+      id: '/espace/confidentialite'
+      path: '/espace/confidentialite'
+      fullPath: '/espace/confidentialite'
+      preLoaderRoute: typeof EspaceConfidentialiteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/espace/': {
       id: '/_authenticated/espace/'
       path: '/'
@@ -1260,6 +1527,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEspaceIndexRouteImport
       parentRoute: typeof AuthenticatedEspaceRoute
     }
+    '/_authenticated/espace/audit-logs': {
+      id: '/_authenticated/espace/audit-logs'
+      path: '/audit-logs'
+      fullPath: '/espace/audit-logs'
+      preLoaderRoute: typeof AuthenticatedEspaceAuditLogsRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     '/api/public/webinaire-sequences': {
       id: '/api/public/webinaire-sequences'
       path: '/api/public/webinaire-sequences'
@@ -1274,172 +1547,214 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSuiviContratsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/scan-emails': {
-      id: '/api/public/scan-emails'
-      path: '/api/public/scan-emails'
-      fullPath: '/api/public/scan-emails'
-      preLoaderRoute: typeof ApiPublicScanEmailsRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/bibliotheque-cg': {
+      id: '/_authenticated/espace/bibliotheque-cg'
+      path: '/bibliotheque-cg'
+      fullPath: '/espace/bibliotheque-cg'
+      preLoaderRoute: typeof AuthenticatedEspaceBibliothequeCgRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/revue-lcbft': {
-      id: '/api/public/revue-lcbft'
-      path: '/api/public/revue-lcbft'
-      fullPath: '/api/public/revue-lcbft'
-      preLoaderRoute: typeof ApiPublicRevueLcbftRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/ca-paliers': {
+      id: '/_authenticated/espace/ca-paliers'
+      path: '/ca-paliers'
+      fullPath: '/espace/ca-paliers'
+      preLoaderRoute: typeof AuthenticatedEspaceCaPaliersRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/reprendre-mails-ignores': {
-      id: '/api/public/reprendre-mails-ignores'
-      path: '/api/public/reprendre-mails-ignores'
-      fullPath: '/api/public/reprendre-mails-ignores'
-      preLoaderRoute: typeof ApiPublicReprendreMailsIgnoresRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/cockpit-ca': {
+      id: '/_authenticated/espace/cockpit-ca'
+      path: '/cockpit-ca'
+      fullPath: '/espace/cockpit-ca'
+      preLoaderRoute: typeof AuthenticatedEspaceCockpitCaRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/reprendre-mails-a-valider': {
-      id: '/api/public/reprendre-mails-a-valider'
-      path: '/api/public/reprendre-mails-a-valider'
-      fullPath: '/api/public/reprendre-mails-a-valider'
-      preLoaderRoute: typeof ApiPublicReprendreMailsAValiderRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/commissions': {
+      id: '/_authenticated/espace/commissions'
+      path: '/commissions'
+      fullPath: '/espace/commissions'
+      preLoaderRoute: typeof AuthenticatedEspaceCommissionsRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/relance-souscription': {
-      id: '/api/public/relance-souscription'
-      path: '/api/public/relance-souscription'
-      fullPath: '/api/public/relance-souscription'
-      preLoaderRoute: typeof ApiPublicRelanceSouscriptionRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/comptabilite': {
+      id: '/_authenticated/espace/comptabilite'
+      path: '/comptabilite'
+      fullPath: '/espace/comptabilite'
+      preLoaderRoute: typeof AuthenticatedEspaceComptabiliteRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/relance-sinistres': {
-      id: '/api/public/relance-sinistres'
-      path: '/api/public/relance-sinistres'
-      fullPath: '/api/public/relance-sinistres'
-      preLoaderRoute: typeof ApiPublicRelanceSinistresRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/conformite': {
+      id: '/_authenticated/espace/conformite'
+      path: '/conformite'
+      fullPath: '/espace/conformite'
+      preLoaderRoute: typeof AuthenticatedEspaceConformiteRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/relance-pieces': {
-      id: '/api/public/relance-pieces'
-      path: '/api/public/relance-pieces'
-      fullPath: '/api/public/relance-pieces'
-      preLoaderRoute: typeof ApiPublicRelancePiecesRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/der-modele': {
+      id: '/_authenticated/espace/der-modele'
+      path: '/der-modele'
+      fullPath: '/espace/der-modele'
+      preLoaderRoute: typeof AuthenticatedEspaceDerModeleRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/regles-agent': {
-      id: '/api/public/regles-agent'
-      path: '/api/public/regles-agent'
-      fullPath: '/api/public/regles-agent'
-      preLoaderRoute: typeof ApiPublicReglesAgentRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/diagnostic': {
+      id: '/_authenticated/espace/diagnostic'
+      path: '/diagnostic'
+      fullPath: '/espace/diagnostic'
+      preLoaderRoute: typeof AuthenticatedEspaceDiagnosticRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/recueil-emprunteur-reconstitution': {
-      id: '/api/public/recueil-emprunteur-reconstitution'
-      path: '/api/public/recueil-emprunteur-reconstitution'
-      fullPath: '/api/public/recueil-emprunteur-reconstitution'
-      preLoaderRoute: typeof ApiPublicRecueilEmprunteurReconstitutionRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/fournisseurs': {
+      id: '/_authenticated/espace/fournisseurs'
+      path: '/fournisseurs'
+      fullPath: '/espace/fournisseurs'
+      preLoaderRoute: typeof AuthenticatedEspaceFournisseursRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/reclamations-accuse-reception': {
-      id: '/api/public/reclamations-accuse-reception'
-      path: '/api/public/reclamations-accuse-reception'
-      fullPath: '/api/public/reclamations-accuse-reception'
-      preLoaderRoute: typeof ApiPublicReclamationsAccuseReceptionRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/gmail-controle': {
+      id: '/_authenticated/espace/gmail-controle'
+      path: '/gmail-controle'
+      fullPath: '/espace/gmail-controle'
+      preLoaderRoute: typeof AuthenticatedEspaceGmailControleRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/rappels-expiration': {
-      id: '/api/public/rappels-expiration'
-      path: '/api/public/rappels-expiration'
-      fullPath: '/api/public/rappels-expiration'
-      preLoaderRoute: typeof ApiPublicRappelsExpirationRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/grilles-garanties': {
+      id: '/_authenticated/espace/grilles-garanties'
+      path: '/grilles-garanties'
+      fullPath: '/espace/grilles-garanties'
+      preLoaderRoute: typeof AuthenticatedEspaceGrillesGarantiesRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/lettres-mission-envois': {
-      id: '/api/public/lettres-mission-envois'
-      path: '/api/public/lettres-mission-envois'
-      fullPath: '/api/public/lettres-mission-envois'
-      preLoaderRoute: typeof ApiPublicLettresMissionEnvoisRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/mes-recommandations': {
+      id: '/_authenticated/espace/mes-recommandations'
+      path: '/mes-recommandations'
+      fullPath: '/espace/mes-recommandations'
+      preLoaderRoute: typeof AuthenticatedEspaceMesRecommandationsRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/leads': {
-      id: '/api/public/leads'
-      path: '/api/public/leads'
-      fullPath: '/api/public/leads'
-      preLoaderRoute: typeof ApiPublicLeadsRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/mon-espace': {
+      id: '/_authenticated/espace/mon-espace'
+      path: '/mon-espace'
+      fullPath: '/espace/mon-espace'
+      preLoaderRoute: typeof AuthenticatedEspaceMonEspaceRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/gmail-inbox': {
-      id: '/api/public/gmail-inbox'
-      path: '/api/public/gmail-inbox'
-      fullPath: '/api/public/gmail-inbox'
-      preLoaderRoute: typeof ApiPublicGmailInboxRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/mon-espace-mandataire': {
+      id: '/_authenticated/espace/mon-espace-mandataire'
+      path: '/mon-espace-mandataire'
+      fullPath: '/espace/mon-espace-mandataire'
+      preLoaderRoute: typeof AuthenticatedEspaceMonEspaceMandataireRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/formations-rappels': {
-      id: '/api/public/formations-rappels'
-      path: '/api/public/formations-rappels'
-      fullPath: '/api/public/formations-rappels'
-      preLoaderRoute: typeof ApiPublicFormationsRappelsRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/neoliane': {
+      id: '/_authenticated/espace/neoliane'
+      path: '/neoliane'
+      fullPath: '/espace/neoliane'
+      preLoaderRoute: typeof AuthenticatedEspaceNeolianeRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/envois-planifies': {
-      id: '/api/public/envois-planifies'
-      path: '/api/public/envois-planifies'
-      fullPath: '/api/public/envois-planifies'
-      preLoaderRoute: typeof ApiPublicEnvoisPlanifiesRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/parametres': {
+      id: '/_authenticated/espace/parametres'
+      path: '/parametres'
+      fullPath: '/espace/parametres'
+      preLoaderRoute: typeof AuthenticatedEspaceParametresRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/dossiers-bloques': {
-      id: '/api/public/dossiers-bloques'
-      path: '/api/public/dossiers-bloques'
-      fullPath: '/api/public/dossiers-bloques'
-      preLoaderRoute: typeof ApiPublicDossiersBloquesRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/pilotage': {
+      id: '/_authenticated/espace/pilotage'
+      path: '/pilotage'
+      fullPath: '/espace/pilotage'
+      preLoaderRoute: typeof AuthenticatedEspacePilotageRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/documents-attendus': {
-      id: '/api/public/documents-attendus'
-      path: '/api/public/documents-attendus'
-      fullPath: '/api/public/documents-attendus'
-      preLoaderRoute: typeof ApiPublicDocumentsAttendusRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/prequalification': {
+      id: '/_authenticated/espace/prequalification'
+      path: '/prequalification'
+      fullPath: '/espace/prequalification'
+      preLoaderRoute: typeof AuthenticatedEspacePrequalificationRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/devoirs-conseil-envois': {
-      id: '/api/public/devoirs-conseil-envois'
-      path: '/api/public/devoirs-conseil-envois'
-      fullPath: '/api/public/devoirs-conseil-envois'
-      preLoaderRoute: typeof ApiPublicDevoirsConseilEnvoisRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/prescripteurs': {
+      id: '/_authenticated/espace/prescripteurs'
+      path: '/prescripteurs'
+      fullPath: '/espace/prescripteurs'
+      preLoaderRoute: typeof AuthenticatedEspacePrescripteursRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/dda-pdf-reprise': {
-      id: '/api/public/dda-pdf-reprise'
-      path: '/api/public/dda-pdf-reprise'
-      fullPath: '/api/public/dda-pdf-reprise'
-      preLoaderRoute: typeof ApiPublicDdaPdfRepriseRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/relation-client': {
+      id: '/_authenticated/espace/relation-client'
+      path: '/relation-client'
+      fullPath: '/espace/relation-client'
+      preLoaderRoute: typeof AuthenticatedEspaceRelationClientRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/corriger-labels-partenaires': {
-      id: '/api/public/corriger-labels-partenaires'
-      path: '/api/public/corriger-labels-partenaires'
-      fullPath: '/api/public/corriger-labels-partenaires'
-      preLoaderRoute: typeof ApiPublicCorrigerLabelsPartenairesRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/signer-contrat-mandataire': {
+      id: '/_authenticated/espace/signer-contrat-mandataire'
+      path: '/signer-contrat-mandataire'
+      fullPath: '/espace/signer-contrat-mandataire'
+      preLoaderRoute: typeof AuthenticatedEspaceSignerContratMandataireRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/controle-interne-rappel': {
-      id: '/api/public/controle-interne-rappel'
-      path: '/api/public/controle-interne-rappel'
-      fullPath: '/api/public/controle-interne-rappel'
-      preLoaderRoute: typeof ApiPublicControleInterneRappelRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/signer-der': {
+      id: '/_authenticated/espace/signer-der'
+      path: '/signer-der'
+      fullPath: '/espace/signer-der'
+      preLoaderRoute: typeof AuthenticatedEspaceSignerDerRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/cartographie-risques-revision': {
-      id: '/api/public/cartographie-risques-revision'
-      path: '/api/public/cartographie-risques-revision'
-      fullPath: '/api/public/cartographie-risques-revision'
-      preLoaderRoute: typeof ApiPublicCartographieRisquesRevisionRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/signer-devoir-conseil': {
+      id: '/_authenticated/espace/signer-devoir-conseil'
+      path: '/signer-devoir-conseil'
+      fullPath: '/espace/signer-devoir-conseil'
+      preLoaderRoute: typeof AuthenticatedEspaceSignerDevoirConseilRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/api/public/brevo-listes-sync': {
-      id: '/api/public/brevo-listes-sync'
-      path: '/api/public/brevo-listes-sync'
-      fullPath: '/api/public/brevo-listes-sync'
-      preLoaderRoute: typeof ApiPublicBrevoListesSyncRouteImport
+    '/_authenticated/espace/signer-lettre-mission': {
+      id: '/_authenticated/espace/signer-lettre-mission'
+      path: '/signer-lettre-mission'
+      fullPath: '/espace/signer-lettre-mission'
+      preLoaderRoute: typeof AuthenticatedEspaceSignerLettreMissionRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/_authenticated/espace/signer-souscription': {
+      id: '/_authenticated/espace/signer-souscription'
+      path: '/signer-souscription'
+      fullPath: '/espace/signer-souscription'
+      preLoaderRoute: typeof AuthenticatedEspaceSignerSouscriptionRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/_authenticated/espace/sinistres': {
+      id: '/_authenticated/espace/sinistres'
+      path: '/sinistres'
+      fullPath: '/espace/sinistres'
+      preLoaderRoute: typeof AuthenticatedEspaceSinistresRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/_authenticated/espace/taches': {
+      id: '/_authenticated/espace/taches'
+      path: '/taches'
+      fullPath: '/espace/taches'
+      preLoaderRoute: typeof AuthenticatedEspaceTachesRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/_authenticated/espace/utilisateurs': {
+      id: '/_authenticated/espace/utilisateurs'
+      path: '/utilisateurs'
+      fullPath: '/espace/utilisateurs'
+      preLoaderRoute: typeof AuthenticatedEspaceUtilisateursRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/_authenticated/espace/webinaires': {
+      id: '/_authenticated/espace/webinaires'
+      path: '/webinaires'
+      fullPath: '/espace/webinaires'
+      preLoaderRoute: typeof AuthenticatedEspaceWebinairesRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/api/public/analyse-recueil': {
+      id: '/api/public/analyse-recueil'
+      path: '/api/public/analyse-recueil'
+      fullPath: '/api/public/analyse-recueil'
+      preLoaderRoute: typeof ApiPublicAnalyseRecueilRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/bootstrap-admin': {
@@ -1449,13 +1764,103 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBootstrapAdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/analyse-recueil': {
-      id: '/api/public/analyse-recueil'
-      path: '/api/public/analyse-recueil'
-      fullPath: '/api/public/analyse-recueil'
-      preLoaderRoute: typeof ApiPublicAnalyseRecueilRouteImport
+    '/api/public/brevo-listes-sync': {
+      id: '/api/public/brevo-listes-sync'
+      path: '/api/public/brevo-listes-sync'
+      fullPath: '/api/public/brevo-listes-sync'
+      preLoaderRoute: typeof ApiPublicBrevoListesSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cartographie-risques-revision': {
+      id: '/api/public/cartographie-risques-revision'
+      path: '/api/public/cartographie-risques-revision'
+      fullPath: '/api/public/cartographie-risques-revision'
+      preLoaderRoute: typeof ApiPublicCartographieRisquesRevisionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/controle-interne-rappel': {
+      id: '/api/public/controle-interne-rappel'
+      path: '/api/public/controle-interne-rappel'
+      fullPath: '/api/public/controle-interne-rappel'
+      preLoaderRoute: typeof ApiPublicControleInterneRappelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/corriger-labels-partenaires': {
+      id: '/api/public/corriger-labels-partenaires'
+      path: '/api/public/corriger-labels-partenaires'
+      fullPath: '/api/public/corriger-labels-partenaires'
+      preLoaderRoute: typeof ApiPublicCorrigerLabelsPartenairesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/dda-pdf-reprise': {
+      id: '/api/public/dda-pdf-reprise'
+      path: '/api/public/dda-pdf-reprise'
+      fullPath: '/api/public/dda-pdf-reprise'
+      preLoaderRoute: typeof ApiPublicDdaPdfRepriseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/devoirs-conseil-envois': {
+      id: '/api/public/devoirs-conseil-envois'
+      path: '/api/public/devoirs-conseil-envois'
+      fullPath: '/api/public/devoirs-conseil-envois'
+      preLoaderRoute: typeof ApiPublicDevoirsConseilEnvoisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/documents-attendus': {
+      id: '/api/public/documents-attendus'
+      path: '/api/public/documents-attendus'
+      fullPath: '/api/public/documents-attendus'
+      preLoaderRoute: typeof ApiPublicDocumentsAttendusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/dossiers-bloques': {
+      id: '/api/public/dossiers-bloques'
+      path: '/api/public/dossiers-bloques'
+      fullPath: '/api/public/dossiers-bloques'
+      preLoaderRoute: typeof ApiPublicDossiersBloquesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/envois-planifies': {
+      id: '/api/public/envois-planifies'
+      path: '/api/public/envois-planifies'
+      fullPath: '/api/public/envois-planifies'
+      preLoaderRoute: typeof ApiPublicEnvoisPlanifiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/formations-rappels': {
+      id: '/api/public/formations-rappels'
+      path: '/api/public/formations-rappels'
+      fullPath: '/api/public/formations-rappels'
+      preLoaderRoute: typeof ApiPublicFormationsRappelsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/gmail-inbox': {
+      id: '/api/public/gmail-inbox'
+      path: '/api/public/gmail-inbox'
+      fullPath: '/api/public/gmail-inbox'
+      preLoaderRoute: typeof ApiPublicGmailInboxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/leads': {
+      id: '/api/public/leads'
+      path: '/api/public/leads'
+      fullPath: '/api/public/leads'
+      preLoaderRoute: typeof ApiPublicLeadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/lettres-mission-envois': {
+      id: '/api/public/lettres-mission-envois'
+      path: '/api/public/lettres-mission-envois'
+      fullPath: '/api/public/lettres-mission-envois'
+      preLoaderRoute: typeof ApiPublicLettresMissionEnvoisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/rappels-expiration': {
+      id: '/api/public/rappels-expiration'
+      path: '/api/public/rappels-expiration'
+      fullPath: '/api/public/rappels-expiration'
+      preLoaderRoute: typeof ApiPublicRappelsExpirationRouteImport
+      parentRoute: typeof rootRouteImport
     '/_authenticated/espace/webinaires': {
       id: '/_authenticated/espace/webinaires'
       path: '/webinaires'
@@ -1526,118 +1931,123 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEspaceRelationClientRouteImport
       parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/_authenticated/espace/prescripteurs': {
-      id: '/_authenticated/espace/prescripteurs'
-      path: '/prescripteurs'
-      fullPath: '/espace/prescripteurs'
-      preLoaderRoute: typeof AuthenticatedEspacePrescripteursRouteImport
+    '/api/public/reclamations-accuse-reception': {
+      id: '/api/public/reclamations-accuse-reception'
+      path: '/api/public/reclamations-accuse-reception'
+      fullPath: '/api/public/reclamations-accuse-reception'
+      preLoaderRoute: typeof ApiPublicReclamationsAccuseReceptionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/recueil-emprunteur-reconstitution': {
+      id: '/api/public/recueil-emprunteur-reconstitution'
+      path: '/api/public/recueil-emprunteur-reconstitution'
+      fullPath: '/api/public/recueil-emprunteur-reconstitution'
+      preLoaderRoute: typeof ApiPublicRecueilEmprunteurReconstitutionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/regles-agent': {
+      id: '/api/public/regles-agent'
+      path: '/api/public/regles-agent'
+      fullPath: '/api/public/regles-agent'
+      preLoaderRoute: typeof ApiPublicReglesAgentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/relance-pieces': {
+      id: '/api/public/relance-pieces'
+      path: '/api/public/relance-pieces'
+      fullPath: '/api/public/relance-pieces'
+      preLoaderRoute: typeof ApiPublicRelancePiecesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/relance-sinistres': {
+      id: '/api/public/relance-sinistres'
+      path: '/api/public/relance-sinistres'
+      fullPath: '/api/public/relance-sinistres'
+      preLoaderRoute: typeof ApiPublicRelanceSinistresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/relance-souscription': {
+      id: '/api/public/relance-souscription'
+      path: '/api/public/relance-souscription'
+      fullPath: '/api/public/relance-souscription'
+      preLoaderRoute: typeof ApiPublicRelanceSouscriptionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/reprendre-mails-a-valider': {
+      id: '/api/public/reprendre-mails-a-valider'
+      path: '/api/public/reprendre-mails-a-valider'
+      fullPath: '/api/public/reprendre-mails-a-valider'
+      preLoaderRoute: typeof ApiPublicReprendreMailsAValiderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/reprendre-mails-ignores': {
+      id: '/api/public/reprendre-mails-ignores'
+      path: '/api/public/reprendre-mails-ignores'
+      fullPath: '/api/public/reprendre-mails-ignores'
+      preLoaderRoute: typeof ApiPublicReprendreMailsIgnoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/revue-lcbft': {
+      id: '/api/public/revue-lcbft'
+      path: '/api/public/revue-lcbft'
+      fullPath: '/api/public/revue-lcbft'
+      preLoaderRoute: typeof ApiPublicRevueLcbftRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/scan-emails': {
+      id: '/api/public/scan-emails'
+      path: '/api/public/scan-emails'
+      fullPath: '/api/public/scan-emails'
+      preLoaderRoute: typeof ApiPublicScanEmailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/suivi-contrats': {
+      id: '/api/public/suivi-contrats'
+      path: '/api/public/suivi-contrats'
+      fullPath: '/api/public/suivi-contrats'
+      preLoaderRoute: typeof ApiPublicSuiviContratsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webinaire-sequences': {
+      id: '/api/public/webinaire-sequences'
+      path: '/api/public/webinaire-sequences'
+      fullPath: '/api/public/webinaire-sequences'
+      preLoaderRoute: typeof ApiPublicWebinaireSequencesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/espace/clients/': {
+      id: '/_authenticated/espace/clients/'
+      path: '/clients'
+      fullPath: '/espace/clients/'
+      preLoaderRoute: typeof AuthenticatedEspaceClientsIndexRouteImport
       parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/_authenticated/espace/prequalification': {
-      id: '/_authenticated/espace/prequalification'
-      path: '/prequalification'
-      fullPath: '/espace/prequalification'
-      preLoaderRoute: typeof AuthenticatedEspacePrequalificationRouteImport
+    '/_authenticated/espace/clients/$id': {
+      id: '/_authenticated/espace/clients/$id'
+      path: '/clients/$id'
+      fullPath: '/espace/clients/$id'
+      preLoaderRoute: typeof AuthenticatedEspaceClientsIdRouteImport
       parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/_authenticated/espace/pilotage': {
-      id: '/_authenticated/espace/pilotage'
-      path: '/pilotage'
-      fullPath: '/espace/pilotage'
-      preLoaderRoute: typeof AuthenticatedEspacePilotageRouteImport
+    '/_authenticated/espace/compagnies/': {
+      id: '/_authenticated/espace/compagnies/'
+      path: '/compagnies'
+      fullPath: '/espace/compagnies/'
+      preLoaderRoute: typeof AuthenticatedEspaceCompagniesIndexRouteImport
       parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/_authenticated/espace/parametres': {
-      id: '/_authenticated/espace/parametres'
-      path: '/parametres'
-      fullPath: '/espace/parametres'
-      preLoaderRoute: typeof AuthenticatedEspaceParametresRouteImport
+    '/_authenticated/espace/compagnies/$id': {
+      id: '/_authenticated/espace/compagnies/$id'
+      path: '/compagnies/$id'
+      fullPath: '/espace/compagnies/$id'
+      preLoaderRoute: typeof AuthenticatedEspaceCompagniesIdRouteImport
       parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/_authenticated/espace/neoliane': {
-      id: '/_authenticated/espace/neoliane'
-      path: '/neoliane'
-      fullPath: '/espace/neoliane'
-      preLoaderRoute: typeof AuthenticatedEspaceNeolianeRouteImport
-      parentRoute: typeof AuthenticatedEspaceRoute
-    }
-    '/_authenticated/espace/mon-espace-mandataire': {
-      id: '/_authenticated/espace/mon-espace-mandataire'
-      path: '/mon-espace-mandataire'
-      fullPath: '/espace/mon-espace-mandataire'
-      preLoaderRoute: typeof AuthenticatedEspaceMonEspaceMandataireRouteImport
-      parentRoute: typeof AuthenticatedEspaceRoute
-    }
-    '/_authenticated/espace/mon-espace': {
-      id: '/_authenticated/espace/mon-espace'
-      path: '/mon-espace'
-      fullPath: '/espace/mon-espace'
-      preLoaderRoute: typeof AuthenticatedEspaceMonEspaceRouteImport
-      parentRoute: typeof AuthenticatedEspaceRoute
-    }
-    '/_authenticated/espace/mes-recommandations': {
-      id: '/_authenticated/espace/mes-recommandations'
-      path: '/mes-recommandations'
-      fullPath: '/espace/mes-recommandations'
-      preLoaderRoute: typeof AuthenticatedEspaceMesRecommandationsRouteImport
-      parentRoute: typeof AuthenticatedEspaceRoute
-    }
-    '/_authenticated/espace/grilles-garanties': {
-      id: '/_authenticated/espace/grilles-garanties'
-      path: '/grilles-garanties'
-      fullPath: '/espace/grilles-garanties'
-      preLoaderRoute: typeof AuthenticatedEspaceGrillesGarantiesRouteImport
-      parentRoute: typeof AuthenticatedEspaceRoute
-    }
-    '/_authenticated/espace/gmail-controle': {
-      id: '/_authenticated/espace/gmail-controle'
-      path: '/gmail-controle'
-      fullPath: '/espace/gmail-controle'
-      preLoaderRoute: typeof AuthenticatedEspaceGmailControleRouteImport
-      parentRoute: typeof AuthenticatedEspaceRoute
-    }
-    '/_authenticated/espace/fournisseurs': {
-      id: '/_authenticated/espace/fournisseurs'
-      path: '/fournisseurs'
-      fullPath: '/espace/fournisseurs'
-      preLoaderRoute: typeof AuthenticatedEspaceFournisseursRouteImport
-      parentRoute: typeof AuthenticatedEspaceRoute
-    }
-    '/_authenticated/espace/diagnostic': {
-      id: '/_authenticated/espace/diagnostic'
-      path: '/diagnostic'
-      fullPath: '/espace/diagnostic'
-      preLoaderRoute: typeof AuthenticatedEspaceDiagnosticRouteImport
-      parentRoute: typeof AuthenticatedEspaceRoute
-    }
-    '/_authenticated/espace/der-modele': {
-      id: '/_authenticated/espace/der-modele'
-      path: '/der-modele'
-      fullPath: '/espace/der-modele'
-      preLoaderRoute: typeof AuthenticatedEspaceDerModeleRouteImport
-      parentRoute: typeof AuthenticatedEspaceRoute
-    }
-    '/_authenticated/espace/conformite': {
-      id: '/_authenticated/espace/conformite'
-      path: '/conformite'
-      fullPath: '/espace/conformite'
-      preLoaderRoute: typeof AuthenticatedEspaceConformiteRouteImport
-      parentRoute: typeof AuthenticatedEspaceRoute
-    }
-    '/_authenticated/espace/comptabilite': {
-      id: '/_authenticated/espace/comptabilite'
-      path: '/comptabilite'
-      fullPath: '/espace/comptabilite'
-      preLoaderRoute: typeof AuthenticatedEspaceComptabiliteRouteImport
-      parentRoute: typeof AuthenticatedEspaceRoute
-    }
-    '/_authenticated/espace/commissions': {
-      id: '/_authenticated/espace/commissions'
-      path: '/commissions'
-      fullPath: '/espace/commissions'
-      preLoaderRoute: typeof AuthenticatedEspaceCommissionsRouteImport
-      parentRoute: typeof AuthenticatedEspaceRoute
-    }
+    '/_authenticated/espace/contrats/': {
+      id: '/_authenticated/espace/contrats/'
+      path: '/contrats'
+      fullPath: '/espace/contrats/'
+      preLoaderRoute: typeof AuthenticatedEspaceContratsIndexRouteImport
     '/_authenticated/espace/cockpit-ca': {
       id: '/_authenticated/espace/cockpit-ca'
       path: '/cockpit-ca'
@@ -1659,11 +2069,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEspaceBibliothequeCgRouteImport
       parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/_authenticated/espace/audit-logs': {
-      id: '/_authenticated/espace/audit-logs'
-      path: '/audit-logs'
-      fullPath: '/espace/audit-logs'
-      preLoaderRoute: typeof AuthenticatedEspaceAuditLogsRouteImport
+    '/_authenticated/espace/contrats/$id': {
+      id: '/_authenticated/espace/contrats/$id'
+      path: '/contrats/$id'
+      fullPath: '/espace/contrats/$id'
+      preLoaderRoute: typeof AuthenticatedEspaceContratsIdRouteImport
       parentRoute: typeof AuthenticatedEspaceRoute
     }
     '/_authenticated/espace/dossiers/': {
@@ -1673,46 +2083,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEspaceDossiersIndexRouteImport
       parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/_authenticated/espace/contrats/': {
-      id: '/_authenticated/espace/contrats/'
-      path: '/contrats'
-      fullPath: '/espace/contrats/'
-      preLoaderRoute: typeof AuthenticatedEspaceContratsIndexRouteImport
+    '/_authenticated/espace/dossiers/$id': {
+      id: '/_authenticated/espace/dossiers/$id'
+      path: '/dossiers/$id'
+      fullPath: '/espace/dossiers/$id'
+      preLoaderRoute: typeof AuthenticatedEspaceDossiersIdRouteImport
       parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/_authenticated/espace/compagnies/': {
-      id: '/_authenticated/espace/compagnies/'
-      path: '/compagnies'
-      fullPath: '/espace/compagnies/'
-      preLoaderRoute: typeof AuthenticatedEspaceCompagniesIndexRouteImport
+    '/_authenticated/espace/dossiers/nouveau': {
+      id: '/_authenticated/espace/dossiers/nouveau'
+      path: '/dossiers/nouveau'
+      fullPath: '/espace/dossiers/nouveau'
+      preLoaderRoute: typeof AuthenticatedEspaceDossiersNouveauRouteImport
       parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/_authenticated/espace/clients/': {
-      id: '/_authenticated/espace/clients/'
-      path: '/clients'
-      fullPath: '/espace/clients/'
-      preLoaderRoute: typeof AuthenticatedEspaceClientsIndexRouteImport
+    '/_authenticated/espace/recueil-sante/$dossierId': {
+      id: '/_authenticated/espace/recueil-sante/$dossierId'
+      path: '/recueil-sante/$dossierId'
+      fullPath: '/espace/recueil-sante/$dossierId'
+      preLoaderRoute: typeof AuthenticatedEspaceRecueilSanteDossierIdRouteImport
       parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/lovable/email/transactional/preview': {
-      id: '/lovable/email/transactional/preview'
-      path: '/lovable/email/transactional/preview'
-      fullPath: '/lovable/email/transactional/preview'
-      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+    '/_authenticated/espace/sinistres/$id': {
+      id: '/_authenticated/espace/sinistres/$id'
+      path: '/$id'
+      fullPath: '/espace/sinistres/$id'
+      preLoaderRoute: typeof AuthenticatedEspaceSinistresIdRouteImport
+      parentRoute: typeof AuthenticatedEspaceSinistresRoute
+    }
+    '/api/public/webhooks/brevo': {
+      id: '/api/public/webhooks/brevo'
+      path: '/api/public/webhooks/brevo'
+      fullPath: '/api/public/webhooks/brevo'
+      preLoaderRoute: typeof ApiPublicWebhooksBrevoRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/auth/webhook': {
-      id: '/lovable/email/auth/webhook'
-      path: '/lovable/email/auth/webhook'
-      fullPath: '/lovable/email/auth/webhook'
-      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/preview': {
-      id: '/lovable/email/auth/preview'
-      path: '/lovable/email/auth/preview'
-      fullPath: '/lovable/email/auth/preview'
-      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+    '/api/public/webhooks/crm': {
+      id: '/api/public/webhooks/crm'
+      path: '/api/public/webhooks/crm'
+      fullPath: '/api/public/webhooks/crm'
+      preLoaderRoute: typeof ApiPublicWebhooksCrmRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/webhooks/webinaire-funnel': {
@@ -1729,13 +2139,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksNeolianeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/webhooks/crm': {
-      id: '/api/public/webhooks/crm'
-      path: '/api/public/webhooks/crm'
-      fullPath: '/api/public/webhooks/crm'
-      preLoaderRoute: typeof ApiPublicWebhooksCrmRouteImport
+    '/api/public/webhooks/webinaire-funnel': {
+      id: '/api/public/webhooks/webinaire-funnel'
+      path: '/api/public/webhooks/webinaire-funnel'
+      fullPath: '/api/public/webhooks/webinaire-funnel'
+      preLoaderRoute: typeof ApiPublicWebhooksWebinaireFunnelRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+      parentRoute: typeof rootRouteImport
     '/api/public/webhooks/brevo': {
       id: '/api/public/webhooks/brevo'
       path: '/api/public/webhooks/brevo'
@@ -1771,19 +2187,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEspaceContratsIdRouteImport
       parentRoute: typeof AuthenticatedEspaceRoute
     }
-    '/_authenticated/espace/compagnies/$id': {
-      id: '/_authenticated/espace/compagnies/$id'
-      path: '/compagnies/$id'
-      fullPath: '/espace/compagnies/$id'
-      preLoaderRoute: typeof AuthenticatedEspaceCompagniesIdRouteImport
-      parentRoute: typeof AuthenticatedEspaceRoute
+    '/lovable/email/auth/webhook': {
+      id: '/lovable/email/auth/webhook'
+      path: '/lovable/email/auth/webhook'
+      fullPath: '/lovable/email/auth/webhook'
+      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/espace/clients/$id': {
-      id: '/_authenticated/espace/clients/$id'
-      path: '/clients/$id'
-      fullPath: '/espace/clients/$id'
-      preLoaderRoute: typeof AuthenticatedEspaceClientsIdRouteImport
-      parentRoute: typeof AuthenticatedEspaceRoute
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -1838,6 +2254,7 @@ interface AuthenticatedEspaceRouteChildren {
   AuthenticatedEspaceCompagniesIdRoute: typeof AuthenticatedEspaceCompagniesIdRoute
   AuthenticatedEspaceContratsIdRoute: typeof AuthenticatedEspaceContratsIdRoute
   AuthenticatedEspaceDossiersIdRoute: typeof AuthenticatedEspaceDossiersIdRoute
+  AuthenticatedEspaceDossiersNouveauRoute: typeof AuthenticatedEspaceDossiersNouveauRoute
   AuthenticatedEspaceRecueilSanteDossierIdRoute: typeof AuthenticatedEspaceRecueilSanteDossierIdRoute
   AuthenticatedEspaceClientsIndexRoute: typeof AuthenticatedEspaceClientsIndexRoute
   AuthenticatedEspaceCompagniesIndexRoute: typeof AuthenticatedEspaceCompagniesIndexRoute
@@ -1892,6 +2309,8 @@ const AuthenticatedEspaceRouteChildren: AuthenticatedEspaceRouteChildren = {
   AuthenticatedEspaceCompagniesIdRoute: AuthenticatedEspaceCompagniesIdRoute,
   AuthenticatedEspaceContratsIdRoute: AuthenticatedEspaceContratsIdRoute,
   AuthenticatedEspaceDossiersIdRoute: AuthenticatedEspaceDossiersIdRoute,
+  AuthenticatedEspaceDossiersNouveauRoute:
+    AuthenticatedEspaceDossiersNouveauRoute,
   AuthenticatedEspaceRecueilSanteDossierIdRoute:
     AuthenticatedEspaceRecueilSanteDossierIdRoute,
   AuthenticatedEspaceClientsIndexRoute: AuthenticatedEspaceClientsIndexRoute,

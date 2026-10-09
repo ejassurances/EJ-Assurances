@@ -50,20 +50,12 @@ export const creerClientManuel = createServerFn({ method: "POST" })
     if (error || !cree) throw new Error(error?.message ?? "Création de la fiche impossible");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { lancerLcbAutomatique } = await import("@/lib/dossier-automation.server");
-    await lancerLcbAutomatique(supabaseAdmin, {
-      client_id: cree.id,
+    const { lancerAutomatisationsNouveauClient } = await import("@/lib/client-creation-automatisations.server");
+    await lancerAutomatisationsNouveauClient(supabaseAdmin, {
+      id: cree.id,
       nom: data.nom,
       prenom: data.prenom ?? null,
     });
-
-    // Listes Brevo : synchro immédiate du nouveau prospect (best-effort).
-    const { synchroniserContactBrevoSansEchec } = await import("@/lib/brevo-listes.server");
-    await synchroniserContactBrevoSansEchec(supabaseAdmin as never, cree.id);
-
-    // Arborescence documentaire Google Drive du client (best-effort).
-    const { assurerArborescenceClientSansEchec } = await import("@/lib/drive-arborescence.server");
-    await assurerArborescenceClientSansEchec(supabaseAdmin as never, cree.id);
 
     return { id: cree.id };
   });
