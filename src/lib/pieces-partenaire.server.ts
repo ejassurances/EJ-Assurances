@@ -316,6 +316,9 @@ export async function traiterPiecesJointesPartenaire(
         resultat.statut = "a_classer";
         resultat.detail = `Titulaire non identifié (${"raison" in trouve ? trouve.raison : "doute"})`;
         await creerTacheAdmin(admin as never, {
+          idempotency_key: clePieceAClasser(params.gmail_message_id, nomFichier),
+          source: "pieces-partenaire",
+          source_event_id: params.gmail_message_id,
           titre: `Pièce partenaire à rattacher — ${piece.nom}`.slice(0, 200),
           description: [
             `Partenaire : ${params.compagnie ?? "inconnu"}`,
@@ -405,6 +408,9 @@ export async function traiterPiecesJointesPartenaire(
       resultat.detail = e instanceof Error ? e.message : "erreur inconnue";
       console.error("[pieces-partenaire]", params.gmail_message_id, piece.nom, resultat.detail);
       await creerTacheAdmin(admin as never, {
+        idempotency_key: clePieceEchec(params.gmail_message_id, nomFichier),
+        source: "pieces-partenaire",
+        source_event_id: params.gmail_message_id,
         titre: `Pièce partenaire non traitée — ${piece.nom}`.slice(0, 200),
         description: [
           `Partenaire : ${params.compagnie ?? "inconnu"}`,
