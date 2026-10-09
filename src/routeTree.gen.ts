@@ -21,6 +21,63 @@ import { Route as AuthenticatedEspaceRouteImport } from './routes/_authenticated
 import { Route as EspaceCguRouteImport } from './routes/espace.cgu'
 import { Route as EspaceConfidentialiteRouteImport } from './routes/espace.confidentialite'
 import { Route as AuthenticatedEspaceIndexRouteImport } from './routes/_authenticated/espace.index'
+import { Route as ApiPublicWebinaireSequencesRouteImport } from './routes/api/public/webinaire-sequences'
+import { Route as ApiPublicSuiviContratsRouteImport } from './routes/api/public/suivi-contrats'
+import { Route as ApiPublicScanEmailsRouteImport } from './routes/api/public/scan-emails'
+import { Route as ApiPublicRevueLcbftRouteImport } from './routes/api/public/revue-lcbft'
+import { Route as ApiPublicReprendreMailsIgnoresRouteImport } from './routes/api/public/reprendre-mails-ignores'
+import { Route as ApiPublicReprendreMailsAValiderRouteImport } from './routes/api/public/reprendre-mails-a-valider'
+import { Route as ApiPublicRelanceSouscriptionRouteImport } from './routes/api/public/relance-souscription'
+import { Route as ApiPublicRelanceSinistresRouteImport } from './routes/api/public/relance-sinistres'
+import { Route as ApiPublicRelancePiecesRouteImport } from './routes/api/public/relance-pieces'
+import { Route as ApiPublicReglesAgentRouteImport } from './routes/api/public/regles-agent'
+import { Route as ApiPublicRecueilEmprunteurReconstitutionRouteImport } from './routes/api/public/recueil-emprunteur-reconstitution'
+import { Route as ApiPublicReclamationsAccuseReceptionRouteImport } from './routes/api/public/reclamations-accuse-reception'
+import { Route as ApiPublicRappelsExpirationRouteImport } from './routes/api/public/rappels-expiration'
+import { Route as ApiPublicLettresMissionEnvoisRouteImport } from './routes/api/public/lettres-mission-envois'
+import { Route as ApiPublicLeadsRouteImport } from './routes/api/public/leads'
+import { Route as ApiPublicGmailInboxRouteImport } from './routes/api/public/gmail-inbox'
+import { Route as ApiPublicFormationsRappelsRouteImport } from './routes/api/public/formations-rappels'
+import { Route as ApiPublicEnvoisPlanifiesRouteImport } from './routes/api/public/envois-planifies'
+import { Route as ApiPublicDossiersBloquesRouteImport } from './routes/api/public/dossiers-bloques'
+import { Route as ApiPublicDocumentsAttendusRouteImport } from './routes/api/public/documents-attendus'
+import { Route as ApiPublicDevoirsConseilEnvoisRouteImport } from './routes/api/public/devoirs-conseil-envois'
+import { Route as ApiPublicDdaPdfRepriseRouteImport } from './routes/api/public/dda-pdf-reprise'
+import { Route as ApiPublicCorrigerLabelsPartenairesRouteImport } from './routes/api/public/corriger-labels-partenaires'
+import { Route as ApiPublicControleInterneRappelRouteImport } from './routes/api/public/controle-interne-rappel'
+import { Route as ApiPublicCartographieRisquesRevisionRouteImport } from './routes/api/public/cartographie-risques-revision'
+import { Route as ApiPublicBrevoListesSyncRouteImport } from './routes/api/public/brevo-listes-sync'
+import { Route as ApiPublicBootstrapAdminRouteImport } from './routes/api/public/bootstrap-admin'
+import { Route as ApiPublicAnalyseRecueilRouteImport } from './routes/api/public/analyse-recueil'
+import { Route as AuthenticatedEspaceWebinairesRouteImport } from './routes/_authenticated/espace.webinaires'
+import { Route as AuthenticatedEspaceUtilisateursRouteImport } from './routes/_authenticated/espace.utilisateurs'
+import { Route as AuthenticatedEspaceTachesRouteImport } from './routes/_authenticated/espace.taches'
+import { Route as AuthenticatedEspaceSinistresRouteImport } from './routes/_authenticated/espace.sinistres'
+import { Route as AuthenticatedEspaceSignerSouscriptionRouteImport } from './routes/_authenticated/espace.signer-souscription'
+import { Route as AuthenticatedEspaceSignerLettreMissionRouteImport } from './routes/_authenticated/espace.signer-lettre-mission'
+import { Route as AuthenticatedEspaceSignerDevoirConseilRouteImport } from './routes/_authenticated/espace.signer-devoir-conseil'
+import { Route as AuthenticatedEspaceSignerDerRouteImport } from './routes/_authenticated/espace.signer-der'
+import { Route as AuthenticatedEspaceSignerContratMandataireRouteImport } from './routes/_authenticated/espace.signer-contrat-mandataire'
+import { Route as AuthenticatedEspaceRelationClientRouteImport } from './routes/_authenticated/espace.relation-client'
+import { Route as AuthenticatedEspacePrescripteursRouteImport } from './routes/_authenticated/espace.prescripteurs'
+import { Route as AuthenticatedEspacePrequalificationRouteImport } from './routes/_authenticated/espace.prequalification'
+import { Route as AuthenticatedEspacePilotageRouteImport } from './routes/_authenticated/espace.pilotage'
+import { Route as AuthenticatedEspaceParametresRouteImport } from './routes/_authenticated/espace.parametres'
+import { Route as AuthenticatedEspaceNeolianeRouteImport } from './routes/_authenticated/espace.neoliane'
+import { Route as AuthenticatedEspaceMonEspaceMandataireRouteImport } from './routes/_authenticated/espace.mon-espace-mandataire'
+import { Route as AuthenticatedEspaceMonEspaceRouteImport } from './routes/_authenticated/espace.mon-espace'
+import { Route as AuthenticatedEspaceMesRecommandationsRouteImport } from './routes/_authenticated/espace.mes-recommandations'
+import { Route as AuthenticatedEspaceGrillesGarantiesRouteImport } from './routes/_authenticated/espace.grilles-garanties'
+import { Route as AuthenticatedEspaceGmailControleRouteImport } from './routes/_authenticated/espace.gmail-controle'
+import { Route as AuthenticatedEspaceFournisseursRouteImport } from './routes/_authenticated/espace.fournisseurs'
+import { Route as AuthenticatedEspaceDiagnosticRouteImport } from './routes/_authenticated/espace.diagnostic'
+import { Route as AuthenticatedEspaceDerModeleRouteImport } from './routes/_authenticated/espace.der-modele'
+import { Route as AuthenticatedEspaceConformiteRouteImport } from './routes/_authenticated/espace.conformite'
+import { Route as AuthenticatedEspaceComptabiliteRouteImport } from './routes/_authenticated/espace.comptabilite'
+import { Route as AuthenticatedEspaceCommissionsRouteImport } from './routes/_authenticated/espace.commissions'
+import { Route as AuthenticatedEspaceCockpitCaRouteImport } from './routes/_authenticated/espace.cockpit-ca'
+import { Route as AuthenticatedEspaceCaPaliersRouteImport } from './routes/_authenticated/espace.ca-paliers'
+import { Route as AuthenticatedEspaceBibliothequeCgRouteImport } from './routes/_authenticated/espace.bibliotheque-cg'
 import { Route as AuthenticatedEspaceAuditLogsRouteImport } from './routes/_authenticated/espace.audit-logs'
 import { Route as AuthenticatedEspaceBibliothequeCgRouteImport } from './routes/_authenticated/espace.bibliotheque-cg'
 import { Route as AuthenticatedEspaceCaPaliersRouteImport } from './routes/_authenticated/espace.ca-paliers'
@@ -80,6 +137,18 @@ import { Route as ApiPublicScanEmailsRouteImport } from './routes/api/public/sca
 import { Route as ApiPublicSuiviContratsRouteImport } from './routes/api/public/suivi-contrats'
 import { Route as ApiPublicWebinaireSequencesRouteImport } from './routes/api/public/webinaire-sequences'
 import { Route as AuthenticatedEspaceClientsIndexRouteImport } from './routes/_authenticated/espace.clients.index'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiPublicWebhooksWebinaireFunnelRouteImport } from './routes/api/public/webhooks/webinaire-funnel'
+import { Route as ApiPublicWebhooksNeolianeRouteImport } from './routes/api/public/webhooks/neoliane'
+import { Route as ApiPublicWebhooksCrmRouteImport } from './routes/api/public/webhooks/crm'
+import { Route as ApiPublicWebhooksBrevoRouteImport } from './routes/api/public/webhooks/brevo'
+import { Route as AuthenticatedEspaceSinistresIdRouteImport } from './routes/_authenticated/espace.sinistres.$id'
+import { Route as AuthenticatedEspaceRecueilSanteDossierIdRouteImport } from './routes/_authenticated/espace.recueil-sante.$dossierId'
+import { Route as AuthenticatedEspaceDossiersIdRouteImport } from './routes/_authenticated/espace.dossiers.$id'
+import { Route as AuthenticatedEspaceContratsIdRouteImport } from './routes/_authenticated/espace.contrats.$id'
+import { Route as AuthenticatedEspaceCompagniesIdRouteImport } from './routes/_authenticated/espace.compagnies.$id'
 import { Route as AuthenticatedEspaceClientsIdRouteImport } from './routes/_authenticated/espace.clients.$id'
 import { Route as AuthenticatedEspaceCompagniesIndexRouteImport } from './routes/_authenticated/espace.compagnies.index'
 import { Route as AuthenticatedEspaceCompagniesIdRouteImport } from './routes/_authenticated/espace.compagnies.$id'
@@ -163,6 +232,32 @@ const AuthenticatedEspaceAuditLogsRoute =
     id: '/audit-logs',
     path: '/audit-logs',
     getParentRoute: () => AuthenticatedEspaceRoute,
+const ApiPublicWebinaireSequencesRoute =
+  ApiPublicWebinaireSequencesRouteImport.update({
+    id: '/api/public/webinaire-sequences',
+    path: '/api/public/webinaire-sequences',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicSuiviContratsRoute = ApiPublicSuiviContratsRouteImport.update({
+  id: '/api/public/suivi-contrats',
+  path: '/api/public/suivi-contrats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicScanEmailsRoute = ApiPublicScanEmailsRouteImport.update({
+  id: '/api/public/scan-emails',
+  path: '/api/public/scan-emails',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicRevueLcbftRoute = ApiPublicRevueLcbftRouteImport.update({
+  id: '/api/public/revue-lcbft',
+  path: '/api/public/revue-lcbft',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicReprendreMailsIgnoresRoute =
+  ApiPublicReprendreMailsIgnoresRouteImport.update({
+    id: '/api/public/reprendre-mails-ignores',
+    path: '/api/public/reprendre-mails-ignores',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const AuthenticatedEspaceBibliothequeCgRoute =
   AuthenticatedEspaceBibliothequeCgRouteImport.update({
@@ -186,6 +281,129 @@ const AuthenticatedEspaceCommissionsRoute =
   AuthenticatedEspaceCommissionsRouteImport.update({
     id: '/commissions',
     path: '/commissions',
+const ApiPublicRelancePiecesRoute = ApiPublicRelancePiecesRouteImport.update({
+  id: '/api/public/relance-pieces',
+  path: '/api/public/relance-pieces',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicReglesAgentRoute = ApiPublicReglesAgentRouteImport.update({
+  id: '/api/public/regles-agent',
+  path: '/api/public/regles-agent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicRecueilEmprunteurReconstitutionRoute =
+  ApiPublicRecueilEmprunteurReconstitutionRouteImport.update({
+    id: '/api/public/recueil-emprunteur-reconstitution',
+    path: '/api/public/recueil-emprunteur-reconstitution',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicReclamationsAccuseReceptionRoute =
+  ApiPublicReclamationsAccuseReceptionRouteImport.update({
+    id: '/api/public/reclamations-accuse-reception',
+    path: '/api/public/reclamations-accuse-reception',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicRappelsExpirationRoute =
+  ApiPublicRappelsExpirationRouteImport.update({
+    id: '/api/public/rappels-expiration',
+    path: '/api/public/rappels-expiration',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicLettresMissionEnvoisRoute =
+  ApiPublicLettresMissionEnvoisRouteImport.update({
+    id: '/api/public/lettres-mission-envois',
+    path: '/api/public/lettres-mission-envois',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicLeadsRoute = ApiPublicLeadsRouteImport.update({
+  id: '/api/public/leads',
+  path: '/api/public/leads',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicGmailInboxRoute = ApiPublicGmailInboxRouteImport.update({
+  id: '/api/public/gmail-inbox',
+  path: '/api/public/gmail-inbox',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicFormationsRappelsRoute =
+  ApiPublicFormationsRappelsRouteImport.update({
+    id: '/api/public/formations-rappels',
+    path: '/api/public/formations-rappels',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicEnvoisPlanifiesRoute =
+  ApiPublicEnvoisPlanifiesRouteImport.update({
+    id: '/api/public/envois-planifies',
+    path: '/api/public/envois-planifies',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicDossiersBloquesRoute =
+  ApiPublicDossiersBloquesRouteImport.update({
+    id: '/api/public/dossiers-bloques',
+    path: '/api/public/dossiers-bloques',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicDocumentsAttendusRoute =
+  ApiPublicDocumentsAttendusRouteImport.update({
+    id: '/api/public/documents-attendus',
+    path: '/api/public/documents-attendus',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicDevoirsConseilEnvoisRoute =
+  ApiPublicDevoirsConseilEnvoisRouteImport.update({
+    id: '/api/public/devoirs-conseil-envois',
+    path: '/api/public/devoirs-conseil-envois',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicDdaPdfRepriseRoute = ApiPublicDdaPdfRepriseRouteImport.update({
+  id: '/api/public/dda-pdf-reprise',
+  path: '/api/public/dda-pdf-reprise',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicCorrigerLabelsPartenairesRoute =
+  ApiPublicCorrigerLabelsPartenairesRouteImport.update({
+    id: '/api/public/corriger-labels-partenaires',
+    path: '/api/public/corriger-labels-partenaires',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicControleInterneRappelRoute =
+  ApiPublicControleInterneRappelRouteImport.update({
+    id: '/api/public/controle-interne-rappel',
+    path: '/api/public/controle-interne-rappel',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCartographieRisquesRevisionRoute =
+  ApiPublicCartographieRisquesRevisionRouteImport.update({
+    id: '/api/public/cartographie-risques-revision',
+    path: '/api/public/cartographie-risques-revision',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicBrevoListesSyncRoute =
+  ApiPublicBrevoListesSyncRouteImport.update({
+    id: '/api/public/brevo-listes-sync',
+    path: '/api/public/brevo-listes-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicBootstrapAdminRoute = ApiPublicBootstrapAdminRouteImport.update({
+  id: '/api/public/bootstrap-admin',
+  path: '/api/public/bootstrap-admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAnalyseRecueilRoute = ApiPublicAnalyseRecueilRouteImport.update({
+  id: '/api/public/analyse-recueil',
+  path: '/api/public/analyse-recueil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedEspaceWebinairesRoute =
+  AuthenticatedEspaceWebinairesRouteImport.update({
+    id: '/webinaires',
+    path: '/webinaires',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceUtilisateursRoute =
+  AuthenticatedEspaceUtilisateursRouteImport.update({
+    id: '/utilisateurs',
+    path: '/utilisateurs',
     getParentRoute: () => AuthenticatedEspaceRoute,
   } as any)
 const AuthenticatedEspaceComptabiliteRoute =
@@ -336,6 +554,22 @@ const AuthenticatedEspaceWebinairesRoute =
   AuthenticatedEspaceWebinairesRouteImport.update({
     id: '/webinaires',
     path: '/webinaires',
+const AuthenticatedEspaceCockpitCaRoute =
+  AuthenticatedEspaceCockpitCaRouteImport.update({
+    id: '/cockpit-ca',
+    path: '/cockpit-ca',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceCaPaliersRoute =
+  AuthenticatedEspaceCaPaliersRouteImport.update({
+    id: '/ca-paliers',
+    path: '/ca-paliers',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceBibliothequeCgRoute =
+  AuthenticatedEspaceBibliothequeCgRouteImport.update({
+    id: '/bibliotheque-cg',
+    path: '/bibliotheque-cg',
     getParentRoute: () => AuthenticatedEspaceRoute,
   } as any)
 const ApiPublicAnalyseRecueilRoute = ApiPublicAnalyseRecueilRouteImport.update({
@@ -421,6 +655,16 @@ const ApiPublicLettresMissionEnvoisRoute =
   ApiPublicLettresMissionEnvoisRouteImport.update({
     id: '/api/public/lettres-mission-envois',
     path: '/api/public/lettres-mission-envois',
+const ApiPublicWebhooksWebinaireFunnelRoute =
+  ApiPublicWebhooksWebinaireFunnelRouteImport.update({
+    id: '/api/public/webhooks/webinaire-funnel',
+    path: '/api/public/webhooks/webinaire-funnel',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicWebhooksNeolianeRoute =
+  ApiPublicWebhooksNeolianeRouteImport.update({
+    id: '/api/public/webhooks/neoliane',
+    path: '/api/public/webhooks/neoliane',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicRappelsExpirationRoute =
@@ -456,6 +700,16 @@ const ApiPublicRelanceSinistresRoute =
     id: '/api/public/relance-sinistres',
     path: '/api/public/relance-sinistres',
     getParentRoute: () => rootRouteImport,
+const ApiPublicWebhooksBrevoRoute = ApiPublicWebhooksBrevoRouteImport.update({
+  id: '/api/public/webhooks/brevo',
+  path: '/api/public/webhooks/brevo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedEspaceSinistresIdRoute =
+  AuthenticatedEspaceSinistresIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedEspaceSinistresRoute,
   } as any)
 const ApiPublicRelanceSouscriptionRoute =
   ApiPublicRelanceSouscriptionRouteImport.update({
@@ -1279,6 +1533,19 @@ declare module '@tanstack/react-router' {
       fullPath: '/espace/audit-logs'
       preLoaderRoute: typeof AuthenticatedEspaceAuditLogsRouteImport
       parentRoute: typeof AuthenticatedEspaceRoute
+    '/api/public/webinaire-sequences': {
+      id: '/api/public/webinaire-sequences'
+      path: '/api/public/webinaire-sequences'
+      fullPath: '/api/public/webinaire-sequences'
+      preLoaderRoute: typeof ApiPublicWebinaireSequencesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/suivi-contrats': {
+      id: '/api/public/suivi-contrats'
+      path: '/api/public/suivi-contrats'
+      fullPath: '/api/public/suivi-contrats'
+      preLoaderRoute: typeof ApiPublicSuiviContratsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/espace/bibliotheque-cg': {
       id: '/_authenticated/espace/bibliotheque-cg'
@@ -1594,6 +1861,75 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/rappels-expiration'
       preLoaderRoute: typeof ApiPublicRappelsExpirationRouteImport
       parentRoute: typeof rootRouteImport
+    '/_authenticated/espace/webinaires': {
+      id: '/_authenticated/espace/webinaires'
+      path: '/webinaires'
+      fullPath: '/espace/webinaires'
+      preLoaderRoute: typeof AuthenticatedEspaceWebinairesRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/_authenticated/espace/utilisateurs': {
+      id: '/_authenticated/espace/utilisateurs'
+      path: '/utilisateurs'
+      fullPath: '/espace/utilisateurs'
+      preLoaderRoute: typeof AuthenticatedEspaceUtilisateursRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/_authenticated/espace/taches': {
+      id: '/_authenticated/espace/taches'
+      path: '/taches'
+      fullPath: '/espace/taches'
+      preLoaderRoute: typeof AuthenticatedEspaceTachesRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/_authenticated/espace/sinistres': {
+      id: '/_authenticated/espace/sinistres'
+      path: '/sinistres'
+      fullPath: '/espace/sinistres'
+      preLoaderRoute: typeof AuthenticatedEspaceSinistresRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/_authenticated/espace/signer-souscription': {
+      id: '/_authenticated/espace/signer-souscription'
+      path: '/signer-souscription'
+      fullPath: '/espace/signer-souscription'
+      preLoaderRoute: typeof AuthenticatedEspaceSignerSouscriptionRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/_authenticated/espace/signer-lettre-mission': {
+      id: '/_authenticated/espace/signer-lettre-mission'
+      path: '/signer-lettre-mission'
+      fullPath: '/espace/signer-lettre-mission'
+      preLoaderRoute: typeof AuthenticatedEspaceSignerLettreMissionRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/_authenticated/espace/signer-devoir-conseil': {
+      id: '/_authenticated/espace/signer-devoir-conseil'
+      path: '/signer-devoir-conseil'
+      fullPath: '/espace/signer-devoir-conseil'
+      preLoaderRoute: typeof AuthenticatedEspaceSignerDevoirConseilRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/_authenticated/espace/signer-der': {
+      id: '/_authenticated/espace/signer-der'
+      path: '/signer-der'
+      fullPath: '/espace/signer-der'
+      preLoaderRoute: typeof AuthenticatedEspaceSignerDerRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/_authenticated/espace/signer-contrat-mandataire': {
+      id: '/_authenticated/espace/signer-contrat-mandataire'
+      path: '/signer-contrat-mandataire'
+      fullPath: '/espace/signer-contrat-mandataire'
+      preLoaderRoute: typeof AuthenticatedEspaceSignerContratMandataireRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/_authenticated/espace/relation-client': {
+      id: '/_authenticated/espace/relation-client'
+      path: '/relation-client'
+      fullPath: '/espace/relation-client'
+      preLoaderRoute: typeof AuthenticatedEspaceRelationClientRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
     '/api/public/reclamations-accuse-reception': {
       id: '/api/public/reclamations-accuse-reception'
@@ -1712,6 +2048,25 @@ declare module '@tanstack/react-router' {
       path: '/contrats'
       fullPath: '/espace/contrats/'
       preLoaderRoute: typeof AuthenticatedEspaceContratsIndexRouteImport
+    '/_authenticated/espace/cockpit-ca': {
+      id: '/_authenticated/espace/cockpit-ca'
+      path: '/cockpit-ca'
+      fullPath: '/espace/cockpit-ca'
+      preLoaderRoute: typeof AuthenticatedEspaceCockpitCaRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/_authenticated/espace/ca-paliers': {
+      id: '/_authenticated/espace/ca-paliers'
+      path: '/ca-paliers'
+      fullPath: '/espace/ca-paliers'
+      preLoaderRoute: typeof AuthenticatedEspaceCaPaliersRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/_authenticated/espace/bibliotheque-cg': {
+      id: '/_authenticated/espace/bibliotheque-cg'
+      path: '/bibliotheque-cg'
+      fullPath: '/espace/bibliotheque-cg'
+      preLoaderRoute: typeof AuthenticatedEspaceBibliothequeCgRouteImport
       parentRoute: typeof AuthenticatedEspaceRoute
     }
     '/_authenticated/espace/contrats/$id': {
@@ -1770,6 +2125,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicWebhooksCrmRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/webhooks/webinaire-funnel': {
+      id: '/api/public/webhooks/webinaire-funnel'
+      path: '/api/public/webhooks/webinaire-funnel'
+      fullPath: '/api/public/webhooks/webinaire-funnel'
+      preLoaderRoute: typeof ApiPublicWebhooksWebinaireFunnelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhooks/neoliane': {
       id: '/api/public/webhooks/neoliane'
       path: '/api/public/webhooks/neoliane'
@@ -1790,6 +2152,40 @@ declare module '@tanstack/react-router' {
       fullPath: '/lovable/email/auth/preview'
       preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
+    '/api/public/webhooks/brevo': {
+      id: '/api/public/webhooks/brevo'
+      path: '/api/public/webhooks/brevo'
+      fullPath: '/api/public/webhooks/brevo'
+      preLoaderRoute: typeof ApiPublicWebhooksBrevoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/espace/sinistres/$id': {
+      id: '/_authenticated/espace/sinistres/$id'
+      path: '/$id'
+      fullPath: '/espace/sinistres/$id'
+      preLoaderRoute: typeof AuthenticatedEspaceSinistresIdRouteImport
+      parentRoute: typeof AuthenticatedEspaceSinistresRoute
+    }
+    '/_authenticated/espace/recueil-sante/$dossierId': {
+      id: '/_authenticated/espace/recueil-sante/$dossierId'
+      path: '/recueil-sante/$dossierId'
+      fullPath: '/espace/recueil-sante/$dossierId'
+      preLoaderRoute: typeof AuthenticatedEspaceRecueilSanteDossierIdRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/_authenticated/espace/dossiers/$id': {
+      id: '/_authenticated/espace/dossiers/$id'
+      path: '/dossiers/$id'
+      fullPath: '/espace/dossiers/$id'
+      preLoaderRoute: typeof AuthenticatedEspaceDossiersIdRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/_authenticated/espace/contrats/$id': {
+      id: '/_authenticated/espace/contrats/$id'
+      path: '/contrats/$id'
+      fullPath: '/espace/contrats/$id'
+      preLoaderRoute: typeof AuthenticatedEspaceContratsIdRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
     }
     '/lovable/email/auth/webhook': {
       id: '/lovable/email/auth/webhook'

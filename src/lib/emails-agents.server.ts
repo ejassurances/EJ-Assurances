@@ -348,7 +348,15 @@ export async function executerAgents(
               if (pieces) {
                 piecesPartenairesRattachees += pieces.rattachees;
                 piecesPartenairesAClasser += pieces.a_classer;
-                if (pieces.a_classer > 0) await poserLabelCabinet(m.id, "sp_a_traiter");
+                if (pieces.a_classer > 0) {
+                  await poserLabelCabinet(m.id, "sp_a_traiter");
+                  // Marque de traitement existante (libellé d'état « A valider ») :
+                  // sans elle le mail est relu à chaque passage du tri. La tâche
+                  // humaine (idempotente) porte la reprise en main.
+                  await marquerEtat(m.id, "a_valider").catch((e: unknown) =>
+                    console.error("[pieces-partenaire] marquage « A valider » impossible", m.id, e),
+                  );
+                }
               }
             }
 
@@ -541,6 +549,9 @@ export async function executerAgents(
 
           if (estInterne || estAutomate) {
             await creerTacheAdmin(admin, {
+              idempotency_key: `email_entrant:interne_ou_automate:${m.id}`,
+              source: "scan-emails",
+              source_event_id: m.id,
               titre: `${estInterne ? "Mail interne" : "Expéditeur automatique non répertorié"} à qualifier — ${entree.sujet ?? "(sans objet)"}`.slice(0, 200),
               description: [
                 `Objet de la demande : ${entree.sujet ?? "(sans objet)"}`,
@@ -680,6 +691,9 @@ export async function executerAgents(
           console.error("[agent-commercial] triage email", m.id, e);
           // Aucune étape ne doit échouer silencieusement : une tâche décrit l'erreur.
           await creerTacheAdmin(admin, {
+            idempotency_key: `email_entrant:echec_traitement:${m.id}`,
+            source: "scan-emails",
+            source_event_id: m.id,
             titre: `Traitement automatique d'un email entrant impossible — ${m.expediteur_email ?? "expéditeur inconnu"}`,
             description: [
               `Objet : ${m.sujet ?? "(sans objet)"}`,
@@ -909,6 +923,9 @@ export async function executerAgents(
           erreurs++;
           console.error("[agent-relation-client] traitement email", messageId, e);
           await creerTacheAdmin(admin, {
+            idempotency_key: `email_client:echec_traitement:${messageId}`,
+            source: "scan-emails",
+            source_event_id: messageId,
             titre: `Email client non traité automatiquement — ${resume?.expediteur_email ?? "expéditeur inconnu"}`,
             description: [
               `Objet : ${resume?.sujet ?? "(sans objet)"}`,

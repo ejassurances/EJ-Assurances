@@ -14,44 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      public_intake_idempotency: {
-        Row: {
-          endpoint: string
-          idempotency_key: string
-          status: string
-          client_id: string | null
-          dossier_ref: string | null
-          created_at: string
-          completed_at: string | null
-        }
-        Insert: {
-          endpoint: string
-          idempotency_key: string
-          status?: string
-          client_id?: string | null
-          dossier_ref?: string | null
-          created_at?: string
-          completed_at?: string | null
-        }
-        Update: {
-          endpoint?: string
-          idempotency_key?: string
-          status?: string
-          client_id?: string | null
-          dossier_ref?: string | null
-          created_at?: string
-          completed_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "public_intake_idempotency_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       activites: {
         Row: {
           client_id: string
@@ -99,6 +61,208 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      agent_actions: {
+        Row: {
+          action_type: string
+          created_at: string
+          error: string | null
+          id: string
+          idempotency_key: string | null
+          input_summary: string | null
+          output_summary: string | null
+          rule_ref: string | null
+          rule_version: string | null
+          run_id: string | null
+          status: string
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          idempotency_key?: string | null
+          input_summary?: string | null
+          output_summary?: string | null
+          rule_ref?: string | null
+          rule_version?: string | null
+          run_id?: string | null
+          status?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          idempotency_key?: string | null
+          input_summary?: string | null
+          output_summary?: string | null
+          rule_ref?: string | null
+          rule_version?: string | null
+          run_id?: string | null
+          status?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_actions_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "agent_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_escalations: {
+        Row: {
+          client_id: string | null
+          contexte: string | null
+          decision_attendue: string | null
+          demande_le: string
+          dossier_id: string | null
+          id: string
+          information_manquante: string | null
+          motif: string
+          resolue_le: string | null
+          resolution: string | null
+          run_id: string | null
+          statut: string
+          task_id: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          contexte?: string | null
+          decision_attendue?: string | null
+          demande_le?: string
+          dossier_id?: string | null
+          id?: string
+          information_manquante?: string | null
+          motif: string
+          resolue_le?: string | null
+          resolution?: string | null
+          run_id?: string | null
+          statut?: string
+          task_id?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          contexte?: string | null
+          decision_attendue?: string | null
+          demande_le?: string
+          dossier_id?: string | null
+          id?: string
+          information_manquante?: string | null
+          motif?: string
+          resolue_le?: string | null
+          resolution?: string | null
+          run_id?: string | null
+          statut?: string
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_escalations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_escalations_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_escalations_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "agent_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_escalations_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "taches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_permissions: {
+        Row: {
+          actif: boolean
+          action_type: string
+          justification: string | null
+          niveau: string
+          updated_at: string
+        }
+        Insert: {
+          actif?: boolean
+          action_type: string
+          justification?: string | null
+          niveau: string
+          updated_at?: string
+        }
+        Update: {
+          actif?: boolean
+          action_type?: string
+          justification?: string | null
+          niveau?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      agent_runs: {
+        Row: {
+          agent_name: string
+          context: Json
+          error: string | null
+          finished_at: string | null
+          id: string
+          rule_ref: string | null
+          rule_version: string | null
+          started_at: string
+          status: string
+          summary: string | null
+          trigger_ref: string | null
+          trigger_type: string
+        }
+        Insert: {
+          agent_name: string
+          context?: Json
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          rule_ref?: string | null
+          rule_version?: string | null
+          started_at?: string
+          status?: string
+          summary?: string | null
+          trigger_ref?: string | null
+          trigger_type: string
+        }
+        Update: {
+          agent_name?: string
+          context?: Json
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          rule_ref?: string | null
+          rule_version?: string | null
+          started_at?: string
+          status?: string
+          summary?: string | null
+          trigger_ref?: string | null
+          trigger_type?: string
+        }
+        Relationships: []
       }
       assurance_regles_fiscales: {
         Row: {
@@ -419,6 +583,50 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      brevo_evenements: {
+        Row: {
+          campagne: string | null
+          email: string | null
+          event_uid: string | null
+          id: string
+          message_id: string | null
+          participant_id: string | null
+          payload: Json | null
+          received_at: string
+          type: string
+        }
+        Insert: {
+          campagne?: string | null
+          email?: string | null
+          event_uid?: string | null
+          id?: string
+          message_id?: string | null
+          participant_id?: string | null
+          payload?: Json | null
+          received_at?: string
+          type: string
+        }
+        Update: {
+          campagne?: string | null
+          email?: string | null
+          event_uid?: string | null
+          id?: string
+          message_id?: string | null
+          participant_id?: string | null
+          payload?: Json | null
+          received_at?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brevo_evenements_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "webinaire_participants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cartographie_risques: {
         Row: {
@@ -1047,6 +1255,10 @@ export type Database = {
       }
       clients: {
         Row: {
+          acquisition_audience: string | null
+          acquisition_campagne_id: string | null
+          acquisition_detail: string | null
+          acquisition_source: string | null
           adresse: string | null
           apporteur_id: string | null
           besoins: string[]
@@ -1083,6 +1295,7 @@ export type Database = {
           nom_naissance: string | null
           numero_secu: string | null
           origine: Database["public"]["Enums"]["client_origine"] | null
+          parrainage_id: string | null
           pays: string | null
           pays_naissance: string | null
           ppe: boolean
@@ -1101,8 +1314,13 @@ export type Database = {
           user_id: string | null
           ville: string | null
           ville_naissance: string | null
+          webinaire_session_id: string | null
         }
         Insert: {
+          acquisition_audience?: string | null
+          acquisition_campagne_id?: string | null
+          acquisition_detail?: string | null
+          acquisition_source?: string | null
           adresse?: string | null
           apporteur_id?: string | null
           besoins?: string[]
@@ -1139,6 +1357,7 @@ export type Database = {
           nom_naissance?: string | null
           numero_secu?: string | null
           origine?: Database["public"]["Enums"]["client_origine"] | null
+          parrainage_id?: string | null
           pays?: string | null
           pays_naissance?: string | null
           ppe?: boolean
@@ -1157,8 +1376,13 @@ export type Database = {
           user_id?: string | null
           ville?: string | null
           ville_naissance?: string | null
+          webinaire_session_id?: string | null
         }
         Update: {
+          acquisition_audience?: string | null
+          acquisition_campagne_id?: string | null
+          acquisition_detail?: string | null
+          acquisition_source?: string | null
           adresse?: string | null
           apporteur_id?: string | null
           besoins?: string[]
@@ -1195,6 +1419,7 @@ export type Database = {
           nom_naissance?: string | null
           numero_secu?: string | null
           origine?: Database["public"]["Enums"]["client_origine"] | null
+          parrainage_id?: string | null
           pays?: string | null
           pays_naissance?: string | null
           ppe?: boolean
@@ -1213,6 +1438,7 @@ export type Database = {
           user_id?: string | null
           ville?: string | null
           ville_naissance?: string | null
+          webinaire_session_id?: string | null
         }
         Relationships: [
           {
@@ -1220,6 +1446,20 @@ export type Database = {
             columns: ["client_origine_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_parrainage_id_fkey"
+            columns: ["parrainage_id"]
+            isOneToOne: false
+            referencedRelation: "parrainages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_webinaire_session_id_fkey"
+            columns: ["webinaire_session_id"]
+            isOneToOne: false
+            referencedRelation: "webinaire_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -1600,6 +1840,7 @@ export type Database = {
           logo_url: string | null
           nom: string
           notes: string | null
+          organisation_id: string | null
           site_web: string | null
           slug: string
           statut: Database["public"]["Enums"]["compagnie_statut"]
@@ -1620,6 +1861,7 @@ export type Database = {
           logo_url?: string | null
           nom: string
           notes?: string | null
+          organisation_id?: string | null
           site_web?: string | null
           slug: string
           statut?: Database["public"]["Enums"]["compagnie_statut"]
@@ -1640,6 +1882,7 @@ export type Database = {
           logo_url?: string | null
           nom?: string
           notes?: string | null
+          organisation_id?: string | null
           site_web?: string | null
           slug?: string
           statut?: Database["public"]["Enums"]["compagnie_statut"]
@@ -1647,7 +1890,15 @@ export type Database = {
           type_partenaire?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "compagnies_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       compagnies_api_config: {
         Row: {
@@ -1720,6 +1971,65 @@ export type Database = {
         }
         Relationships: []
       }
+      conformite_controles: {
+        Row: {
+          anomalie: string | null
+          created_at: string
+          derniere_execution: string | null
+          frequence: string | null
+          id: string
+          nom: string
+          obligation_id: string
+          preuve_attendue: string | null
+          procedure: string | null
+          prochaine_echeance: string | null
+          responsable: string | null
+          resultat: string | null
+          statut: string
+          updated_at: string
+        }
+        Insert: {
+          anomalie?: string | null
+          created_at?: string
+          derniere_execution?: string | null
+          frequence?: string | null
+          id?: string
+          nom: string
+          obligation_id: string
+          preuve_attendue?: string | null
+          procedure?: string | null
+          prochaine_echeance?: string | null
+          responsable?: string | null
+          resultat?: string | null
+          statut?: string
+          updated_at?: string
+        }
+        Update: {
+          anomalie?: string | null
+          created_at?: string
+          derniere_execution?: string | null
+          frequence?: string | null
+          id?: string
+          nom?: string
+          obligation_id?: string
+          preuve_attendue?: string | null
+          procedure?: string | null
+          prochaine_echeance?: string | null
+          responsable?: string | null
+          resultat?: string | null
+          statut?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conformite_controles_obligation_id_fkey"
+            columns: ["obligation_id"]
+            isOneToOne: false
+            referencedRelation: "conformite_obligations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conformite_documents: {
         Row: {
           created_at: string
@@ -1764,6 +2074,141 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      conformite_incidents: {
+        Row: {
+          action_immediate: string | null
+          cloture_le: string | null
+          created_at: string
+          description: string | null
+          detecte_le: string
+          echeance_corrective: string | null
+          entite_id: string | null
+          entite_type: string | null
+          gravite: string
+          id: string
+          niveau: string
+          notification_requise: boolean
+          plan_correctif: string | null
+          responsable: string | null
+          statut: string
+          survenu_le: string | null
+          titre: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          action_immediate?: string | null
+          cloture_le?: string | null
+          created_at?: string
+          description?: string | null
+          detecte_le?: string
+          echeance_corrective?: string | null
+          entite_id?: string | null
+          entite_type?: string | null
+          gravite: string
+          id?: string
+          niveau: string
+          notification_requise?: boolean
+          plan_correctif?: string | null
+          responsable?: string | null
+          statut?: string
+          survenu_le?: string | null
+          titre: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          action_immediate?: string | null
+          cloture_le?: string | null
+          created_at?: string
+          description?: string | null
+          detecte_le?: string
+          echeance_corrective?: string | null
+          entite_id?: string | null
+          entite_type?: string | null
+          gravite?: string
+          id?: string
+          niveau?: string
+          notification_requise?: boolean
+          plan_correctif?: string | null
+          responsable?: string | null
+          statut?: string
+          survenu_le?: string | null
+          titre?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      conformite_obligations: {
+        Row: {
+          applicabilite_id: string | null
+          created_at: string
+          date_entree_vigueur: string | null
+          description: string | null
+          domaine: string
+          id: string
+          libelle: string
+          niveau: string
+          periodicite: string | null
+          preuve_attendue: string | null
+          prochaine_echeance: string | null
+          responsable: string | null
+          source_id: string | null
+          statut: string
+          updated_at: string
+        }
+        Insert: {
+          applicabilite_id?: string | null
+          created_at?: string
+          date_entree_vigueur?: string | null
+          description?: string | null
+          domaine: string
+          id?: string
+          libelle: string
+          niveau: string
+          periodicite?: string | null
+          preuve_attendue?: string | null
+          prochaine_echeance?: string | null
+          responsable?: string | null
+          source_id?: string | null
+          statut?: string
+          updated_at?: string
+        }
+        Update: {
+          applicabilite_id?: string | null
+          created_at?: string
+          date_entree_vigueur?: string | null
+          description?: string | null
+          domaine?: string
+          id?: string
+          libelle?: string
+          niveau?: string
+          periodicite?: string | null
+          preuve_attendue?: string | null
+          prochaine_echeance?: string | null
+          responsable?: string | null
+          source_id?: string | null
+          statut?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conformite_obligations_applicabilite_id_fkey"
+            columns: ["applicabilite_id"]
+            isOneToOne: false
+            referencedRelation: "reglementaire_applicabilites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conformite_obligations_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "veille_reglementaire"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       consentements_plateforme: {
         Row: {
@@ -1965,6 +2410,8 @@ export type Database = {
           prime_ttc_annuelle: number | null
           prochain_suivi_le: string | null
           produit: string
+          produit_condition_id: string | null
+          produit_document_id: string | null
           produit_id: string | null
           projet_id: string | null
           quotite: number | null
@@ -2019,6 +2466,8 @@ export type Database = {
           prime_ttc_annuelle?: number | null
           prochain_suivi_le?: string | null
           produit: string
+          produit_condition_id?: string | null
+          produit_document_id?: string | null
           produit_id?: string | null
           projet_id?: string | null
           quotite?: number | null
@@ -2073,6 +2522,8 @@ export type Database = {
           prime_ttc_annuelle?: number | null
           prochain_suivi_le?: string | null
           produit?: string
+          produit_condition_id?: string | null
+          produit_document_id?: string | null
           produit_id?: string | null
           projet_id?: string | null
           quotite?: number | null
@@ -2112,6 +2563,20 @@ export type Database = {
             columns: ["dossier_id"]
             isOneToOne: false
             referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contrats_produit_condition_id_fkey"
+            columns: ["produit_condition_id"]
+            isOneToOne: false
+            referencedRelation: "produit_conditions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contrats_produit_document_id_fkey"
+            columns: ["produit_document_id"]
+            isOneToOne: false
+            referencedRelation: "produit_documents"
             referencedColumns: ["id"]
           },
           {
@@ -2628,6 +3093,8 @@ export type Database = {
           classification_le: string | null
           client_id: string | null
           contrat_id: string | null
+          controle_le: string | null
+          controle_resultat: string | null
           created_at: string
           date_expiration: string | null
           dossier_id: string | null
@@ -2637,7 +3104,10 @@ export type Database = {
           gmail_message_id: string | null
           id: string
           mime_type: string | null
+          motif_rejet: string | null
           rappel_expiration_envoye_le: string | null
+          source: string | null
+          statut_exploitabilite: string
           storage_path: string
           type_document: string | null
           uploader_id: string
@@ -2649,6 +3119,8 @@ export type Database = {
           classification_le?: string | null
           client_id?: string | null
           contrat_id?: string | null
+          controle_le?: string | null
+          controle_resultat?: string | null
           created_at?: string
           date_expiration?: string | null
           dossier_id?: string | null
@@ -2658,7 +3130,10 @@ export type Database = {
           gmail_message_id?: string | null
           id?: string
           mime_type?: string | null
+          motif_rejet?: string | null
           rappel_expiration_envoye_le?: string | null
+          source?: string | null
+          statut_exploitabilite?: string
           storage_path: string
           type_document?: string | null
           uploader_id: string
@@ -2670,6 +3145,8 @@ export type Database = {
           classification_le?: string | null
           client_id?: string | null
           contrat_id?: string | null
+          controle_le?: string | null
+          controle_resultat?: string | null
           created_at?: string
           date_expiration?: string | null
           dossier_id?: string | null
@@ -2679,7 +3156,10 @@ export type Database = {
           gmail_message_id?: string | null
           id?: string
           mime_type?: string | null
+          motif_rejet?: string | null
           rappel_expiration_envoye_le?: string | null
+          source?: string | null
+          statut_exploitabilite?: string
           storage_path?: string
           type_document?: string | null
           uploader_id?: string
@@ -2826,6 +3306,8 @@ export type Database = {
       }
       dossier_devis: {
         Row: {
+          analyse_garanties: Json | null
+          analyse_source: string | null
           archive_le: string | null
           assiette_commission_annuelle: number | null
           assure_personne_id: string | null
@@ -2839,8 +3321,10 @@ export type Database = {
           cotisation_mensuelle: number | null
           cotisation_min: number | null
           created_at: string
+          date_devis: string | null
           document_id: string | null
           dossier_id: string
+          est_reference_recommandation: boolean
           est_retenu: boolean
           fiscalite_calculee_le: string | null
           fiscalite_detail: Json | null
@@ -2848,20 +3332,26 @@ export type Database = {
           garanties_resume: string | null
           id: string
           montant_total_saisi: number | null
+          motif_non_retenu: string | null
           prime_ht_annuelle: number | null
           prime_ttc_annuelle: number | null
+          produit_document_id: string | null
           produit_id: string | null
           quotite_pct: number | null
+          reference_externe: string | null
           regime_fiscal: string
           saisi_par: string | null
           source: string
           source_prime_ttc: string | null
+          statut: string
           taux_commission: number | null
           taxes_annuelles: number | null
           type_cotisation: string | null
           updated_at: string
         }
         Insert: {
+          analyse_garanties?: Json | null
+          analyse_source?: string | null
           archive_le?: string | null
           assiette_commission_annuelle?: number | null
           assure_personne_id?: string | null
@@ -2875,8 +3365,10 @@ export type Database = {
           cotisation_mensuelle?: number | null
           cotisation_min?: number | null
           created_at?: string
+          date_devis?: string | null
           document_id?: string | null
           dossier_id: string
+          est_reference_recommandation?: boolean
           est_retenu?: boolean
           fiscalite_calculee_le?: string | null
           fiscalite_detail?: Json | null
@@ -2884,20 +3376,26 @@ export type Database = {
           garanties_resume?: string | null
           id?: string
           montant_total_saisi?: number | null
+          motif_non_retenu?: string | null
           prime_ht_annuelle?: number | null
           prime_ttc_annuelle?: number | null
+          produit_document_id?: string | null
           produit_id?: string | null
           quotite_pct?: number | null
+          reference_externe?: string | null
           regime_fiscal?: string
           saisi_par?: string | null
           source?: string
           source_prime_ttc?: string | null
+          statut?: string
           taux_commission?: number | null
           taxes_annuelles?: number | null
           type_cotisation?: string | null
           updated_at?: string
         }
         Update: {
+          analyse_garanties?: Json | null
+          analyse_source?: string | null
           archive_le?: string | null
           assiette_commission_annuelle?: number | null
           assure_personne_id?: string | null
@@ -2911,8 +3409,10 @@ export type Database = {
           cotisation_mensuelle?: number | null
           cotisation_min?: number | null
           created_at?: string
+          date_devis?: string | null
           document_id?: string | null
           dossier_id?: string
+          est_reference_recommandation?: boolean
           est_retenu?: boolean
           fiscalite_calculee_le?: string | null
           fiscalite_detail?: Json | null
@@ -2920,14 +3420,18 @@ export type Database = {
           garanties_resume?: string | null
           id?: string
           montant_total_saisi?: number | null
+          motif_non_retenu?: string | null
           prime_ht_annuelle?: number | null
           prime_ttc_annuelle?: number | null
+          produit_document_id?: string | null
           produit_id?: string | null
           quotite_pct?: number | null
+          reference_externe?: string | null
           regime_fiscal?: string
           saisi_par?: string | null
           source?: string
           source_prime_ttc?: string | null
+          statut?: string
           taux_commission?: number | null
           taxes_annuelles?: number | null
           type_cotisation?: string | null
@@ -2960,6 +3464,13 @@ export type Database = {
             columns: ["formule_id"]
             isOneToOne: false
             referencedRelation: "produit_formules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dossier_devis_produit_document_id_fkey"
+            columns: ["produit_document_id"]
+            isOneToOne: false
+            referencedRelation: "produit_documents"
             referencedColumns: ["id"]
           },
           {
@@ -3077,15 +3588,22 @@ export type Database = {
           categorie: string
           client_id: string | null
           code: string
+          controle_le: string | null
+          controle_resultat: string | null
+          controle_statut: string
           created_at: string
+          demande_le: string | null
           document_id: string | null
           dossier_id: string
           id: string
           kyc_document_id: string | null
           libelle: string
+          motif_rejet: string | null
           notes: string | null
           obligatoire: boolean
           recue_le: string | null
+          source: string | null
+          source_event_id: string | null
           statut: string
           updated_at: string
         }
@@ -3093,15 +3611,22 @@ export type Database = {
           categorie?: string
           client_id?: string | null
           code: string
+          controle_le?: string | null
+          controle_resultat?: string | null
+          controle_statut?: string
           created_at?: string
+          demande_le?: string | null
           document_id?: string | null
           dossier_id: string
           id?: string
           kyc_document_id?: string | null
           libelle: string
+          motif_rejet?: string | null
           notes?: string | null
           obligatoire?: boolean
           recue_le?: string | null
+          source?: string | null
+          source_event_id?: string | null
           statut?: string
           updated_at?: string
         }
@@ -3109,15 +3634,22 @@ export type Database = {
           categorie?: string
           client_id?: string | null
           code?: string
+          controle_le?: string | null
+          controle_resultat?: string | null
+          controle_statut?: string
           created_at?: string
+          demande_le?: string | null
           document_id?: string | null
           dossier_id?: string
           id?: string
           kyc_document_id?: string | null
           libelle?: string
+          motif_rejet?: string | null
           notes?: string | null
           obligatoire?: boolean
           recue_le?: string | null
+          source?: string | null
+          source_event_id?: string | null
           statut?: string
           updated_at?: string
         }
@@ -3213,11 +3745,21 @@ export type Database = {
       dossiers: {
         Row: {
           accuse_reception_envoye_le: string | null
+          acquisition_audience: string | null
+          acquisition_campagne_id: string | null
+          acquisition_detail: string | null
+          acquisition_source: string | null
           age: number | null
           analyse_ia: Json | null
           analyse_ia_le: string | null
           analyse_ia_modele: string | null
           apporteur_id: string | null
+          blocage_actif: boolean
+          blocage_code: string | null
+          blocage_depuis: string | null
+          blocage_element_attendu: string | null
+          blocage_motif: string | null
+          blocage_responsable: string | null
           cadre_financement: string | null
           capital: number | null
           chance_reussite: string | null
@@ -3239,11 +3781,16 @@ export type Database = {
           id: string
           mode_recommandation: string
           notes: string | null
+          parrainage_id: string | null
+          pipeline_etape: string | null
+          pipeline_version: number
           prime_annuelle: number | null
           prime_mensuelle: number | null
           prime_semestrielle: number | null
           prime_trimestrielle: number | null
           priorite: string | null
+          prochaine_action: string | null
+          prochaine_action_le: string | null
           produit_id: string | null
           projet_contexte: string | null
           projet_etat: string | null
@@ -3260,14 +3807,25 @@ export type Database = {
           statut: Database["public"]["Enums"]["dossier_statut"]
           type_assurance: string
           updated_at: string
+          webinaire_session_id: string | null
         }
         Insert: {
           accuse_reception_envoye_le?: string | null
+          acquisition_audience?: string | null
+          acquisition_campagne_id?: string | null
+          acquisition_detail?: string | null
+          acquisition_source?: string | null
           age?: number | null
           analyse_ia?: Json | null
           analyse_ia_le?: string | null
           analyse_ia_modele?: string | null
           apporteur_id?: string | null
+          blocage_actif?: boolean
+          blocage_code?: string | null
+          blocage_depuis?: string | null
+          blocage_element_attendu?: string | null
+          blocage_motif?: string | null
+          blocage_responsable?: string | null
           cadre_financement?: string | null
           capital?: number | null
           chance_reussite?: string | null
@@ -3289,11 +3847,16 @@ export type Database = {
           id?: string
           mode_recommandation?: string
           notes?: string | null
+          parrainage_id?: string | null
+          pipeline_etape?: string | null
+          pipeline_version?: number
           prime_annuelle?: number | null
           prime_mensuelle?: number | null
           prime_semestrielle?: number | null
           prime_trimestrielle?: number | null
           priorite?: string | null
+          prochaine_action?: string | null
+          prochaine_action_le?: string | null
           produit_id?: string | null
           projet_contexte?: string | null
           projet_etat?: string | null
@@ -3310,14 +3873,25 @@ export type Database = {
           statut?: Database["public"]["Enums"]["dossier_statut"]
           type_assurance?: string
           updated_at?: string
+          webinaire_session_id?: string | null
         }
         Update: {
           accuse_reception_envoye_le?: string | null
+          acquisition_audience?: string | null
+          acquisition_campagne_id?: string | null
+          acquisition_detail?: string | null
+          acquisition_source?: string | null
           age?: number | null
           analyse_ia?: Json | null
           analyse_ia_le?: string | null
           analyse_ia_modele?: string | null
           apporteur_id?: string | null
+          blocage_actif?: boolean
+          blocage_code?: string | null
+          blocage_depuis?: string | null
+          blocage_element_attendu?: string | null
+          blocage_motif?: string | null
+          blocage_responsable?: string | null
           cadre_financement?: string | null
           capital?: number | null
           chance_reussite?: string | null
@@ -3339,11 +3913,16 @@ export type Database = {
           id?: string
           mode_recommandation?: string
           notes?: string | null
+          parrainage_id?: string | null
+          pipeline_etape?: string | null
+          pipeline_version?: number
           prime_annuelle?: number | null
           prime_mensuelle?: number | null
           prime_semestrielle?: number | null
           prime_trimestrielle?: number | null
           priorite?: string | null
+          prochaine_action?: string | null
+          prochaine_action_le?: string | null
           produit_id?: string | null
           projet_contexte?: string | null
           projet_etat?: string | null
@@ -3360,6 +3939,7 @@ export type Database = {
           statut?: Database["public"]["Enums"]["dossier_statut"]
           type_assurance?: string
           updated_at?: string
+          webinaire_session_id?: string | null
         }
         Relationships: [
           {
@@ -3377,10 +3957,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "dossiers_parrainage_id_fkey"
+            columns: ["parrainage_id"]
+            isOneToOne: false
+            referencedRelation: "parrainages"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "dossiers_produit_id_fkey"
             columns: ["produit_id"]
             isOneToOne: false
             referencedRelation: "produits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dossiers_webinaire_session_id_fkey"
+            columns: ["webinaire_session_id"]
+            isOneToOne: false
+            referencedRelation: "webinaire_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -3809,6 +4403,163 @@ export type Database = {
             columns: ["tiers_id"]
             isOneToOne: false
             referencedRelation: "tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_charges: {
+        Row: {
+          business: string | null
+          categorie: string
+          created_at: string
+          date_echeance: string | null
+          date_facture: string | null
+          date_paiement: string | null
+          devise: string
+          id: string
+          montant: number
+          notes: string | null
+          periode: string | null
+          reference_externe: string | null
+          source: string | null
+          statut: string
+          tiers_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          business?: string | null
+          categorie: string
+          created_at?: string
+          date_echeance?: string | null
+          date_facture?: string | null
+          date_paiement?: string | null
+          devise?: string
+          id?: string
+          montant: number
+          notes?: string | null
+          periode?: string | null
+          reference_externe?: string | null
+          source?: string | null
+          statut?: string
+          tiers_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business?: string | null
+          categorie?: string
+          created_at?: string
+          date_echeance?: string | null
+          date_facture?: string | null
+          date_paiement?: string | null
+          devise?: string
+          id?: string
+          montant?: number
+          notes?: string | null
+          periode?: string | null
+          reference_externe?: string | null
+          source?: string | null
+          statut?: string
+          tiers_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_charges_tiers_id_fkey"
+            columns: ["tiers_id"]
+            isOneToOne: false
+            referencedRelation: "tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_revenus: {
+        Row: {
+          beneficiaire_id: string | null
+          commission_id: string | null
+          compagnie_id: string | null
+          contrat_id: string | null
+          created_at: string
+          date_encaissement: string | null
+          date_facture: string | null
+          date_prevue: string | null
+          devise: string
+          dossier_id: string | null
+          id: string
+          montant: number
+          notes: string | null
+          reference_externe: string | null
+          source: string | null
+          statut: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          beneficiaire_id?: string | null
+          commission_id?: string | null
+          compagnie_id?: string | null
+          contrat_id?: string | null
+          created_at?: string
+          date_encaissement?: string | null
+          date_facture?: string | null
+          date_prevue?: string | null
+          devise?: string
+          dossier_id?: string | null
+          id?: string
+          montant: number
+          notes?: string | null
+          reference_externe?: string | null
+          source?: string | null
+          statut?: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          beneficiaire_id?: string | null
+          commission_id?: string | null
+          compagnie_id?: string | null
+          contrat_id?: string | null
+          created_at?: string
+          date_encaissement?: string | null
+          date_facture?: string | null
+          date_prevue?: string | null
+          devise?: string
+          dossier_id?: string | null
+          id?: string
+          montant?: number
+          notes?: string | null
+          reference_externe?: string | null
+          source?: string | null
+          statut?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_revenus_commission_id_fkey"
+            columns: ["commission_id"]
+            isOneToOne: false
+            referencedRelation: "commissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_revenus_compagnie_id_fkey"
+            columns: ["compagnie_id"]
+            isOneToOne: false
+            referencedRelation: "compagnies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_revenus_contrat_id_fkey"
+            columns: ["contrat_id"]
+            isOneToOne: false
+            referencedRelation: "contrats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_revenus_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
             referencedColumns: ["id"]
           },
         ]
@@ -4327,6 +5078,79 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_events: {
+        Row: {
+          audience: string | null
+          campagne_id: string | null
+          client_id: string | null
+          dossier_id: string | null
+          email: string | null
+          event_type: string
+          id: string
+          occurred_at: string
+          payload: Json
+          processed_at: string | null
+          provider: string
+          provider_event_id: string | null
+          source: string | null
+          webinaire_session_id: string | null
+        }
+        Insert: {
+          audience?: string | null
+          campagne_id?: string | null
+          client_id?: string | null
+          dossier_id?: string | null
+          email?: string | null
+          event_type: string
+          id?: string
+          occurred_at?: string
+          payload?: Json
+          processed_at?: string | null
+          provider: string
+          provider_event_id?: string | null
+          source?: string | null
+          webinaire_session_id?: string | null
+        }
+        Update: {
+          audience?: string | null
+          campagne_id?: string | null
+          client_id?: string | null
+          dossier_id?: string | null
+          email?: string | null
+          event_type?: string
+          id?: string
+          occurred_at?: string
+          payload?: Json
+          processed_at?: string | null
+          provider?: string
+          provider_event_id?: string | null
+          source?: string | null
+          webinaire_session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_events_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_events_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_events_webinaire_session_id_fkey"
+            columns: ["webinaire_session_id"]
+            isOneToOne: false
+            referencedRelation: "webinaire_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           auteur_id: string
@@ -4497,6 +5321,163 @@ export type Database = {
           },
         ]
       }
+      organisation_contacts: {
+        Row: {
+          actif: boolean
+          created_at: string
+          email: string | null
+          fonction: string | null
+          id: string
+          nom: string
+          notes: string | null
+          organisation_id: string
+          prenom: string | null
+          principal: boolean
+          service: string | null
+          telephone: string | null
+          type_contact: string
+          updated_at: string
+        }
+        Insert: {
+          actif?: boolean
+          created_at?: string
+          email?: string | null
+          fonction?: string | null
+          id?: string
+          nom: string
+          notes?: string | null
+          organisation_id: string
+          prenom?: string | null
+          principal?: boolean
+          service?: string | null
+          telephone?: string | null
+          type_contact?: string
+          updated_at?: string
+        }
+        Update: {
+          actif?: boolean
+          created_at?: string
+          email?: string | null
+          fonction?: string | null
+          id?: string
+          nom?: string
+          notes?: string | null
+          organisation_id?: string
+          prenom?: string | null
+          principal?: boolean
+          service?: string | null
+          telephone?: string | null
+          type_contact?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organisation_contacts_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organisation_roles: {
+        Row: {
+          created_at: string
+          date_debut: string | null
+          date_fin: string | null
+          id: string
+          notes: string | null
+          organisation_id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          date_debut?: string | null
+          date_fin?: string | null
+          id?: string
+          notes?: string | null
+          organisation_id: string
+          role: string
+        }
+        Update: {
+          created_at?: string
+          date_debut?: string | null
+          date_fin?: string | null
+          id?: string
+          notes?: string | null
+          organisation_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organisation_roles_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organisations: {
+        Row: {
+          adresse: string | null
+          code_postal: string | null
+          created_at: string
+          email_operationnel: string | null
+          id: string
+          nom: string
+          notes: string | null
+          numero_tva: string | null
+          pays: string | null
+          portail_url: string | null
+          siret: string | null
+          site_web: string | null
+          statut: string
+          telephone_operationnel: string | null
+          type: string
+          updated_at: string
+          ville: string | null
+        }
+        Insert: {
+          adresse?: string | null
+          code_postal?: string | null
+          created_at?: string
+          email_operationnel?: string | null
+          id?: string
+          nom: string
+          notes?: string | null
+          numero_tva?: string | null
+          pays?: string | null
+          portail_url?: string | null
+          siret?: string | null
+          site_web?: string | null
+          statut?: string
+          telephone_operationnel?: string | null
+          type?: string
+          updated_at?: string
+          ville?: string | null
+        }
+        Update: {
+          adresse?: string | null
+          code_postal?: string | null
+          created_at?: string
+          email_operationnel?: string | null
+          id?: string
+          nom?: string
+          notes?: string | null
+          numero_tva?: string | null
+          pays?: string | null
+          portail_url?: string | null
+          siret?: string | null
+          site_web?: string | null
+          statut?: string
+          telephone_operationnel?: string | null
+          type?: string
+          updated_at?: string
+          ville?: string | null
+        }
+        Relationships: []
+      }
       paiements_partenaires: {
         Row: {
           beneficiaire_id: string
@@ -4541,6 +5522,74 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      parrainages: {
+        Row: {
+          actif_at: string | null
+          clicked_at: string | null
+          code: string
+          consentement_parrain: boolean
+          etude_at: string | null
+          fic_at: string | null
+          filleul_email: string
+          id: string
+          invited_at: string
+          metadata: Json
+          parrain_client_id: string
+          prospect_at: string | null
+          recompense_at: string | null
+          recompense_statut: string
+          source: string
+          souscription_at: string | null
+          statut: string
+        }
+        Insert: {
+          actif_at?: string | null
+          clicked_at?: string | null
+          code: string
+          consentement_parrain?: boolean
+          etude_at?: string | null
+          fic_at?: string | null
+          filleul_email: string
+          id?: string
+          invited_at?: string
+          metadata?: Json
+          parrain_client_id: string
+          prospect_at?: string | null
+          recompense_at?: string | null
+          recompense_statut?: string
+          source?: string
+          souscription_at?: string | null
+          statut?: string
+        }
+        Update: {
+          actif_at?: string | null
+          clicked_at?: string | null
+          code?: string
+          consentement_parrain?: boolean
+          etude_at?: string | null
+          fic_at?: string | null
+          filleul_email?: string
+          id?: string
+          invited_at?: string
+          metadata?: Json
+          parrain_client_id?: string
+          prospect_at?: string | null
+          recompense_at?: string | null
+          recompense_statut?: string
+          source?: string
+          souscription_at?: string | null
+          statut?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parrainages_parrain_client_id_fkey"
+            columns: ["parrain_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plan_comptable: {
         Row: {
@@ -4740,10 +5789,61 @@ export type Database = {
         }
         Relationships: []
       }
+      produit_conditions: {
+        Row: {
+          commission_taux: number | null
+          conditions: Json
+          created_at: string
+          date_debut: string
+          date_fin: string | null
+          frais_arbitrage_pct: number | null
+          frais_gestion_pct: number | null
+          frais_versement_pct: number | null
+          id: string
+          produit_id: string
+          source: string | null
+        }
+        Insert: {
+          commission_taux?: number | null
+          conditions?: Json
+          created_at?: string
+          date_debut: string
+          date_fin?: string | null
+          frais_arbitrage_pct?: number | null
+          frais_gestion_pct?: number | null
+          frais_versement_pct?: number | null
+          id?: string
+          produit_id: string
+          source?: string | null
+        }
+        Update: {
+          commission_taux?: number | null
+          conditions?: Json
+          created_at?: string
+          date_debut?: string
+          date_fin?: string | null
+          frais_arbitrage_pct?: number | null
+          frais_gestion_pct?: number | null
+          frais_versement_pct?: number | null
+          id?: string
+          produit_id?: string
+          source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produit_conditions_produit_id_fkey"
+            columns: ["produit_id"]
+            isOneToOne: false
+            referencedRelation: "produits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       produit_documents: {
         Row: {
           created_at: string
           date_effet: string | null
+          date_fin: string | null
           drive_chemin: string | null
           drive_file_id: string | null
           drive_url: string | null
@@ -4752,6 +5852,7 @@ export type Database = {
           mime_type: string | null
           nom: string
           produit_id: string
+          statut: string
           storage_path: string | null
           taille_bytes: number | null
           type: Database["public"]["Enums"]["produit_document_type"]
@@ -4762,6 +5863,7 @@ export type Database = {
         Insert: {
           created_at?: string
           date_effet?: string | null
+          date_fin?: string | null
           drive_chemin?: string | null
           drive_file_id?: string | null
           drive_url?: string | null
@@ -4770,6 +5872,7 @@ export type Database = {
           mime_type?: string | null
           nom: string
           produit_id: string
+          statut?: string
           storage_path?: string | null
           taille_bytes?: number | null
           type: Database["public"]["Enums"]["produit_document_type"]
@@ -4780,6 +5883,7 @@ export type Database = {
         Update: {
           created_at?: string
           date_effet?: string | null
+          date_fin?: string | null
           drive_chemin?: string | null
           drive_file_id?: string | null
           drive_url?: string | null
@@ -4788,6 +5892,7 @@ export type Database = {
           mime_type?: string | null
           nom?: string
           produit_id?: string
+          statut?: string
           storage_path?: string | null
           taille_bytes?: number | null
           type?: Database["public"]["Enums"]["produit_document_type"]
@@ -5092,6 +6197,7 @@ export type Database = {
           image_url: string | null
           mode_tarification: string
           nom: string
+          organisation_id: string | null
           periodicite_cotisation: string
           points_forts: string | null
           points_vigilance: string | null
@@ -5121,6 +6227,7 @@ export type Database = {
           image_url?: string | null
           mode_tarification?: string
           nom: string
+          organisation_id?: string | null
           periodicite_cotisation?: string
           points_forts?: string | null
           points_vigilance?: string | null
@@ -5150,6 +6257,7 @@ export type Database = {
           image_url?: string | null
           mode_tarification?: string
           nom?: string
+          organisation_id?: string | null
           periodicite_cotisation?: string
           points_forts?: string | null
           points_vigilance?: string | null
@@ -5178,6 +6286,13 @@ export type Database = {
             columns: ["famille_requise_id"]
             isOneToOne: false
             referencedRelation: "produit_familles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produits_organisation_id_fkey"
+            columns: ["organisation_id"]
+            isOneToOne: false
+            referencedRelation: "organisations"
             referencedColumns: ["id"]
           },
           {
@@ -5271,6 +6386,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "projets_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      public_intake_idempotency: {
+        Row: {
+          client_id: string | null
+          completed_at: string | null
+          created_at: string
+          dossier_ref: string | null
+          endpoint: string
+          idempotency_key: string
+          status: string
+        }
+        Insert: {
+          client_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          dossier_ref?: string | null
+          endpoint: string
+          idempotency_key: string
+          status?: string
+        }
+        Update: {
+          client_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          dossier_ref?: string | null
+          endpoint?: string
+          idempotency_key?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "public_intake_idempotency_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
@@ -5502,6 +6655,62 @@ export type Database = {
           version?: number
         }
         Relationships: []
+      }
+      reglementaire_applicabilites: {
+        Row: {
+          activites_concernees: string | null
+          conclusion_agent: string | null
+          created_at: string
+          entites_concernees: string | null
+          id: string
+          niveau_confiance: string | null
+          perimetre: string
+          produits_concernes: string | null
+          statut: string
+          validation_humaine: boolean
+          valide_le: string | null
+          valide_par: string | null
+          veille_id: string
+        }
+        Insert: {
+          activites_concernees?: string | null
+          conclusion_agent?: string | null
+          created_at?: string
+          entites_concernees?: string | null
+          id?: string
+          niveau_confiance?: string | null
+          perimetre: string
+          produits_concernes?: string | null
+          statut?: string
+          validation_humaine?: boolean
+          valide_le?: string | null
+          valide_par?: string | null
+          veille_id: string
+        }
+        Update: {
+          activites_concernees?: string | null
+          conclusion_agent?: string | null
+          created_at?: string
+          entites_concernees?: string | null
+          id?: string
+          niveau_confiance?: string | null
+          perimetre?: string
+          produits_concernes?: string | null
+          statut?: string
+          validation_humaine?: boolean
+          valide_le?: string | null
+          valide_par?: string | null
+          veille_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reglementaire_applicabilites_veille_id_fkey"
+            columns: ["veille_id"]
+            isOneToOne: false
+            referencedRelation: "veille_reglementaire"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rgpd_demandes_droits: {
         Row: {
@@ -5971,45 +7180,87 @@ export type Database = {
       taches: {
         Row: {
           assignee_id: string | null
+          blocage_motif: string | null
           client_id: string | null
+          compagnie_id: string | null
+          contrat_id: string | null
           created_at: string
           created_by: string | null
+          cree_par_agent: boolean
           description: string | null
+          document_id: string | null
           dossier_id: string | null
           echeance: string | null
+          email_id: string | null
           id: string
+          idempotency_key: string | null
+          legacy_orpheline: boolean
+          orchestration_version: number
           priorite: Database["public"]["Enums"]["tache_priorite"]
+          resultat_attendu: string | null
+          resultat_obtenu: string | null
+          source: string | null
+          source_event_id: string | null
           statut: Database["public"]["Enums"]["tache_statut"]
+          terminee_le: string | null
           titre: string
           type: string
           updated_at: string
         }
         Insert: {
           assignee_id?: string | null
+          blocage_motif?: string | null
           client_id?: string | null
+          compagnie_id?: string | null
+          contrat_id?: string | null
           created_at?: string
           created_by?: string | null
+          cree_par_agent?: boolean
           description?: string | null
+          document_id?: string | null
           dossier_id?: string | null
           echeance?: string | null
+          email_id?: string | null
           id?: string
+          idempotency_key?: string | null
+          legacy_orpheline?: boolean
+          orchestration_version?: number
           priorite?: Database["public"]["Enums"]["tache_priorite"]
+          resultat_attendu?: string | null
+          resultat_obtenu?: string | null
+          source?: string | null
+          source_event_id?: string | null
           statut?: Database["public"]["Enums"]["tache_statut"]
+          terminee_le?: string | null
           titre: string
           type?: string
           updated_at?: string
         }
         Update: {
           assignee_id?: string | null
+          blocage_motif?: string | null
           client_id?: string | null
+          compagnie_id?: string | null
+          contrat_id?: string | null
           created_at?: string
           created_by?: string | null
+          cree_par_agent?: boolean
           description?: string | null
+          document_id?: string | null
           dossier_id?: string | null
           echeance?: string | null
+          email_id?: string | null
           id?: string
+          idempotency_key?: string | null
+          legacy_orpheline?: boolean
+          orchestration_version?: number
           priorite?: Database["public"]["Enums"]["tache_priorite"]
+          resultat_attendu?: string | null
+          resultat_obtenu?: string | null
+          source?: string | null
+          source_event_id?: string | null
           statut?: Database["public"]["Enums"]["tache_statut"]
+          terminee_le?: string | null
           titre?: string
           type?: string
           updated_at?: string
@@ -6023,10 +7274,38 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "taches_compagnie_id_fkey"
+            columns: ["compagnie_id"]
+            isOneToOne: false
+            referencedRelation: "compagnies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "taches_contrat_id_fkey"
+            columns: ["contrat_id"]
+            isOneToOne: false
+            referencedRelation: "contrats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "taches_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "taches_dossier_id_fkey"
             columns: ["dossier_id"]
             isOneToOne: false
             referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "taches_email_id_fkey"
+            columns: ["email_id"]
+            isOneToOne: false
+            referencedRelation: "crm_emails"
             referencedColumns: ["id"]
           },
         ]
@@ -6108,42 +7387,270 @@ export type Database = {
       }
       veille_reglementaire: {
         Row: {
+          analyse_agent: string | null
+          autorite: string | null
           created_at: string
+          date_entree_vigueur: string | null
+          date_prochaine_revue: string | null
+          date_publication: string | null
           date_reception: string
           document_source_url: string | null
+          domaine: string | null
           gmail_message_id: string | null
           id: string
           impact_assurance: boolean
+          nature: string
+          reference: string | null
           resume: string | null
           source: string
           statut: string
           sujet: string
           updated_at: string
+          validation_humaine: boolean
+          version: string | null
         }
         Insert: {
+          analyse_agent?: string | null
+          autorite?: string | null
           created_at?: string
+          date_entree_vigueur?: string | null
+          date_prochaine_revue?: string | null
+          date_publication?: string | null
           date_reception?: string
           document_source_url?: string | null
+          domaine?: string | null
           gmail_message_id?: string | null
           id?: string
           impact_assurance?: boolean
+          nature?: string
+          reference?: string | null
           resume?: string | null
           source?: string
           statut?: string
           sujet: string
           updated_at?: string
+          validation_humaine?: boolean
+          version?: string | null
         }
         Update: {
+          analyse_agent?: string | null
+          autorite?: string | null
           created_at?: string
+          date_entree_vigueur?: string | null
+          date_prochaine_revue?: string | null
+          date_publication?: string | null
           date_reception?: string
           document_source_url?: string | null
+          domaine?: string | null
           gmail_message_id?: string | null
           id?: string
           impact_assurance?: boolean
+          nature?: string
+          reference?: string | null
           resume?: string | null
           source?: string
           statut?: string
           sujet?: string
+          updated_at?: string
+          validation_humaine?: boolean
+          version?: string | null
+        }
+        Relationships: []
+      }
+      webinaire_participants: {
+        Row: {
+          audience: string | null
+          ca_at: string | null
+          ca_montant: number | null
+          campagne_id: string | null
+          clic_at: string | null
+          client_id: string | null
+          contrat_at: string | null
+          created_at: string
+          dossier_id: string | null
+          email: string
+          etape_courante: string
+          etude_at: string | null
+          fic_at: string | null
+          formulaire_debut_at: string | null
+          formulaire_fin_at: string | null
+          id: string
+          inscription_at: string | null
+          nom: string | null
+          presence_at: string | null
+          session_id: string
+          signature_at: string | null
+          source: string | null
+          telephone: string | null
+          updated_at: string
+        }
+        Insert: {
+          audience?: string | null
+          ca_at?: string | null
+          ca_montant?: number | null
+          campagne_id?: string | null
+          clic_at?: string | null
+          client_id?: string | null
+          contrat_at?: string | null
+          created_at?: string
+          dossier_id?: string | null
+          email: string
+          etape_courante?: string
+          etude_at?: string | null
+          fic_at?: string | null
+          formulaire_debut_at?: string | null
+          formulaire_fin_at?: string | null
+          id?: string
+          inscription_at?: string | null
+          nom?: string | null
+          presence_at?: string | null
+          session_id: string
+          signature_at?: string | null
+          source?: string | null
+          telephone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          audience?: string | null
+          ca_at?: string | null
+          ca_montant?: number | null
+          campagne_id?: string | null
+          clic_at?: string | null
+          client_id?: string | null
+          contrat_at?: string | null
+          created_at?: string
+          dossier_id?: string | null
+          email?: string
+          etape_courante?: string
+          etude_at?: string | null
+          fic_at?: string | null
+          formulaire_debut_at?: string | null
+          formulaire_fin_at?: string | null
+          id?: string
+          inscription_at?: string | null
+          nom?: string | null
+          presence_at?: string | null
+          session_id?: string
+          signature_at?: string | null
+          source?: string | null
+          telephone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webinaire_participants_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "webinaire_participants_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "webinaire_participants_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "webinaire_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webinaire_sessions: {
+        Row: {
+          audience: string | null
+          campagne_id: string | null
+          created_at: string
+          description_public: string | null
+          id: string
+          occurrence_at: string | null
+          parametres: Json
+          replay_url: string | null
+          statut: string
+          titre_public: string | null
+          updated_at: string
+          video_url: string | null
+          webinaire_id: string
+        }
+        Insert: {
+          audience?: string | null
+          campagne_id?: string | null
+          created_at?: string
+          description_public?: string | null
+          id?: string
+          occurrence_at?: string | null
+          parametres?: Json
+          replay_url?: string | null
+          statut?: string
+          titre_public?: string | null
+          updated_at?: string
+          video_url?: string | null
+          webinaire_id: string
+        }
+        Update: {
+          audience?: string | null
+          campagne_id?: string | null
+          created_at?: string
+          description_public?: string | null
+          id?: string
+          occurrence_at?: string | null
+          parametres?: Json
+          replay_url?: string | null
+          statut?: string
+          titre_public?: string | null
+          updated_at?: string
+          video_url?: string | null
+          webinaire_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webinaire_sessions_webinaire_id_fkey"
+            columns: ["webinaire_id"]
+            isOneToOne: false
+            referencedRelation: "webinaires"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webinaires: {
+        Row: {
+          actif: boolean
+          created_at: string
+          description: string | null
+          emails_config: Json
+          formulaire_config: Json
+          id: string
+          parametres_commerciaux: Json
+          titre: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          actif?: boolean
+          created_at?: string
+          description?: string | null
+          emails_config?: Json
+          formulaire_config?: Json
+          id?: string
+          parametres_commerciaux?: Json
+          titre: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          actif?: boolean
+          created_at?: string
+          description?: string | null
+          emails_config?: Json
+          formulaire_config?: Json
+          id?: string
+          parametres_commerciaux?: Json
+          titre?: string
+          type?: string
           updated_at?: string
         }
         Relationships: []
@@ -6234,12 +7741,17 @@ export type Database = {
         Args: { _annee: number; _prefixe: string }
         Returns: string
       }
+      get_private_runtime_secret: { Args: { p_name: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      invoke_crm_public_job: {
+        Args: { p_body?: Json; p_path: string; p_timeout_ms?: number }
+        Returns: number
       }
       log_audit: {
         Args: {
