@@ -51,7 +51,7 @@ export function CommissionContratCard({
       ]);
       setTypeAssurance((dossier?.type_assurance as string | null) ?? null);
       setEconomieDossier(dossier?.economie_estimee != null ? Number(dossier.economie_estimee) : null);
-      const rows = (devis ?? []) as typeof devis;
+      const rows = devis ?? [];
       setNbDevis(rows.length);
       setDevisControle(
         rows.find((d) => d.est_retenu) ?? rows[0] ?? null,
