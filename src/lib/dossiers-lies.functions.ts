@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { withPendingSchema } from "@/lib/pending-schema-client";
 
 const lierSchema = z.object({
   dossier_id_a: z.string().uuid(),
@@ -18,7 +19,8 @@ export const lierDossiers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => lierSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+    const { userId } = context;
+    const supabase = withPendingSchema(context.supabase);
     if (data.dossier_id_a === data.dossier_id_b) throw new Error("Un dossier ne peut pas être lié à lui-même");
 
     const [id1, id2] = [data.dossier_id_a, data.dossier_id_b].sort();
@@ -39,7 +41,7 @@ export const listerDossiersLies = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ dossier_id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const supabase = withPendingSchema(context.supabase);
     const { data: liens } = await supabase
       .from("dossiers_lies")
       .select("id, motif, dossier_id_1, dossier_id_2")

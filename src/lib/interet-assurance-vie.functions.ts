@@ -3,6 +3,7 @@ import { z } from "zod";
 import { sendTemplateEmail } from "@/lib/email-templates/send-email";
 import { SITE } from "@/lib/site";
 import { appUrl } from "@/lib/app-url";
+import { withPendingSchema } from "@/lib/pending-schema-client";
 
 const schema = z.object({
   devoir_id: z.string().uuid(),
@@ -23,7 +24,8 @@ const schema = z.object({
 export const signalerInteretAssuranceVie = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => schema.parse(input))
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin: generatedAdmin } = await import("@/integrations/supabase/client.server");
+    const supabaseAdmin = withPendingSchema(generatedAdmin);
 
     const { data: devoir, error: errDevoir } = await supabaseAdmin
       .from("devoirs_conseil")

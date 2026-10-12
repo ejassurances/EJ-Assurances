@@ -11,6 +11,7 @@ import {
 import { BRANCHES_CREATION } from "@/lib/recueil-besoins-schemas";
 import { piecesRequisesPour } from "@/lib/pieces-requises";
 import { SITE } from "@/lib/site";
+import { withPendingSchema } from "@/lib/pending-schema-client";
 
 const champOptionnel = (max: number) => z.string().trim().max(max).optional().nullable();
 
@@ -117,7 +118,7 @@ export const creerClientDossierRapide = createServerFn({ method: "POST" })
             obligatoire,
           }),
         );
-        const { data: resultat, error } = await supabaseAdmin.rpc("creer_client_dossier_rapide", {
+        const { data: resultat, error } = await withPendingSchema(supabaseAdmin).rpc("creer_client_dossier_rapide", {
           p_client: {
             ...payload.client,
             marque: "ej_assurances",
