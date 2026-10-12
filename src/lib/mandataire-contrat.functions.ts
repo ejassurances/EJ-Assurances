@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
+import { withPendingSchema } from "@/lib/pending-schema-client";
 
 async function estAdmin(supabase: any, userId: string) {
   const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId).eq("role", "admin");
@@ -24,7 +25,8 @@ export const creerContratMandataire = createServerFn({ method: "POST" })
       return { ok: false as const, error: "Action réservée aux administrateurs." };
     }
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin: generatedAdmin } = await import("@/integrations/supabase/client.server");
+    const supabaseAdmin = withPendingSchema(generatedAdmin);
     const { data: profilM } = await supabaseAdmin
       .from("mandataires_profils")
       .select("user_id, taux_commission, zone_non_concurrence")
@@ -96,7 +98,8 @@ export const creerContratMandataire = createServerFn({ method: "POST" })
 export const monContratAttente = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase, userId } = context;
+    const { userId } = context;
+    const supabase = withPendingSchema(context.supabase);
     const { data } = await supabase
       .from("mandataires_contrats")
       .select("id, reference, contenu, statut, envoye_le")
@@ -116,7 +119,8 @@ export const signerContratMandataire = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => signerSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+    const { userId } = context;
+    const supabase = withPendingSchema(context.supabase);
     const { error } = await supabase
       .from("mandataires_contrats")
       .update({
@@ -138,7 +142,8 @@ export const pdfContratMandataire = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ contrat_id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+    const { userId } = context;
+    const supabase = withPendingSchema(context.supabase);
     const { data: contrat, error } = await supabase
       .from("mandataires_contrats")
       .select("reference, contenu, hash, signature_png, signed_at, signed_ip")

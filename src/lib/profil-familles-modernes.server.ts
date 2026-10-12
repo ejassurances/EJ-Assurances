@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { sendTemplateEmail } from "@/lib/email-templates/send-email";
 import { SITE } from "@/lib/site";
+import { withPendingSchema } from "@/lib/pending-schema-client";
 
 const schema = z.object({
   nom: z.string().trim().min(1).max(200),
@@ -89,7 +90,7 @@ export const creerProfilFamillesModernes = createServerFn({ method: "POST" })
       if (!errEmp && dossierEmp) {
         dossierEmprunteurRef = dossierEmp.reference;
         const [id1, id2] = [dossierVie.id, dossierEmp.id].sort();
-        await supabaseAdmin.from("dossiers_lies").insert({
+        await withPendingSchema(supabaseAdmin).from("dossiers_lies").insert({
           dossier_id_1: id1,
           dossier_id_2: id2,
           motif: "Étude assurance emprunteur demandée depuis le formulaire familles modernes",

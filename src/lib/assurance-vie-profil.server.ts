@@ -71,11 +71,13 @@ export const creerProfilAssuranceVie = createServerFn({ method: "POST" })
         .eq("id", data.dossier_id);
       if (errMaj) throw new Error(errMaj.message);
 
-      const { data: client } = await supabaseAdmin
-        .from("clients")
-        .select("reference")
-        .eq("id", existant.client_id)
-        .maybeSingle();
+      const { data: client } = existant.client_id
+        ? await supabaseAdmin
+            .from("clients")
+            .select("reference")
+            .eq("id", existant.client_id)
+            .maybeSingle()
+        : { data: null };
 
       return {
         client_id: existant.client_id,

@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Corriger les erreurs de compilation existantes sans changer les données — compilation OK et connexion affichée sans erreur.
+- [ ] Ajouter les certificats UGIP BELAYGUES / HAMMI — validation de création des fiches clients en attente.
+
 - [x] Refonte ciblée de la fiche client 360 selon la direction dense validée
 - [x] Vérification ordinateur/mobile et capture finale
 
