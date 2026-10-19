@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 
 import type { NavGroup } from "@/lib/navigation";
@@ -19,9 +19,27 @@ export function ModuleColumn({
   taskCount?: number | null;
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [openGroups, setOpenGroups] = useState<Partial<Record<NavGroup["key"], boolean>>>(
+    { principal: true },
+  );
 
   const estActif = (to: string, exact?: boolean) =>
     exact ? pathname === to : pathname === to || pathname.startsWith(`${to}/`);
+
+  useEffect(() => {
+    const activeGroup = groups.find((group) =>
+      group.items.some((item) =>
+        item.exact
+          ? pathname === item.to
+          : pathname === item.to || pathname.startsWith(`${item.to}/`),
+      ),
+    );
+    if (activeGroup) {
+      setOpenGroups((current) =>
+        current[activeGroup.key] ? current : { ...current, [activeGroup.key]: true },
+      );
+    }
+  }, [groups, pathname]);
 
   return (
     <aside
@@ -58,12 +76,31 @@ export function ModuleColumn({
       >
         {groups.map((group) => (
           <section key={group.key} aria-label={group.label}>
-            <p
-              className={`px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-muted ${collapsed ? "lg:sr-only" : ""}`}
+            {collapsed ? (
+              <p className="sr-only">{group.label}</p>
+            ) : (
+              <button
+                type="button"
+                aria-expanded={!!openGroups[group.key]}
+                aria-controls={`crm-navigation-group-${group.key}`}
+                onClick={() =>
+                  setOpenGroups((current) => ({
+                    ...current,
+                    [group.key]: !current[group.key],
+                  }))
+                }
+                className="flex w-full items-center justify-between rounded-md px-3 pb-2 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-muted transition-colors hover:text-ink"
+              >
+                <span>{group.label}</span>
+                <span aria-hidden="true" className="text-sm leading-none">
+                  {openGroups[group.key] ? "−" : "+"}
+                </span>
+              </button>
+            )}
+            <ul
+              id={`crm-navigation-group-${group.key}`}
+              className={`space-y-1 ${!collapsed && !openGroups[group.key] ? "hidden" : ""}`}
             >
-              {group.label}
-            </p>
-            <ul className="space-y-1">
               {group.items.map((item) => {
                 const active = estActif(item.to, item.exact);
                 const badge = item.label === "Tâches" && taskCount ? taskCount : null;

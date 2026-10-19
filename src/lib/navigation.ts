@@ -50,6 +50,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Dossiers", to: "/espace/dossiers", icon: IconFolder, roles: STAFF },
       { label: "Tâches", to: "/espace/taches", icon: IconChecklist, roles: STAFF },
       { label: "Emails", to: "/espace/relation-client", icon: IconMail, roles: STAFF },
+      { label: "Sinistres", to: "/espace/sinistres", icon: IconLifebuoy, roles: STAFF },
       { label: "Mon espace", to: "/espace/mon-espace", icon: IconAddressBook, roles: ["client"] },
       {
         label: "Mes recommandations",
@@ -71,20 +72,12 @@ export const NAV_GROUPS: NavGroup[] = [
         roles: STAFF,
       },
       { label: "Prescripteurs", to: "/espace/prescripteurs", icon: IconAddressBook, roles: STAFF },
-      { label: "Sinistres", to: "/espace/sinistres", icon: IconLifebuoy, roles: STAFF },
       {
-        label: "Compagnies & produits",
-        to: "/espace/compagnies",
-        icon: IconBuildingBank,
+        label: "Webinaires & funnel",
+        to: "/espace/webinaires",
+        icon: IconUsersGroup,
         roles: STAFF,
       },
-      {
-        label: "Grilles de garanties",
-        to: "/espace/grilles-garanties",
-        icon: IconChecklist,
-        roles: STAFF,
-      },
-      { label: "Bibliothèque CG", to: "/espace/bibliotheque-cg", icon: IconFileText, roles: STAFF },
       { label: "Contrats", to: "/espace/contrats", icon: IconFolder, roles: STAFF },
       { label: "Souscription Néoliane", to: "/espace/neoliane", icon: IconRobot, roles: STAFF },
     ],
@@ -95,12 +88,6 @@ export const NAV_GROUPS: NavGroup[] = [
     icon: IconChartHistogram,
     items: [
       { label: "Vision direction", to: "/espace/pilotage", icon: IconChartHistogram, roles: STAFF },
-      {
-        label: "Webinaires & funnel",
-        to: "/espace/webinaires",
-        icon: IconUsersGroup,
-        roles: STAFF,
-      },
       { label: "Cockpit CA", to: "/espace/cockpit-ca", icon: IconCoin, roles: STAFF },
       {
         label: "CA prévisionnel",
@@ -124,6 +111,19 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Paramètres", to: "/espace/parametres", icon: IconSettings },
       { label: "Utilisateurs", to: "/espace/utilisateurs", icon: IconUsersGroup, roles: ["admin"] },
+      {
+        label: "Compagnies & produits",
+        to: "/espace/compagnies",
+        icon: IconBuildingBank,
+        roles: STAFF,
+      },
+      {
+        label: "Grilles de garanties",
+        to: "/espace/grilles-garanties",
+        icon: IconChecklist,
+        roles: STAFF,
+      },
+      { label: "Bibliothèque CG", to: "/espace/bibliotheque-cg", icon: IconFileText, roles: STAFF },
       { label: "Conformité", to: "/espace/conformite", icon: IconShieldCheck, roles: STAFF },
       { label: "Modèle DER", to: "/espace/der-modele", icon: IconFileText, roles: STAFF },
       { label: "Journal d’audit", to: "/espace/audit-logs", icon: IconFileText, roles: ["admin"] },
