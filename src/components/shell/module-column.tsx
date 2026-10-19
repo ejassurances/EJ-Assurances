@@ -3,6 +3,8 @@ import { Link } from "@tanstack/react-router";
 
 import type { NavGroup } from "@/lib/navigation";
 
+type OpenGroups = Partial<Record<NavGroup["key"], boolean>>;
+
 export function ModuleColumn({
   groups,
   pathname,
@@ -19,9 +21,7 @@ export function ModuleColumn({
   taskCount?: number | null;
 }) {
   const [collapsed, setCollapsed] = useState(false);
-  const [openGroups, setOpenGroups] = useState<Partial<Record<NavGroup["key"], boolean>>>(
-    { principal: true },
-  );
+  const [openGroups, setOpenGroups] = useState<OpenGroups>({ principal: true });
 
   const estActif = (to: string, exact?: boolean) =>
     exact ? pathname === to : pathname === to || pathname.startsWith(`${to}/`);
