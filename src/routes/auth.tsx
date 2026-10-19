@@ -247,7 +247,7 @@ function AuthPage() {
                   Les accès collaborateurs et les espaces clients sont créés exclusivement sur invitation du cabinet.
                 </p>
               </>
-            ) : forgotOpen ? (
+            ) : (
               <form onSubmit={requestReset} className="space-y-4">
                 <h2 className="font-sans text-base font-semibold text-white">Réinitialiser le mot de passe</h2>
                 <div>
