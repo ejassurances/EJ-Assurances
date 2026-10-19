@@ -7,7 +7,7 @@
     "nodejs_compat_populate_process_env"
   ],
   "main": "@tanstack/react-start/server-entry",
-  "workers_dev": false,
+  "workers_dev": true,
   "preview_urls": false,
   "observability": {
     "enabled": true
