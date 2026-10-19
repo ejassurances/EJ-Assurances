@@ -56,8 +56,6 @@ function CompagniesIndex() {
   const [typePartenaire, setTypePartenaire] = useState<TypePartenaire>("compagnie");
   const [filtreType, setFiltreType] = useState<"tous" | TypePartenaire>("tous");
 
-  const [grilles, setGrilles] = useState<Record<string, { total: number; validees: number }>>({});
-
   async function load() {
     setLoading(true);
     const { data, error } = await supabase
@@ -69,28 +67,8 @@ function CompagniesIndex() {
     setLoading(false);
   }
 
-  /** Couverture des grilles de garanties : indispensable pour que le comparatif IA puisse utiliser un produit. */
-  async function loadGrilles() {
-    const [prod, gar] = await Promise.all([
-      supabase.from("produits").select("id,compagnie_id").neq("statut", "retire"),
-      supabase.from("produit_garanties").select("produit_id").eq("statut", "valide"),
-    ]);
-    const produits = (prod.data as { id: string; compagnie_id: string }[] | null) ?? [];
-    const validees = new Set(
-      ((gar.data as { produit_id: string }[] | null) ?? []).map((g) => g.produit_id),
-    );
-    const map: Record<string, { total: number; validees: number }> = {};
-    for (const p of produits) {
-      const e = (map[p.compagnie_id] ??= { total: 0, validees: 0 });
-      e.total += 1;
-      if (validees.has(p.id)) e.validees += 1;
-    }
-    setGrilles(map);
-  }
-
   useEffect(() => {
     load();
-    loadGrilles();
   }, []);
 
   async function create(e: React.FormEvent) {
@@ -137,7 +115,7 @@ function CompagniesIndex() {
     <div className="space-y-8">
       <PageHeader
         eyebrow="Référentiel"
-        title="Compagnies partenaires"
+        title="Partenaires"
         description="Référentiel des compagnies d'assurance et courtiers grossistes, de leurs produits et de leurs documents contractuels."
         icon={IconBuildingBank}
       />
@@ -152,7 +130,7 @@ function CompagniesIndex() {
       {isAdmin && (
         <form onSubmit={create} className="flex flex-wrap items-end gap-3 rounded-lg border border-line bg-surface p-4">
           <div className="flex-1 min-w-[220px]">
-            <label className="mb-1 block text-xs font-medium text-ink-muted">Nouvelle compagnie</label>
+            <label className="mb-1 block text-xs font-medium text-ink-muted">Nouveau partenaire</label>
             <input
               value={nom}
               onChange={(e) => setNom(e.target.value)}
@@ -224,12 +202,11 @@ function CompagniesIndex() {
           <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-surface text-xs uppercase tracking-wide text-ink-muted">
               <tr>
-                <th className="px-4 py-3 text-left">Compagnie</th>
+                <th className="px-4 py-3 text-left">Partenaire</th>
                 <th className="px-4 py-3 text-left">Type</th>
                 <th className="px-4 py-3 text-left">Contact</th>
                 <th className="px-4 py-3 text-left">Statut</th>
                 <th className="px-4 py-3 text-left">Favorite</th>
-                <th className="px-4 py-3 text-left">Grilles garanties</th>
                 <th className="px-4 py-3 text-left">API</th>
                 <th className="px-4 py-3" />
 
@@ -310,29 +287,6 @@ function CompagniesIndex() {
                     ) : (
                       <span className="text-xs text-ink-muted">—</span>
                     )}
-                  </td>
-
-                  <td className="px-4 py-3 text-xs">
-                    {(() => {
-                      const g = grilles[c.id];
-                      if (!g || g.total === 0) return <span className="text-ink-muted">Aucun produit</span>;
-                      const complet = g.validees === g.total;
-                      return (
-                        <span
-                          className={
-                            "rounded-full px-2 py-0.5 font-medium " +
-                            (complet
-                              ? "bg-emerald-50 text-emerald-800"
-                              : g.validees === 0
-                                ? "bg-red-50 text-red-800"
-                                : "bg-amber-50 text-amber-800")
-                          }
-                          title="Produits dont la grille de garanties est validée (utilisable par le comparatif)"
-                        >
-                          {g.validees}/{g.total} validées
-                        </span>
-                      );
-                    })()}
                   </td>
 
                   <td className="px-4 py-3 text-xs">

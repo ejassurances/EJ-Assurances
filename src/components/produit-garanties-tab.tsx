@@ -248,27 +248,30 @@ export function ProduitGarantiesTab({
     <section className="crm-card space-y-5 p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="font-serif text-lg">{titre ?? `Grille de garanties — ${familleNom ?? grille.libelle}`}</h3>
+          <h3 className="font-serif text-lg">
+            {titre ?? `Garanties du produit — ${familleNom ?? grille.libelle}`}
+          </h3>
           <p className="text-xs text-ink-muted">
-            Structure standardisée (version {grille.version}) commune à toutes les compagnies de cette typologie.
+            Caractéristiques de couverture du produit, renseignées à partir de ses documents contractuels
+            (référentiel version {grille.version}).
           </p>
         </div>
 
         <span className={`rounded-full border px-3 py-1 text-xs font-medium ${validee ? badge("oui") : badge("non")}`}>
           {validee
-            ? `Grille validée${ligne?.valide_le ? ` le ${new Date(ligne.valide_le).toLocaleDateString("fr-FR")}` : ""}`
+            ? `Garanties validées${ligne?.valide_le ? ` le ${new Date(ligne.valide_le).toLocaleDateString("fr-FR")}` : ""}`
             : ligne?.statut === "a_revoir"
-              ? "À revoir (structure mise à jour)"
+              ? "À revoir après mise à jour"
               : ligne
-                ? "Brouillon non validé"
-                : "Aucune grille"}
+                ? "Garanties en brouillon"
+                : "Garanties à renseigner"}
         </span>
       </div>
 
       {!validee && (
         <p className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
-          Grille non validée — la génération du devoir de conseil est bloquée pour ce produit jusqu'à validation
-          humaine de la grille.
+          Les garanties ne sont pas validées. La génération du devoir de conseil reste bloquée pour ce produit
+          jusqu'à leur validation humaine.
         </p>
       )}
 
@@ -568,13 +571,13 @@ export function ProduitGarantiesTab({
                   ? enregistrerFormule("valide")
                   : valider({ data: { ...payload(), proposition_id: proposition?.id ?? null } }),
               modeFormule
-                ? "Grille de la formule validée — elle peut alimenter un devoir de conseil."
-                : "Grille validée — le produit peut alimenter un devoir de conseil.",
+                ? "Garanties de la formule validées — elles peuvent alimenter un devoir de conseil."
+                : "Garanties validées — le produit peut alimenter un devoir de conseil.",
             )
           }
           className="rounded-md bg-ink px-4 py-2 text-sm text-surface disabled:opacity-50"
         >
-          Valider la grille
+          Valider les garanties
         </button>
       </div>
 

@@ -238,7 +238,7 @@ function CompagnieDetail() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Compagnie partenaire"
+        eyebrow="Partenaire"
         title={c.nom}
         description={`${produits.length} produit${produits.length > 1 ? "s" : ""} référencé${produits.length > 1 ? "s" : ""}`}
         icon={IconBuildingBank}
@@ -427,10 +427,10 @@ function Field({
 type GrilleEtat = "validee" | "proposition" | "brouillon" | "absente";
 
 const GRILLE_BADGE: Record<GrilleEtat, { label: string; className: string }> = {
-  validee: { label: "Grille validée", className: "border-emerald-300 bg-emerald-50 text-emerald-800" },
+  validee: { label: "Garanties validées", className: "border-emerald-300 bg-emerald-50 text-emerald-800" },
   proposition: { label: "Proposition IA à valider", className: "border-amber-300 bg-amber-50 text-amber-800" },
-  brouillon: { label: "Grille en brouillon", className: "border-amber-300 bg-amber-50 text-amber-800" },
-  absente: { label: "Grille manquante", className: "border-red-300 bg-red-50 text-red-800" },
+  brouillon: { label: "Garanties en brouillon", className: "border-amber-300 bg-amber-50 text-amber-800" },
+  absente: { label: "Garanties à renseigner", className: "border-red-300 bg-red-50 text-red-800" },
 };
 
 function GrilleBadge({ etat }: { etat: GrilleEtat }) {
@@ -501,11 +501,6 @@ function ProduitsTab({
     };
   }, [produitIds]);
 
-  const nbValidees = useMemo(
-    () => produits.filter((p) => grilles[p.id] === "validee").length,
-    [produits, grilles],
-  );
-
   const active = useMemo(() => produits.find((p) => p.id === selected), [produits, selected]);
 
   async function create(e: React.FormEvent) {
@@ -556,24 +551,6 @@ function ProduitsTab({
               {creating ? "…" : "Ajouter"}
             </button>
           </form>
-        )}
-
-        {produits.length > 0 && (
-          <div className="rounded-md border border-line bg-surface p-3 text-xs">
-            <p className="font-medium text-ink">
-              Grilles de garanties : {nbValidees}/{produits.length} validées
-            </p>
-            <p className="mt-1 text-ink-muted">
-              Sans grille validée, le produit est exclu du comparatif de garanties (mention « non disponible pour
-              comparaison »).
-            </p>
-            <Link
-              to="/espace/grilles-garanties"
-              className="mt-2 inline-block text-[#0A192F] underline underline-offset-2"
-            >
-              Atelier des grilles de garanties →
-            </Link>
-          </div>
         )}
 
         <div className="space-y-1">
@@ -972,6 +949,7 @@ function ProduitEditor({
         familleNom={famille?.nom}
         isAdmin={isAdmin}
         docs={docs.map((d) => ({ id: d.id, nom: d.nom, type: d.type }))}
+        titre="Garanties, exclusions et options du produit"
       />
 
       {(famille?.code === "sante" || famille?.code === "emprunteur" || p.mode_tarification === "fixe") && (

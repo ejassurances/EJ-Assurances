@@ -112,15 +112,9 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Paramètres", to: "/espace/parametres", icon: IconSettings },
       { label: "Utilisateurs", to: "/espace/utilisateurs", icon: IconUsersGroup, roles: ["admin"] },
       {
-        label: "Compagnies & produits",
+        label: "Partenaires & produits",
         to: "/espace/compagnies",
         icon: IconBuildingBank,
-        roles: STAFF,
-      },
-      {
-        label: "Grilles de garanties",
-        to: "/espace/grilles-garanties",
-        icon: IconChecklist,
         roles: STAFF,
       },
       { label: "Bibliothèque CG", to: "/espace/bibliotheque-cg", icon: IconFileText, roles: STAFF },
