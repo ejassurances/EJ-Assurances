@@ -6,6 +6,17 @@ DECLARE
   _contrat uuid;
   _effet date := current_date;
 BEGIN
+  -- This backfill targets one historical client/dossier. Fresh environments have
+  -- no corresponding source records, so skip it without bypassing KYC controls.
+  IF NOT EXISTS (SELECT 1 FROM public.clients WHERE id = _client)
+     OR NOT EXISTS (
+       SELECT 1 FROM public.dossiers
+       WHERE id = _dossier AND client_id = _client
+     ) THEN
+    RAISE NOTICE 'Skipping historical contract backfill: source client or dossier is absent.';
+    RETURN;
+  END IF;
+
   IF EXISTS (SELECT 1 FROM public.contrats WHERE dossier_id = _dossier) THEN
     RETURN;
   END IF;
