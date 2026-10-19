@@ -14,17 +14,11 @@ const rootDir = path.dirname(fileURLToPath(import.meta.url));
 const serverEnv = loadEnv(process.env.NODE_ENV ?? "development", process.cwd(), "");
 Object.assign(process.env, serverEnv);
 
-// Supabase's publishable key is designed to be exposed in browser applications.
-// These defaults keep the CRM login connected when Cloudflare's build variables
-// have not been configured; environment values still override them.
-const supabaseUrl =
-  process.env.VITE_SUPABASE_URL ||
-  process.env.SUPABASE_URL ||
-  "https://ljquiweziktbjxldfztk.supabase.co";
-const supabasePublishableKey =
-  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.SUPABASE_PUBLISHABLE_KEY ||
-  "sb_publishable_ep3uSXHgzsJr1Q7L80rwYA_lVpre7uZ";
+// This CRM is connected to the Recette Supabase project. Fix the public browser
+// config here so stale Cloudflare build variables cannot point the app elsewhere.
+// Both values are public; never put a service-role or secret key in this file.
+const supabaseUrl = "https://ljquiweziktbjxldfztk.supabase.co";
+const supabasePublishableKey = "sb_publishable_ep3uSXHgzsJr1Q7L80rwYA_lVpre7uZ";
 
 export default defineConfig({
   define: {

@@ -11,25 +11,16 @@ Ce document recense les réglages nécessaires avant un premier déploiement. Le
 - La boîte e-mail du CRM utilise IONOS en IMAP/SMTP TLS ; les étiquettes de traitement restent dans la base du CRM.
 - Google OAuth ne sert qu'à l'intégration Drive.
 
-## Variables de build public
+## Configuration publique Supabase
 
-À renseigner dans la configuration de build Cloudflare :
-
-| Variable | Usage |
-| --- | --- |
-| `VITE_SUPABASE_URL` | URL du projet Supabase utilisé par le CRM |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Clé publique Supabase intégrée au navigateur |
-
-Ces deux valeurs ne remplacent pas la configuration serveur ci-dessous.
+L'URL et la clé publishable du projet « CRM EJ Assurances — Recette » sont fixées dans `vite.config.ts` pour le navigateur et dans `wrangler.jsonc` pour le Worker. Ce sont des valeurs publiques ; ne jamais y mettre une clé `service_role` ou `sb_secret`. Si le CRM change de projet Supabase, mettre à jour les deux fichiers et le secret serveur dans Cloudflare.
 
 ## Secrets et variables du Worker
 
-À ajouter dans **Settings → Variables and Secrets** du Worker :
+Les variables publiques `SUPABASE_URL` et `SUPABASE_PUBLISHABLE_KEY` sont synchronisées depuis `wrangler.jsonc`. Ajouter le secret serveur dans **Settings → Variables and Secrets** du Worker :
 
 | Nom | Type | Nécessaire pour |
 | --- | --- | --- |
-| `SUPABASE_URL` | Variable | Authentification et accès au projet Supabase |
-| `SUPABASE_PUBLISHABLE_KEY` | Variable | Vérification des sessions Supabase côté serveur |
 | `SUPABASE_SERVICE_ROLE_KEY` | Secret | Tâches serveur autorisées ; cette clé contourne les règles RLS |
 | `PUBLIC_APP_URL` | Variable | Liens du CRM envoyés par e-mail, par exemple `https://crm.ej-assurances.fr` |
 | `BREVO_API_KEY` | Secret | Envoi des e-mails transactionnels et synchronisation des contacts |
@@ -64,7 +55,7 @@ Pour exécuter les outils de migration Drizzle depuis un poste de développement
 
 ## Avant de déployer
 
-1. Vérifier que le projet Supabase utilisé est accessible indépendamment de la plateforme d'origine, puis renseigner son URL et ses clés dans Cloudflare.
+1. Vérifier que le projet Supabase « Recette » est accessible et que son URL et sa clé publishable correspondent bien à celles de `vite.config.ts` et `wrangler.jsonc`. Ajouter uniquement la clé `SUPABASE_SERVICE_ROLE_KEY` comme secret Cloudflare.
 2. Définir le sous-domaine du CRM et aligner `PUBLIC_APP_URL` avec celui-ci.
 3. Ajouter les secrets Brevo, IONOS et Google Drive seulement après avoir validé les comptes et autorisations nécessaires.
 4. Créer les comptes CRM autorisés dans Supabase ; ne pas réactiver l'inscription publique.
