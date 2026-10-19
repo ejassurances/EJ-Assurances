@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { creerProfilFamillesModernes } from "@/lib/profil-familles-modernes.server";
+import { creerProfilFamillesModernes } from "@/lib/profil-familles-modernes.functions";
 
 export const Route = createFileRoute("/familles-modernes-profil")({
   head: () => ({

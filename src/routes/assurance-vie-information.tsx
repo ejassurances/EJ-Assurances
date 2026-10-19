@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { creerDemandeInfoVie } from "@/lib/demande-info-vie.server";
+import { creerDemandeInfoVie } from "@/lib/demande-info-vie.functions";
 
 export const Route = createFileRoute("/assurance-vie-information")({
   head: () => ({

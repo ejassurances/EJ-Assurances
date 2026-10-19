@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { creerPrequalificationEmprunteur } from "@/lib/prequalification.server";
+import { creerPrequalificationEmprunteur } from "@/lib/prequalification.functions";
 
 export const Route = createFileRoute("/_authenticated/espace/prequalification")({
   component: Prequalification,
