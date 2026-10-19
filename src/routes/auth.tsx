@@ -131,7 +131,9 @@ function AuthPage() {
               alt={`Logo ${SITE.name}`}
               className="size-14 rounded-xl object-cover ring-1 ring-[#d4af37]/40"
             />
-            <h1 className="mt-5 font-sans text-2xl font-bold tracking-tight text-white">{SITE.name}</h1>
+            <h1 className="mt-5 font-sans text-2xl font-bold tracking-tight text-white">
+              {SITE.name}
+            </h1>
             <p className="mt-1.5 text-sm text-white/55">CRM interne — accès sécurisé</p>
             <span className="mt-4 h-px w-16 bg-[#d4af37]/60" />
           </div>
@@ -146,7 +148,9 @@ function AuthPage() {
 
                 <form onSubmit={submit} className="mt-6 space-y-4">
                   <div>
-                    <label htmlFor="email" className={labelClass}>Email</label>
+                    <label htmlFor="email" className={labelClass}>
+                      Email
+                    </label>
                     <input
                       id="email"
                       type="email"
@@ -159,7 +163,9 @@ function AuthPage() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="password" className={labelClass}>Mot de passe</label>
+                    <label htmlFor="password" className={labelClass}>
+                      Mot de passe
+                    </label>
                     <div className="relative">
                       <input
                         id="password"
@@ -194,7 +200,9 @@ function AuthPage() {
 
                 <div className="my-5 flex items-center gap-3">
                   <span className="h-px flex-1 bg-white/10" />
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">ou</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">
+                    ou
+                  </span>
                   <span className="h-px flex-1 bg-white/10" />
                 </div>
 
@@ -249,9 +257,13 @@ function AuthPage() {
               </>
             ) : (
               <form onSubmit={requestReset} className="space-y-4">
-                <h2 className="font-sans text-base font-semibold text-white">Réinitialiser le mot de passe</h2>
+                <h2 className="font-sans text-base font-semibold text-white">
+                  Réinitialiser le mot de passe
+                </h2>
                 <div>
-                  <label htmlFor="forgot" className={labelClass}>Adresse e-mail du compte</label>
+                  <label htmlFor="forgot" className={labelClass}>
+                    Adresse e-mail du compte
+                  </label>
                   <input
                     id="forgot"
                     type="email"
