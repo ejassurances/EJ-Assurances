@@ -17,7 +17,7 @@ export const Route = createFileRoute("/api/public/relance-pieces")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        if (!authorizePublicJob(request)) return new Response("Unauthorized", { status: 401 });
+        if (!(await authorizePublicJob(request))) return new Response("Unauthorized", { status: 401 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { planifierLotEmails } = await import("@/lib/emails-file-attente.server");

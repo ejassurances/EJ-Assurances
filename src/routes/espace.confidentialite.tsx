@@ -88,9 +88,9 @@ function Confidentialite() {
             contrat
           </li>
           <li>
-            Les prestataires techniques du cabinet agissant en qualité de sous-traitants au sens du RGPD : Lovable
-            (édition et hébergement de la plateforme), Supabase (hébergement et base de données), Brevo (envoi des
-            emails transactionnels)
+            Les prestataires techniques utilisés par la plateforme : Cloudflare (hébergement et exécution), Supabase
+            (authentification, base de données et stockage), IONOS (messagerie), Google Drive et Gemini lorsque l'IA est
+            activée, ainsi que Brevo (emails transactionnels).
           </li>
         </ul>
         <p>Aucune donnée n'est vendue ni cédée à des fins commerciales tierces.</p>
@@ -103,8 +103,7 @@ function Confidentialite() {
           certains documents (devoir de conseil, comparatifs d'offres). Ces traitements sont systématiquement soumis
           à la validation d'un collaborateur habilité du cabinet avant toute utilisation ou envoi : l'intelligence
           artificielle assiste le conseil, elle ne se substitue jamais à la décision humaine. Ces outils sont
-          fournis par Lovable, qui peut s'appuyer sur des modèles d'intelligence artificielle tiers (dont Google
-          Gemini) dans le cadre de cette prestation.
+          fournis via l'API Gemini de Google lorsque cette intégration est activée.
         </p>
       </Bloc>
 

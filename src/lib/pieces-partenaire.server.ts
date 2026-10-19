@@ -16,13 +16,14 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { geminiFetch } from "@/lib/gemini-gateway.server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 type Admin = SupabaseClient<any, any, any>;
 
 const BUCKET = "dossier-documents";
-const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODELES = ["google/gemini-3.6-flash", "google/gemini-2.5-flash"];
+const GATEWAY = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const MODELES = ["gemini-3.6-flash", "gemini-2.5-flash"];
 const TAILLE_MAX = 12 * 1024 * 1024;
 
 export interface PieceEmail {
@@ -98,7 +99,7 @@ export async function identifierTitulaire(
   fichier: { nom: string; mime: string; base64: string },
   contexte: { compagnie: string | null; sujet: string | null },
 ): Promise<IdentificationTitulaire> {
-  const cle = process.env["LOVABLE_API_KEY"];
+  const cle = process.env["GEMINI_API_KEY"];
   if (!cle) throw new Error("Lecture IA indisponible : clé IA absente du projet.");
 
   const dataUrl = `data:${fichier.mime};base64,${fichier.base64}`;
@@ -114,7 +115,7 @@ export async function identifierTitulaire(
 
   let derniere = "";
   for (const model of MODELES) {
-    const res = await fetch(GATEWAY, {
+    const res = await geminiFetch(GATEWAY, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${cle}` },
       body: JSON.stringify({ model, messages: [{ role: "user", content: contenu }] }),
@@ -181,7 +182,7 @@ async function retrouverClient(
 }
 
 function lienMail(id: string): string {
-  return `https://mail.google.com/mail/u/0/#all/${id}`;
+  return `https://mail.ionos.fr/`;
 }
 
 /** Clés d'idempotence des tâches humaines créées pour une pièce partenaire. */
@@ -417,7 +418,7 @@ export async function traiterPiecesJointesPartenaire(
           `Objet du mail : ${params.sujet ?? "(sans objet)"}`,
           `Motif : ${resultat.detail}`,
           `Email : ${lienMail(params.gmail_message_id)}`,
-          "Action : télécharger la pièce depuis Gmail et la classer manuellement.",
+          "Action : télécharger la pièce depuis le webmail IONOS et la classer manuellement.",
         ].join("\n"),
         priorite: "normale",
         created_by: params.userId,

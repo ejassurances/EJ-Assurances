@@ -13,13 +13,13 @@ export const Route = createFileRoute("/_authenticated/espace/gmail-controle")({
   component: GmailControlePage,
   head: () => ({
     meta: [
-      { title: "Contrôle du traitement Gmail — EJ Partners Assurances" },
+      { title: "Contrôle du traitement des e-mails — EJ Partners Assurances" },
       {
         name: "description",
         content:
           "Écran de contrôle du traitement de la boîte de réception : alertes à traiter, brouillons à relire et historique des décisions.",
       },
-      { property: "og:title", content: "Contrôle du traitement Gmail — EJ Partners Assurances" },
+      { property: "og:title", content: "Contrôle du traitement des e-mails — EJ Partners Assurances" },
       {
         property: "og:description",
         content: "Alertes, brouillons à relire et historique des décisions du traitement de la boîte de réception.",
@@ -96,13 +96,13 @@ function GmailControlePage() {
     <div className="space-y-4">
       <PageHeader
         icon={IconMail}
-        title="Contrôle du traitement Gmail"
-        description="Lecture de la boîte de réception principale, délai de 45 minutes, classement et brouillons. Aucun envoi automatique."
+        title="Contrôle du traitement des e-mails"
+        description="Lecture de la boîte de réception IONOS, délai de 45 minutes, classement et brouillons. Aucun envoi automatique par ce traitement."
       />
 
       <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-        Aucun e-mail n'est envoyé par le logiciel : les réponses restent des brouillons Gmail à relire et à envoyer
-        manuellement. Le traitement ne se déclenche pas encore tout seul.
+        Ce traitement prépare des brouillons IONOS à relire avant envoi. Il ne déclenche pas d'envoi automatique et ne
+        démarre pas encore tout seul.
       </p>
 
       <div className="flex flex-wrap gap-2">
@@ -187,7 +187,7 @@ function GmailControlePage() {
               <div className="mt-2 flex flex-wrap gap-3 text-xs">
                 {e.lien_gmail && (
                   <a className="text-brand-navy underline" href={e.lien_gmail} target="_blank" rel="noreferrer">
-                    Ouvrir le message dans Gmail
+                    Ouvrir le webmail IONOS
                   </a>
                 )}
                 {e.lien_brouillon && (

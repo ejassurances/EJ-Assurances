@@ -1,27 +1,23 @@
 /**
- * Accès Google Drive via la passerelle de connecteurs (serveur uniquement).
- * Toutes les requêtes passent par le connecteur google_drive du cabinet.
+ * Accès direct à l'API Google Drive via OAuth (serveur uniquement).
  */
 
-const GATEWAY = "https://connector-gateway.lovable.dev/google_drive";
+const DRIVE_API_URL = "https://www.googleapis.com";
 const FOLDER_MIME = "application/vnd.google-apps.folder";
 
-function headers() {
-  const lovable = process.env["LOVABLE_API_KEY"];
-  const connection = process.env["GOOGLE_DRIVE_API_KEY"];
-  if (!lovable || !connection) throw new Error("Connecteur Google Drive non configuré");
+async function headers() {
+  const { obtenirJetonGoogle } = await import("@/lib/google-oauth.server");
   return {
-    Authorization: `Bearer ${lovable}`,
-    "X-Connection-Api-Key": connection,
+    Authorization: `Bearer ${await obtenirJetonGoogle()}`,
   };
 }
 
 async function driveFetch(path: string, init?: RequestInit & { json?: unknown }) {
   const { json, ...rest } = init ?? {};
-  const res = await fetch(`${GATEWAY}${path}`, {
+  const res = await fetch(`${DRIVE_API_URL}${path}`, {
     ...rest,
     headers: {
-      ...headers(),
+      ...(await headers()),
       ...(json ? { "Content-Type": "application/json" } : {}),
       ...(rest.headers as Record<string, string> | undefined),
     },
@@ -131,10 +127,10 @@ export async function deposerFichier(params: {
     `${toBase64(params.contenu)}\r\n--${boundary}--\r\n`;
 
   const res = await fetch(
-    `${GATEWAY}/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=id,webViewLink`,
+    `${DRIVE_API_URL}/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=id,webViewLink`,
     {
       method: "POST",
-      headers: { ...headers(), "Content-Type": `multipart/related; boundary=${boundary}` },
+      headers: { ...(await headers()), "Content-Type": `multipart/related; boundary=${boundary}` },
       body,
     },
   );
@@ -150,8 +146,8 @@ export async function deposerFichier(params: {
 /** Télécharge le contenu binaire d'un fichier Drive (analyse IA, archivage). */
 export async function telechargerFichier(fileId: string): Promise<Uint8Array> {
   const res = await fetch(
-    `${GATEWAY}/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&supportsAllDrives=true`,
-    { headers: headers() },
+    `${DRIVE_API_URL}/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&supportsAllDrives=true`,
+    { headers: await headers() },
   );
   if (!res.ok) {
     const text = await res.text();
@@ -265,8 +261,8 @@ export async function lireTexteFichier(fileId: string, mimeType?: string): Promi
   const mime = mimeType ?? (await mimeDrive(fileId));
   if (mime === GDOC_MIME) {
     const res = await fetch(
-      `${GATEWAY}/drive/v3/files/${encodeURIComponent(fileId)}/export?mimeType=text%2Fplain&supportsAllDrives=true`,
-      { headers: headers() },
+      `${DRIVE_API_URL}/drive/v3/files/${encodeURIComponent(fileId)}/export?mimeType=text%2Fplain&supportsAllDrives=true`,
+      { headers: await headers() },
     );
     const texte = await res.text();
     if (!res.ok) {
@@ -295,10 +291,10 @@ export async function mimeDrive(fileId: string): Promise<string | null> {
 /** Remplace le contenu texte d'un fichier Drive existant. */
 export async function remplacerTexteFichier(fileId: string, contenu: string): Promise<void> {
   const res = await fetch(
-    `${GATEWAY}/upload/drive/v3/files/${encodeURIComponent(fileId)}?uploadType=media&supportsAllDrives=true&fields=id`,
+    `${DRIVE_API_URL}/upload/drive/v3/files/${encodeURIComponent(fileId)}?uploadType=media&supportsAllDrives=true&fields=id`,
     {
       method: "PATCH",
-      headers: { ...headers(), "Content-Type": "text/plain; charset=UTF-8" },
+      headers: { ...(await headers()), "Content-Type": "text/plain; charset=UTF-8" },
       body: contenu,
     },
   );

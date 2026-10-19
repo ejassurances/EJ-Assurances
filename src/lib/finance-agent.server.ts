@@ -1,3 +1,4 @@
+import { geminiFetch } from "@/lib/gemini-gateway.server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -11,8 +12,8 @@ import type { Database } from "@/integrations/supabase/types";
  * automatique. Rien n'est marqué « payé », et toute anomalie ouvre une tâche.
  */
 
-const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODELES = ["google/gemini-3.6-flash", "google/gemini-2.5-flash"];
+const GATEWAY = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const MODELES = ["gemini-3.6-flash", "gemini-2.5-flash"];
 
 type Admin = SupabaseClient<Database>;
 
@@ -86,12 +87,12 @@ function consigne(email: EmailFinance): string {
 
 /** Classification IA d'un email entrant non rattaché à un client. */
 export async function classifierEmailFinance(email: EmailFinance): Promise<ClassificationFinance> {
-  const cle = process.env["LOVABLE_API_KEY"];
+  const cle = process.env["GEMINI_API_KEY"];
   if (!cle) throw new Error("Analyse indisponible : clé IA absente du projet.");
 
   let derniere = "";
   for (const modele of MODELES) {
-    const res = await fetch(GATEWAY, {
+    const res = await geminiFetch(GATEWAY, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${cle}` },
       body: JSON.stringify({ model: modele, messages: [{ role: "user", content: consigne(email) }] }),
@@ -252,7 +253,7 @@ export async function traiterEmailFinance(
         `Conseil : ouvrir le mail, récupérer le document, puis créer la ${
           classification.categorie === "facture_fournisseur" ? "facture d'achat" : "ligne de bordereau"
         } depuis le module Comptabilité.`,
-        `Email : https://mail.google.com/mail/u/0/#all/${params.gmail_message_id}`,
+        `Email : https://mail.ionos.fr/`,
       ].join("\n"),
       priorite: "normale",
       created_by: params.userId,
@@ -309,7 +310,7 @@ async function traiterFacture(
         `Problème : ${probleme}`,
         `Pièce de référence : ${piece.nom}`,
         `Objet du mail : ${email.sujet ?? "(sans objet)"}`,
-        `Email : https://mail.google.com/mail/u/0/#all/${params.gmail_message_id}`,
+        `Email : https://mail.ionos.fr/`,
         "Aucune facture n'a été créée automatiquement — saisie et contrôle manuels requis.",
       ].join("\n"),
       created_by: params.userId,
@@ -382,7 +383,7 @@ async function traiterFacture(
     notes: [
       "Agent finance — facture détectée dans un email entrant.",
       `Objet : ${email.sujet ?? "(sans objet)"}`,
-      `Email : https://mail.google.com/mail/u/0/#all/${params.gmail_message_id}`,
+      `Email : https://mail.ionos.fr/`,
       lue.nature ? `Nature : ${lue.nature}` : null,
       "À vérifier avant paiement et génération de l'écriture.",
       marqueur,
@@ -412,7 +413,7 @@ async function traiterFacture(
       `Facture ${lue.numero_facture ?? "(numéro non lu)"} — ${ttc.toFixed(2)} € TTC`,
       `Fichier : ${piece.nom}`,
       `Fiche : ${lienFacture}`,
-      `Email : https://mail.google.com/mail/u/0/#all/${params.gmail_message_id}`,
+      `Email : https://mail.ionos.fr/`,
       "Créée automatiquement en « à payer » : vérifier les montants, le compte de charge, puis décider du paiement.",
     ].join("\n"),
     created_by: params.userId,
@@ -449,7 +450,7 @@ async function traiterBordereau(
       description: [
         `Problème : ${probleme}`,
         `Pièce de référence : ${piece.nom}`,
-        `Email : https://mail.google.com/mail/u/0/#all/${params.gmail_message_id}`,
+        `Email : https://mail.ionos.fr/`,
         "Aucun bordereau n'a été créé automatiquement — import manuel requis depuis la comptabilité.",
       ].join("\n"),
       created_by: params.userId,
@@ -465,7 +466,7 @@ async function traiterBordereau(
   if (upErr) {
     await creerTacheAdmin(admin as never, {
       titre: `Bordereau de commissions non archivé — ${classification.emetteur ?? "compagnie inconnue"}`.slice(0, 200),
-      description: `Archivage impossible : ${upErr.message}\nEmail : https://mail.google.com/mail/u/0/#all/${params.gmail_message_id}`,
+      description: `Archivage impossible : ${upErr.message}\nEmail : https://mail.ionos.fr/`,
       created_by: params.userId,
     });
     return { categorie: "bordereau_commission", action: "tache_anomalie", message: upErr.message };
@@ -488,7 +489,7 @@ async function traiterBordereau(
       analyse_le: new Date().toISOString(),
       notes: [
         "Agent finance — bordereau détecté dans un email entrant.",
-        `Email : https://mail.google.com/mail/u/0/#all/${params.gmail_message_id}`,
+        `Email : https://mail.ionos.fr/`,
       ].join("\n"),
       created_by: params.userId,
     })
@@ -498,7 +499,7 @@ async function traiterBordereau(
     await admin.storage.from("bordereaux-commissions").remove([chemin]);
     await creerTacheAdmin(admin as never, {
       titre: `Bordereau de commissions non créé — ${classification.emetteur ?? "compagnie inconnue"}`.slice(0, 200),
-      description: `Erreur : ${bErr?.message ?? "création impossible"}\nEmail : https://mail.google.com/mail/u/0/#all/${params.gmail_message_id}`,
+      description: `Erreur : ${bErr?.message ?? "création impossible"}\nEmail : https://mail.ionos.fr/`,
       created_by: params.userId,
     });
     return { categorie: "bordereau_commission", action: "tache_anomalie", message: bErr?.message };

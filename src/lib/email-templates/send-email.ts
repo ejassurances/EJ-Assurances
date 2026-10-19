@@ -2,12 +2,12 @@ import * as React from 'react'
 import { render } from '@react-email/render'
 import { TEMPLATES } from './registry'
 
-// Server-only: reads LOVABLE_API_KEY / BREVO_API_KEY. Never import from client components.
+// Server-only: reads BREVO_API_KEY. Never import from client components.
 
 const SITE_NAME = 'EJ Partners Assurances'
 /** Adresse expéditrice (doit être un expéditeur/domaine vérifié dans Brevo). */
 const FROM_EMAIL = 'contact@ej-assurances.fr'
-const GATEWAY_URL = 'https://connector-gateway.lovable.dev/brevo'
+const BREVO_API_URL = 'https://api.brevo.com/v3'
 
 export type SendTemplateEmailResult =
   | { sent: true }
@@ -39,10 +39,10 @@ export interface SendTemplateEmailOptions {
 }
 
 /**
- * Rend un template enregistré et l'envoie via le connecteur Brevo — y compris
+ * Rend un template enregistré et l'envoie directement à l'API Brevo — y compris
  * les quatre courriers d'accompagnement DDA (DER, lettre de mission, devoir de
  * conseil, signature de souscription), dont la traçabilité ACPR est assurée par
- * la copie automatique déposée dans la boîte Gmail du cabinet. La génération des
+ * la copie automatique déposée dans la boîte IONOS du cabinet. La génération des
  * PDF reste inchangée : seul le texte du mail passe par Brevo. Toute erreur
  * d'envoi lève une exception.
  */
@@ -52,11 +52,6 @@ export async function sendTemplateEmail(
   to: string,
   options: SendTemplateEmailOptions = {}
 ): Promise<SendTemplateEmailResult> {
-  const lovableApiKey = process.env['LOVABLE_API_KEY']
-  if (!lovableApiKey) {
-    throw new Error('LOVABLE_API_KEY is not configured')
-  }
-
   const template = TEMPLATES[templateName]
   if (!template) {
     throw new Error(
@@ -87,12 +82,11 @@ export async function sendTemplateEmail(
 
 
 
-  const response = await fetch(`${GATEWAY_URL}/smtp/email`, {
+  const response = await fetch(`${BREVO_API_URL}/smtp/email`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${lovableApiKey}`,
-      'X-Connection-Api-Key': brevoKey,
+      'api-key': brevoKey,
     },
     body: JSON.stringify({
       sender: { name: SITE_NAME, email: FROM_EMAIL },
@@ -129,7 +123,7 @@ export async function sendTemplateEmail(
     `[email] OK template=${templateName} destinataire=${recipient} messageId=${messageId ?? 'n/a'}`
   )
 
-  // Trace de l'envoi dans la boîte Gmail du cabinet (copie dans « Envoyés »,
+  // Trace de l'envoi dans la boîte IONOS du cabinet (copie dans « Envoyés »,
   // libellée « Envoyé via Brevo »), puis rattachement de cette copie à la fiche
   // client / au dossier. Aucun échec silencieux : si la copie n'a pas pu être
   // déposée, une tâche admin de vérification est créée.
@@ -146,7 +140,7 @@ export async function sendTemplateEmail(
       attachments: options.attachments,
     })
     copieId = copie?.id ?? null
-    if (!copieId) copieErreur = 'dépôt de la copie refusé par Gmail'
+    if (!copieId) copieErreur = 'dépôt de la copie refusé par IONOS'
   } catch (e) {
     copieErreur = e instanceof Error ? e.message : 'erreur inconnue'
   }
@@ -171,20 +165,20 @@ export async function sendTemplateEmail(
         )
       }
     } else {
-      console.error(`[email] copie Gmail de l’envoi Brevo impossible: ${copieErreur}`)
+      console.error(`[email] copie IONOS de l’envoi Brevo impossible: ${copieErreur}`)
       const { creerTacheAdmin } = await import('@/lib/agent-taches.server')
       await creerTacheAdmin(supabaseAdmin, {
-        titre: `Vérifier la trace Gmail d'un envoi (${templateName})`,
+        titre: `Vérifier la trace IONOS d'un envoi (${templateName})`,
         description:
-          `L'e-mail « ${subject} » a bien été envoyé à ${recipient} via Brevo, mais la copie dans la boîte Gmail ` +
+          `L'e-mail « ${subject} » a bien été envoyé à ${recipient} via Brevo, mais la copie dans la boîte IONOS ` +
           `du cabinet n'a pas pu être déposée (${copieErreur ?? 'raison inconnue'}). ` +
-          `Vérifier la connexion Gmail et déposer la trace manuellement si nécessaire (exigence ACPR).`,
+          `Vérifier la connexion IONOS et déposer la trace manuellement si nécessaire (exigence ACPR).`,
         client_id: options.liens?.client_id ?? null,
         priorite: 'haute',
       })
     }
   } catch (e) {
-    console.error('[email] suivi de la copie Gmail impossible:', e)
+    console.error('[email] suivi de la copie IONOS impossible:', e)
   }
 
 

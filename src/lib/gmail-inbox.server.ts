@@ -1,10 +1,10 @@
 /**
- * Réception et classement de la boîte de réception principale Gmail.
+ * Réception et classement de la boîte de réception IONOS.
  *
  * Server-only. Chaîne de traitement, pour chaque message de l'onglet Principal
  * (lu ou non lu, hors Promotions / Réseaux sociaux / Notifications / Forums) :
  *
- *  1. enregistrement dans `crm_emails` (anti-doublon sur l'identifiant Gmail) ;
+ *  1. enregistrement dans `crm_emails` (anti-doublon sur l'identifiant IONOS) ;
  *  2. attente stricte de 45 minutes après la réception ;
  *  3. vérification d'une réponse du cabinet déjà envoyée dans le fil ;
  *  4. rattachement à une fiche CRM (client, prospect, partenaire, fournisseur,
@@ -13,7 +13,7 @@
  *     01_Brouillon_IA_A_Relire / 02_Alerte_Humain_A_Traiter / 03_Archives_Traitees ;
  *  6. trace de la décision dans `email_decisions`.
  *
- * AUCUN ENVOI n'est réalisé ici. Le brouillon reste un brouillon Gmail.
+ * AUCUN ENVOI n'est réalisé ici. Le brouillon reste un brouillon IONOS.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { classerBesoinReponse } from "@/lib/besoin-reponse";
@@ -163,7 +163,7 @@ export async function traiterInboxPrincipale(
   for (const m of messages) {
     if (traites >= limite) break;
 
-    // 1. Enregistrement (anti-doublon sur l'identifiant du message Gmail).
+    // 1. Enregistrement (anti-doublon sur l'identifiant du message IONOS).
     const { data: existant } = await admin
       .from("crm_emails")
       .select("id, statut_traitement")
@@ -270,7 +270,7 @@ export async function traiterInboxPrincipale(
     }
 
 
-    // 5. Brouillon Gmail si une réponse est nécessaire (jamais d'envoi).
+    // 5. Brouillon IONOS si une réponse est nécessaire (jamais d'envoi).
     let brouillonId: string | null = null;
     let lienBrouillon: string | null = null;
     if (classement.decision === "brouillon_a_relire" && m.expediteur_email) {
@@ -291,11 +291,11 @@ export async function traiterInboxPrincipale(
       }
     }
 
-    // 6. Classement Gmail + trace CRM.
+    // 6. Classement IMAP + trace CRM.
     try {
       await classerInbox(m.id, classement.label);
     } catch (e) {
-      console.error(`[gmail-inbox] classement Gmail impossible sur ${m.id}`, e);
+      console.error(`[ionos-inbox] classement IONOS impossible sur ${m.id}`, e);
     }
 
     await admin

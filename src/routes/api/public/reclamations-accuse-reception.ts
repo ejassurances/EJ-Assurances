@@ -22,7 +22,7 @@ export const Route = createFileRoute("/api/public/reclamations-accuse-reception"
   server: {
     handlers: {
       POST: async ({ request }) => {
-        if (!authorizePublicJob(request)) return new Response("Unauthorized", { status: 401 });
+        if (!(await authorizePublicJob(request))) return new Response("Unauthorized", { status: 401 });
 
         if (!dansHorairesOuverture()) return Response.json({ ok: true, reporte: true, envois: 0 });
 

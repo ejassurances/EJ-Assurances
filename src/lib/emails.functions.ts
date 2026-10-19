@@ -3,7 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 /**
- * Onglet Email du CRM : lecture de la boîte principale Gmail du cabinet,
+ * Onglet Email du CRM : lecture de la boîte IONOS du cabinet,
  * rattachement des messages (client / dossier / contrat / compagnie),
  * création de fiche + dossier depuis un email, et envoi depuis le CRM.
  */
@@ -30,7 +30,7 @@ const liensSchema = z.object({
   notes: z.string().trim().max(2000).optional().nullable(),
 });
 
-/** Boîte de réception principale (onglet « Principal » de Gmail). */
+/** Boîte de réception IONOS. */
 export const boiteReception = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
@@ -92,7 +92,7 @@ export const boiteReception = createServerFn({ method: "POST" })
           client_id: cl.id,
           type: "email",
           titre: "Email rattaché automatiquement",
-          contenu: `De ${m.expediteur_email}\nObjet : ${m.sujet ?? "(sans objet)"}\nEmail : https://mail.google.com/mail/u/0/#all/${m.id}`,
+          contenu: `De ${m.expediteur_email}\nObjet : ${m.sujet ?? "(sans objet)"}\nEmail : https://mail.ionos.fr/`,
           created_by: context.userId,
         });
       }
@@ -122,7 +122,7 @@ export const boiteReception = createServerFn({ method: "POST" })
 /** Contenu complet d'un message + son rattachement éventuel. */
 export const messageComplet = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string().min(5).max(80) }).parse(input))
+  .inputValidator((input: unknown) => z.object({ id: z.string().min(5).max(1024) }).parse(input))
   .handler(async ({ data, context }) => {
     await exigerStaff(context.supabase, context.userId);
     const { lireMessage } = await import("@/lib/gmail.server");
@@ -144,8 +144,8 @@ export const rattacherMessage = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     liensSchema
       .extend({
-        gmail_message_id: z.string().min(5).max(80),
-        gmail_thread_id: z.string().max(80).optional().nullable(),
+        gmail_message_id: z.string().min(5).max(1024),
+        gmail_thread_id: z.string().max(1024).optional().nullable(),
         expediteur_nom: z.string().max(200).optional().nullable(),
         expediteur_email: z.string().max(255).optional().nullable(),
         destinataires: z.string().max(1000).optional().nullable(),
@@ -187,7 +187,7 @@ export const rattacherMessage = createServerFn({ method: "POST" })
         .select("nom, prenom")
         .eq("id", data.client_id)
         .maybeSingle();
-      // Pas d'étiquette Gmail par client : l'arborescence du cabinet ne comporte
+      // Pas d'étiquette individuelle par client : le classement métier repose
       // pas de branche par fiche client (aucune branche parallèle créée).
       void cl;
 
@@ -195,7 +195,7 @@ export const rattacherMessage = createServerFn({ method: "POST" })
         client_id: data.client_id,
         type: "email",
         titre: `Email reçu : ${data.sujet ?? "(sans objet)"}`,
-        contenu: `De ${data.expediteur_email ?? "inconnu"}\nEmail : https://mail.google.com/mail/u/0/#all/${data.gmail_message_id}`,
+        contenu: `De ${data.expediteur_email ?? "inconnu"}\nEmail : https://mail.ionos.fr/`,
         created_by: context.userId,
       });
     }
@@ -206,7 +206,7 @@ export const rattacherMessage = createServerFn({ method: "POST" })
 /** Supprime le rattachement d'un message. */
 export const detacherMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ gmail_message_id: z.string().min(5).max(80) }).parse(input))
+  .inputValidator((input: unknown) => z.object({ gmail_message_id: z.string().min(5).max(1024) }).parse(input))
   .handler(async ({ data, context }) => {
     await exigerStaff(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -220,8 +220,8 @@ export const creerFicheDepuisEmail = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z
       .object({
-        gmail_message_id: z.string().min(5).max(80),
-        gmail_thread_id: z.string().max(80).optional().nullable(),
+        gmail_message_id: z.string().min(5).max(1024),
+        gmail_thread_id: z.string().max(1024).optional().nullable(),
         sujet: z.string().max(500).optional().nullable(),
         snippet: z.string().max(2000).optional().nullable(),
         recu_le: z.string().max(40).optional().nullable(),
@@ -309,7 +309,7 @@ export const creerFicheDepuisEmail = createServerFn({ method: "POST" })
       client_id: clientId,
       type: "email",
       titre: `Fiche créée depuis un email : ${data.sujet ?? "(sans objet)"}`,
-      contenu: `Email : https://mail.google.com/mail/u/0/#all/${data.gmail_message_id}`,
+      contenu: `Email : https://mail.ionos.fr/`,
       created_by: context.userId,
     });
 
@@ -322,8 +322,8 @@ export const rattacherCompagnie = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z
       .object({
-        gmail_message_id: z.string().min(5).max(80),
-        gmail_thread_id: z.string().max(80).optional().nullable(),
+        gmail_message_id: z.string().min(5).max(1024),
+        gmail_thread_id: z.string().max(1024).optional().nullable(),
         compagnie_id: z.string().uuid(),
         expediteur_nom: z.string().max(200).optional().nullable(),
         expediteur_email: z.string().max(255).optional().nullable(),
@@ -375,7 +375,7 @@ export const envoyerEmailCrm = createServerFn({ method: "POST" })
         cc: z.string().trim().max(500).optional().nullable(),
         sujet: z.string().trim().min(1).max(300),
         message: z.string().trim().min(1).max(20000),
-        thread_id: z.string().max(80).optional().nullable(),
+        thread_id: z.string().max(1024).optional().nullable(),
       })
       .parse(input),
   )
@@ -462,11 +462,11 @@ export const envoyerEmailCrm = createServerFn({ method: "POST" })
   });
 
 
-/** Marque un message comme lu ou non lu dans Gmail. */
+/** Marque un message comme lu ou non lu dans IONOS. */
 export const marquerLuMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ id: z.string().min(5).max(80), lu: z.boolean() }).parse(input),
+    z.object({ id: z.string().min(5).max(1024), lu: z.boolean() }).parse(input),
   )
   .handler(async ({ data, context }) => {
     await exigerStaff(context.supabase, context.userId);
@@ -475,10 +475,10 @@ export const marquerLuMessage = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Archive un message (le retire de la boîte de réception Gmail). */
+/** Archive un message (le retire de la boîte de réception IONOS). */
 export const archiverMessageCrm = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string().min(5).max(80) }).parse(input))
+  .inputValidator((input: unknown) => z.object({ id: z.string().min(5).max(1024) }).parse(input))
   .handler(async ({ data, context }) => {
     await exigerStaff(context.supabase, context.userId);
     const { archiverMessage } = await import("@/lib/gmail.server");
@@ -489,10 +489,10 @@ export const archiverMessageCrm = createServerFn({ method: "POST" })
 
 
 
-/** Met un message à la corbeille Gmail et supprime son rattachement CRM. */
+/** Met un message à la corbeille IONOS et supprime son rattachement CRM. */
 export const supprimerMessageCrm = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string().min(5).max(80) }).parse(input))
+  .inputValidator((input: unknown) => z.object({ id: z.string().min(5).max(1024) }).parse(input))
   .handler(async ({ data, context }) => {
     await exigerStaff(context.supabase, context.userId);
     const { mettreCorbeille } = await import("@/lib/gmail.server");
@@ -502,11 +502,11 @@ export const supprimerMessageCrm = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Applique une étiquette Gmail libre à un message. */
+/** Applique une étiquette métier au message dans le CRM. */
 export const etiqueterMessageCrm = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ id: z.string().min(5).max(80), etiquette: z.string().trim().min(1).max(120) }).parse(input),
+    z.object({ id: z.string().min(5).max(1024), etiquette: z.string().trim().min(1).max(120) }).parse(input),
   )
   .handler(async ({ data, context }) => {
     await exigerStaff(context.supabase, context.userId);
@@ -620,7 +620,7 @@ export const scannerBoiteCrm = createServerFn({ method: "POST" })
             client_id: client.id,
             type: "email",
             titre: "Email rattaché automatiquement (scan)",
-            contenu: `De ${m.expediteur_email ?? "?"}\nObjet : ${m.sujet ?? "(sans objet)"}\nEmail : https://mail.google.com/mail/u/0/#all/${m.id}`,
+            contenu: `De ${m.expediteur_email ?? "?"}\nObjet : ${m.sujet ?? "(sans objet)"}\nEmail : https://mail.ionos.fr/`,
             created_by: context.userId,
           });
         } else {

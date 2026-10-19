@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { geminiFetch } from "@/lib/gemini-gateway.server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { creerTacheAdmin } from "@/lib/agent-taches.server";
 import {
@@ -22,8 +23,8 @@ import {
 type Admin = SupabaseClient<any, any, any>;
 
 const STATUTS_CONTRAT_ACTIF = ["actif", "contrat_actif", "contrat_valide"];
-const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODELES = ["google/gemini-3.6-flash", "google/gemini-2.5-flash"];
+const GATEWAY = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const MODELES = ["gemini-3.6-flash", "gemini-2.5-flash"];
 
 type ContratSuivi = { id: string; produit: string | null; assureur: string | null; prochain_suivi_le: string | null };
 type ClientSuivi = { id: string; nom: string | null; prenom: string | null; email: string | null };
@@ -159,7 +160,7 @@ async function analyserRetour(params: {
   texte: string | null;
   contrats: string;
 }): Promise<{ retour_client: string; recommandation: string }> {
-  const cle = process.env["LOVABLE_API_KEY"];
+  const cle = process.env["GEMINI_API_KEY"];
   const brut = (params.texte ?? "").trim().slice(0, 4000);
   if (!cle) return { retour_client: brut, recommandation: "" };
 
@@ -180,7 +181,7 @@ async function analyserRetour(params: {
   ].join("\n");
 
   for (const modele of MODELES) {
-    const res = await fetch(GATEWAY, {
+    const res = await geminiFetch(GATEWAY, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${cle}` },
       body: JSON.stringify({ model: modele, messages: [{ role: "user", content: consigne }] }),
@@ -231,7 +232,7 @@ export async function traiterRetourSuiviContrats(
 
   const analyse = await analyserRetour({ sujet: params.sujet, texte: params.texte, contrats: liste });
   const lienMail = params.gmail_message_id
-    ? `https://mail.google.com/mail/u/0/#all/${params.gmail_message_id}`
+    ? `https://mail.ionos.fr/`
     : "";
 
   await creerTacheAdmin(admin as never, {

@@ -1,7 +1,7 @@
 import { LABEL_ALERTE, LABEL_ARCHIVE_TRAITEE, LABEL_BROUILLON } from "@/lib/gmail-inbox";
 
 /**
- * Étiquettes Gmail du cabinet — structure simplifiée, entièrement À PLAT.
+ * Étiquettes métier du cabinet — structure simplifiée, entièrement À PLAT.
  *
  * 3 libellés de DIRECTION :
  *  - « Direction Commerciale »

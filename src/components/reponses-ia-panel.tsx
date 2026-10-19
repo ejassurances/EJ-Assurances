@@ -131,12 +131,12 @@ export function ReponsesIaPanel({ clientId }: { clientId?: string }) {
                   <>
                     {" · "}
                     <a
-                      href={`https://mail.google.com/mail/u/0/#all/${r.gmail_message_id}`}
+                      href={`https://mail.ionos.fr/`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="underline"
                     >
-                      ouvrir dans Gmail
+                      ouvrir le webmail IONOS
                     </a>
                   </>
                 ) : null}

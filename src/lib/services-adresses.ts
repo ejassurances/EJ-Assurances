@@ -5,9 +5,9 @@ import { LABELS_CABINET, type LabelCabinet } from "@/lib/gmail-labels";
 /**
  * Services du cabinet et adresses réelles de renvoi.
  *
- * La correspondance libellé Gmail / adresse / thème est stockée en base dans la
- * table `config_labels_gmail` : les noms de libellés changent régulièrement et
- * doivent pouvoir être corrigés en SQL, sans modification de code. Ce module
+ * La correspondance étiquette métier / adresse / thème reste dans la table
+ * historique `config_labels_gmail` : les noms changent régulièrement et doivent
+ * pouvoir être corrigés en SQL, sans modification de code. Ce module
  * lit cette table avec un cache court (5 minutes) pour éviter une requête par
  * mail traité.
  *
@@ -27,7 +27,7 @@ export type ServiceCabinet =
 export interface DefinitionService {
   cle: ServiceCabinet;
   libelle: string;
-  /** Libellé Gmail de direction (à plat) du service. */
+  /** Étiquette CRM de direction (à plat) du service. */
   label_direction: string;
   /** Adresse réelle de renvoi, ou null si le service n'en a pas. */
   adresse: string | null;
@@ -72,7 +72,7 @@ export async function chargerServices(
     .from("config_labels_gmail")
     .select("service_cle, libelle, label_direction, adresse, theme, actif")
     .eq("actif", true);
-  if (error) throw new Error(`Configuration des libellés Gmail illisible : ${error.message}`);
+  if (error) throw new Error(`Configuration des étiquettes métier illisible : ${error.message}`);
 
   const services: DefinitionService[] = [];
   for (const ligne of data ?? []) {

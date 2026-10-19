@@ -11,6 +11,7 @@
  * `contrat_id`…), AUCUNE création de prospect / contrat / produit / tâche.
  * `triage_ia` et `triage_le` ne sont ni lus pour décider, ni modifiés.
  */
+import { geminiFetch } from "@/lib/gemini-gateway.server";
 import {
   MODELES_EXTRACTION,
   TEMPERATURE_EXTRACTION,
@@ -27,7 +28,7 @@ import {
 import { lireContexteEmail } from "./email-context-schema";
 import type { EmailContext } from "./email-context-types";
 
-const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const GATEWAY = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 
 export interface ResultatExtractionContexte {
   contexte: EmailContext;
@@ -51,12 +52,12 @@ export async function analyserContexteEmail(
   email: EmailAExtraire,
   options: OptionsExtraction = {},
 ): Promise<ResultatExtractionContexte> {
-  const cle = options.cleApi ?? process.env["LOVABLE_API_KEY"] ?? null;
+  const cle = options.cleApi ?? process.env["GEMINI_API_KEY"] ?? null;
   if (!cle) {
-    return echec("cle_absente", null, "LOVABLE_API_KEY absente", options.analyseLe);
+    return echec("cle_absente", null, "GEMINI_API_KEY absente", options.analyseLe);
   }
 
-  const appel = options.fetchImpl ?? fetch;
+  const appel = options.fetchImpl ?? geminiFetch;
   const modeles = options.modeles ?? MODELES_EXTRACTION;
   const timeout = options.timeoutMs ?? TIMEOUT_EXTRACTION_MS;
 

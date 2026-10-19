@@ -3,9 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SITE } from "@/lib/site";
 import { useServerFn } from "@tanstack/react-start";
-import { autoInscriptionClient } from "@/lib/client-espace.functions";
 import { demanderReinitialisationMotDePasse } from "@/lib/auth-email.functions";
-import { lovable } from "@/integrations/lovable";
 
 export const Route = createFileRoute("/auth")({
   // Page d'authentification : pas de SSR (noindex, dépend du navigateur),
@@ -37,13 +35,6 @@ function AuthPage() {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotMsg, setForgotMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
-  const [signupOpen, setSignupOpen] = useState(false);
-  const [signupEmail, setSignupEmail] = useState("");
-  const [signupPwd, setSignupPwd] = useState("");
-  const [signupPwd2, setSignupPwd2] = useState("");
-  const [signupLoading, setSignupLoading] = useState(false);
-  const [signupMsg, setSignupMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
-  const creerCompte = useServerFn(autoInscriptionClient);
   const demanderReset = useServerFn(demanderReinitialisationMotDePasse);
 
   useEffect(() => {
@@ -64,16 +55,14 @@ function AuthPage() {
     setGoogleError(null);
     setGoogleLoading(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
-        extraParams: { prompt: "select_account" },
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin,
+          queryParams: { prompt: "select_account" },
+        },
       });
-      if (result.error) {
-        setGoogleError(result.error.message || "Connexion Google impossible.");
-        return;
-      }
-      if (result.redirected) return;
-      navigate({ to: "/espace" });
+      if (error) setGoogleError(error.message || "Connexion Google impossible.");
     } catch (err) {
       setGoogleError(err instanceof Error ? err.message : "Connexion Google impossible.");
     } finally {
@@ -99,40 +88,6 @@ function AuthPage() {
       );
     } finally {
       setLoading(false);
-    }
-  };
-
-  const submitSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSignupMsg(null);
-    if (signupPwd.length < 10) {
-      setSignupMsg({ type: "err", text: "Le mot de passe doit contenir au moins 10 caractères." });
-      return;
-    }
-    if (signupPwd !== signupPwd2) {
-      setSignupMsg({ type: "err", text: "Les deux mots de passe ne correspondent pas." });
-      return;
-    }
-    setSignupLoading(true);
-    try {
-      const res = await creerCompte({ data: { email: signupEmail, password: signupPwd } });
-      if (!res.ok) {
-        setSignupMsg({ type: "err", text: res.error });
-      } else {
-        const { error: signInErr } = await supabase.auth.signInWithPassword({
-          email: signupEmail,
-          password: signupPwd,
-        });
-        if (signInErr) {
-          setSignupMsg({ type: "ok", text: "Votre espace est créé. Vous pouvez vous connecter." });
-        } else {
-          navigate({ to: "/espace/mon-espace" });
-        }
-      }
-    } catch (err) {
-      setSignupMsg({ type: "err", text: err instanceof Error ? err.message : "Erreur" });
-    } finally {
-      setSignupLoading(false);
     }
   };
 
@@ -182,7 +137,7 @@ function AuthPage() {
           </div>
 
           <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.04] p-7 shadow-2xl backdrop-blur">
-            {!forgotOpen && !signupOpen ? (
+            {!forgotOpen ? (
               <>
                 <h2 className="font-sans text-base font-semibold text-white">Connexion</h2>
                 <p className="mt-1 text-xs text-white/50">
@@ -288,21 +243,8 @@ function AuthPage() {
                   Mot de passe oublié ?
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSignupOpen(true);
-                    setSignupEmail(email);
-                    setSignupMsg(null);
-                  }}
-                  className="mt-2 w-full text-center text-xs text-[#d4af37] underline underline-offset-4 hover:brightness-125"
-                >
-                  Client du cabinet ? Activer mon espace
-                </button>
-
                 <p className="mt-6 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-3 text-[11px] leading-relaxed text-white/50">
-                  Les accès collaborateurs sont créés exclusivement par le cabinet. L'activation d'espace est
-                  réservée aux clients déjà enregistrés dans nos fichiers.
+                  Les accès collaborateurs et les espaces clients sont créés exclusivement sur invitation du cabinet.
                 </p>
               </>
             ) : forgotOpen ? (
@@ -343,74 +285,6 @@ function AuthPage() {
                   onClick={() => {
                     setForgotOpen(false);
                     setForgotMsg(null);
-                  }}
-                  className="w-full text-center text-xs text-white/55 underline underline-offset-4 hover:text-white"
-                >
-                  Retour à la connexion
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={submitSignup} className="space-y-4">
-                <h2 className="font-sans text-base font-semibold text-white">Activer mon espace client</h2>
-                <p className="text-xs text-white/50">
-                  Réservé aux clients du cabinet : utilisez l'adresse e-mail communiquée à votre conseiller.
-                </p>
-                <div>
-                  <label htmlFor="signup-email" className={labelClass}>Adresse e-mail</label>
-                  <input
-                    id="signup-email"
-                    type="email"
-                    required
-                    value={signupEmail}
-                    onChange={(e) => setSignupEmail(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="signup-pwd" className={labelClass}>Mot de passe</label>
-                  <input
-                    id="signup-pwd"
-                    type="password"
-                    required
-                    autoComplete="new-password"
-                    value={signupPwd}
-                    onChange={(e) => setSignupPwd(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="signup-pwd2" className={labelClass}>Confirmation</label>
-                  <input
-                    id="signup-pwd2"
-                    type="password"
-                    required
-                    autoComplete="new-password"
-                    value={signupPwd2}
-                    onChange={(e) => setSignupPwd2(e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-
-                {signupMsg && (
-                  <p
-                    className={`rounded-lg px-3 py-2 text-sm ${
-                      signupMsg.type === "ok"
-                        ? "border border-[#d4af37]/30 bg-[#d4af37]/10 text-[#d4af37]"
-                        : "border border-red-400/30 bg-red-500/10 text-red-200"
-                    }`}
-                  >
-                    {signupMsg.text}
-                  </p>
-                )}
-
-                <button type="submit" disabled={signupLoading} className={buttonClass}>
-                  {signupLoading ? "Création…" : "Créer mon espace"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSignupOpen(false);
-                    setSignupMsg(null);
                   }}
                   className="w-full text-center text-xs text-white/55 underline underline-offset-4 hover:text-white"
                 >

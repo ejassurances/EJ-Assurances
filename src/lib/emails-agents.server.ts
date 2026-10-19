@@ -560,7 +560,7 @@ export async function executerAgents(
                   : `Motif : adresse automatique d'un domaine NON répertorié (${entree.expediteur_email}) — ni partenaire connu, ni client. À répertorier si c'est un partenaire.`,
                 `Ce qui bloque : aucun agent ne peut décider à partir d'un expéditeur interne (ni prospect, ni client, ni partenaire identifiable automatiquement).`,
                 `Conseil : ouvrir le mail et indiquer la suite à donner (rattacher au client concerné, transmettre au service partenaire, ou saisir en comptabilité). Aucune fiche client n'a été créée.`,
-                `Email : https://mail.google.com/mail/u/0/#all/${m.id}`,
+                `Email : https://mail.ionos.fr/`,
               ].join("\n"),
               priorite: "normale",
               created_by: userId,

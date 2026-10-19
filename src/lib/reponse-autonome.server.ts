@@ -17,6 +17,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import type { IntentionEmail } from "@/lib/email-intention-types";
+import { geminiFetch } from "@/lib/gemini-gateway.server";
 import { autorisationReponseAutonome, type CanalReponse } from "@/lib/actes-reglementaires";
 import { prochaineSortieAutorisee } from "@/lib/heures-ouverture";
 import { classerBesoinReponse } from "@/lib/besoin-reponse";
@@ -25,7 +26,7 @@ import { classerBesoinReponse } from "@/lib/besoin-reponse";
 type Admin = SupabaseClient<Database>;
 
 const CABINET = "EJ Partners Assurances";
-const MODELE = "openai/gpt-5.6-sol";
+const MODELE = "gemini-3.6-flash";
 
 export interface DemandeReponseAutonome {
   canal: CanalReponse;
@@ -59,7 +60,7 @@ export interface ResultatReponseAutonome {
 
 /** Rédaction du corps de la réponse par l'IA, à partir des seuls faits fournis. */
 async function redigerReponse(d: DemandeReponseAutonome): Promise<{ titre: string; paragraphes: string[] } | null> {
-  const cle = process.env["LOVABLE_API_KEY"];
+  const cle = process.env["GEMINI_API_KEY"];
   if (!cle) return null;
 
   const consignes = [
@@ -83,48 +84,29 @@ async function redigerReponse(d: DemandeReponseAutonome): Promise<{ titre: strin
       : "Éléments vérifiés du CRM : aucun.",
   ].join("\n\n");
 
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
+  const res = await geminiFetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Lovable-API-Key": cle,
-      "X-Lovable-AIG-SDK": "fetch",
+      Authorization: `Bearer ${cle}`,
     },
     body: JSON.stringify({
       model: MODELE,
-      instructions: consignes,
-      input: contexte,
-      stream: true,
-      store: false,
+      messages: [
+        { role: "system", content: consignes },
+        { role: "user", content: contexte },
+      ],
     }),
   });
-  if (!res.ok || !res.body) {
+  if (!res.ok) {
     console.error("[reponse-autonome] rédaction impossible", res.status, await res.text().catch(() => ""));
     return null;
   }
 
-  let texte = "";
-  const lecteur = res.body.getReader();
-  const decodeur = new TextDecoder();
-  let tampon = "";
-  for (;;) {
-    const { done, value } = await lecteur.read();
-    if (done) break;
-    tampon += decodeur.decode(value, { stream: true });
-    const lignes = tampon.split("\n");
-    tampon = lignes.pop() ?? "";
-    for (const ligne of lignes) {
-      if (!ligne.startsWith("data:")) continue;
-      const brut = ligne.slice(5).trim();
-      if (!brut || brut === "[DONE]") continue;
-      try {
-        const ev = JSON.parse(brut) as { type?: string; delta?: string };
-        if (ev.type === "response.output_text.delta" && typeof ev.delta === "string") texte += ev.delta;
-      } catch {
-        /* fragment non JSON : ignoré */
-      }
-    }
-  }
+  const completion = (await res.json()) as {
+    choices?: { message?: { content?: string } }[];
+  };
+  const texte = completion.choices?.[0]?.message?.content ?? "";
 
   const blocs = texte
     .split(/\n\s*\n/)

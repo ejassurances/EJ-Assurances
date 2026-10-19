@@ -45,7 +45,7 @@ export async function notifierActionAgent(
     titre,
     description: [
       ...params.lignes.filter((l): l is string => !!l),
-      `Email : https://mail.google.com/mail/u/0/#all/${params.gmail_message_id}`,
+      `Email : https://mail.ionos.fr/`,
       `Identifiant Gmail : ${params.gmail_message_id}`,
     ].join("\n"),
     client_id: params.client_id ?? null,

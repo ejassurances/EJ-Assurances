@@ -107,7 +107,7 @@ const parametres = {
 
 beforeEach(() => {
   telecharger.mockReset();
-  process.env["LOVABLE_API_KEY"] = "cle-test";
+  process.env["GEMINI_API_KEY"] = "cle-test";
   // L'IA ne reconnaît aucun titulaire connu du CRM → pièce « à classer ».
   vi.stubGlobal(
     "fetch",
