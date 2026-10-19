@@ -252,8 +252,8 @@ function AuthPage() {
                 </button>
 
                 <p className="mt-6 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-3 text-[11px] leading-relaxed text-white/50">
-                  Les accès collaborateurs et les espaces clients sont créés exclusivement
-                  sur invitation du cabinet.
+                  Les accès collaborateurs et les espaces clients sont créés exclusivement sur
+                  invitation du cabinet.
                 </p>
               </>
             ) : (
