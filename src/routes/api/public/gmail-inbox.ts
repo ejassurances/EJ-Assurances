@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { authorizePublicJob } from "@/lib/public-job-auth";
 
 /**
- * Traitement de la boîte de réception principale Gmail.
+ * Traitement de la boîte de réception IONOS.
  *
  * DÉCLENCHEMENT MANUEL UNIQUEMENT : aucune planification n'est posée tant que
  * le cabinet n'a pas validé la mise en service. Aucun email n'est envoyé —

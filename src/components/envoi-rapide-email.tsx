@@ -7,11 +7,9 @@ import { envoyerEmailCrm } from "@/lib/emails.functions";
 
 export type TypeObjetEmail = "client" | "dossier" | "contrat" | "sinistre" | "reclamation";
 
-/** Construit l'URL de rédaction Gmail (Workspace) avec les champs pré-remplis. */
-function urlGmailCompose(to: string, cc: string, sujet: string, corps: string) {
-  const params = new URLSearchParams({ view: "cm", fs: "1", to, su: sujet, body: corps });
-  if (cc) params.set("cc", cc);
-  return `https://mail.google.com/mail/?${params.toString()}`;
+/** Ouvre le webmail du cabinet pour consulter sa boîte IONOS. */
+function urlWebmailIonos() {
+  return "https://mail.ionos.fr/";
 }
 
 /**
@@ -191,12 +189,12 @@ export function EnvoiRapideEmailDialog({
             Annuler
           </button>
           <a
-            href={urlGmailCompose(to, cc, sujet, message)}
+            href={urlWebmailIonos()}
             target="_blank"
             rel="noreferrer"
             className="rounded-full border border-line px-4 py-1.5 text-sm hover:bg-surface"
           >
-            Ouvrir dans Gmail
+            Ouvrir le webmail IONOS
           </a>
           <button
             type="submit"

@@ -232,7 +232,7 @@ export async function traiterRetourSuiviContrats(
 
   const analyse = await analyserRetour({ sujet: params.sujet, texte: params.texte, contrats: liste });
   const lienMail = params.gmail_message_id
-    ? `https://mail.google.com/mail/u/0/#all/${params.gmail_message_id}`
+    ? `https://mail.ionos.fr/`
     : "";
 
   await creerTacheAdmin(admin as never, {

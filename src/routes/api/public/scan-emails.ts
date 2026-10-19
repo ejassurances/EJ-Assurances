@@ -90,7 +90,7 @@ export const Route = createFileRoute("/api/public/scan-emails")({
             description: [
               `Erreur : ${message}`,
               "",
-              "Vérifier la connexion Gmail et les étiquettes du cabinet, puis relancer depuis l'onglet Emails.",
+              "Vérifier les identifiants IONOS et les étiquettes CRM, puis relancer depuis l'onglet Emails.",
             ].join("\n"),
             priorite: "haute",
             created_by: userId,

@@ -230,7 +230,7 @@ export async function journaliserCasNonCouvert(
     `Client : ${params.client ?? "inconnu"}`,
     `Objet du mail : ${params.sujet ?? "(sans objet)"}`,
     params.gmail_message_id
-      ? `Mail : https://mail.google.com/mail/u/0/#all/${params.gmail_message_id}`
+      ? `Mail : https://mail.ionos.fr/`
       : "Mail : (référence absente)",
     `Situation : ${params.situation}`,
     `Aucune règle applicable car : ${params.pourquoi_non_couvert}`,
@@ -262,7 +262,7 @@ export async function journaliserCasNonCouvert(
       {
         libelle: "Mail",
         valeur: params.gmail_message_id
-          ? `https://mail.google.com/mail/u/0/#all/${params.gmail_message_id}`
+          ? `https://mail.ionos.fr/`
           : "—",
       },
     ],

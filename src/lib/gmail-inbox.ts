@@ -1,7 +1,7 @@
 /**
- * Règles de traitement de la boîte de réception principale Gmail.
+ * Règles de traitement de la boîte de réception IONOS.
  *
- * Module PUR (client-safe, testable) : aucune dépendance Gmail ni base de
+ * Module PUR (client-safe, testable) : aucune dépendance fournisseur ni base de
  * données. Il décide uniquement (a) si un message est mûr pour traitement et
  * (b) dans quel état de classement il doit aller.
  *
@@ -10,7 +10,7 @@
  *  - ⚠️ 02_Alerte_Humain_A_Traiter : doute, sujet sensible ou rattachement incertain ;
  *  - 📦 03_Archives_Traitees : rien à répondre, ou une réponse existe déjà.
  *
- * Noms OFFICIELS, recopiés à l'identique depuis Gmail (emoji compris).
+ * Libellés métier conservés à l'identique pendant la migration depuis Gmail.
  */
 
 export const LABEL_BROUILLON = "📥 01_Brouillon_IA_A_Relire";
@@ -97,9 +97,11 @@ export function classerEmail(e: EntreeClassement): ClassementEmail {
 }
 
 export function lienGmailMessage(messageId: string): string {
-  return `https://mail.google.com/mail/u/0/#all/${messageId}`;
+  void messageId;
+  return "https://mail.ionos.fr/";
 }
 
 export function lienGmailBrouillon(draftId: string): string {
-  return `https://mail.google.com/mail/u/0/#drafts?compose=${draftId}`;
+  void draftId;
+  return "https://mail.ionos.fr/";
 }

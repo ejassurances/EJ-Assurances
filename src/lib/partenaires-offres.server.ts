@@ -358,7 +358,7 @@ export async function traiterEmailPartenaireOffre(
   if (!analyse || analyse.categorie === "aucune") return vide;
 
   const { creerTacheAdmin } = await import("@/lib/agent-taches.server");
-  const lien = `https://mail.google.com/mail/u/0/#all/${params.gmail_message_id}`;
+  const lien = `https://mail.ionos.fr/`;
 
   // Compagnie : celle de l'annuaire si connue, sinon celle citée par l'IA.
   let compagnieId = params.compagnie_connue?.id ?? null;

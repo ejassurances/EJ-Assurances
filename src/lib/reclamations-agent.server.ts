@@ -214,7 +214,7 @@ export async function ouvrirReclamationDepuisEmail(
   }
 
   const lienMail = params.gmail_message_id
-    ? `https://mail.google.com/mail/u/0/#all/${params.gmail_message_id}`
+    ? `https://mail.ionos.fr/`
     : "—";
 
   await creerTacheAdmin(admin as never, {

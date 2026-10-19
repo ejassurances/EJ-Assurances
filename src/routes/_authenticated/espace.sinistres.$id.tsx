@@ -150,12 +150,12 @@ function FicheSinistre() {
           {s.gmail_message_id && (
             <p>
               <a
-                href={`https://mail.google.com/mail/u/0/#all/${s.gmail_message_id}`}
+                href={`https://mail.ionos.fr/`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="underline"
               >
-                Email d'origine dans Gmail
+                Email d'origine dans le webmail IONOS
               </a>
             </p>
           )}

@@ -182,7 +182,7 @@ async function retrouverClient(
 }
 
 function lienMail(id: string): string {
-  return `https://mail.google.com/mail/u/0/#all/${id}`;
+  return `https://mail.ionos.fr/`;
 }
 
 /** Clés d'idempotence des tâches humaines créées pour une pièce partenaire. */
@@ -418,7 +418,7 @@ export async function traiterPiecesJointesPartenaire(
           `Objet du mail : ${params.sujet ?? "(sans objet)"}`,
           `Motif : ${resultat.detail}`,
           `Email : ${lienMail(params.gmail_message_id)}`,
-          "Action : télécharger la pièce depuis Gmail et la classer manuellement.",
+          "Action : télécharger la pièce depuis le webmail IONOS et la classer manuellement.",
         ].join("\n"),
         priorite: "normale",
         created_by: params.userId,

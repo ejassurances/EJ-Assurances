@@ -1,6 +1,6 @@
 # CRM EJ Assurances
 
-CRM interne d'EJ Assurances, préparé pour un hébergement Cloudflare Workers. L'application s'appuie sur Supabase pour l'authentification, la base et le stockage ; Brevo pour les emails transactionnels ; les API Google pour Gmail/Drive ; et l'API Gemini pour les fonctions IA lorsqu'elles sont configurées.
+CRM interne d'EJ Assurances, préparé pour un hébergement Cloudflare Workers. L'application s'appuie sur Supabase pour l'authentification, la base et le stockage ; IONOS pour la boîte e-mail du CRM (IMAP/SMTP) ; Brevo pour les e-mails transactionnels ; Google Drive pour les documents ; et l'API Gemini pour les fonctions IA lorsqu'elles sont configurées.
 
 ## Développement local
 

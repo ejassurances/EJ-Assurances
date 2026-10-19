@@ -219,7 +219,7 @@ export async function traiterEmailVeille(
         analyse.resume || "(résumé indisponible)",
         "",
         analyse.document_source_url ? `Document source : ${analyse.document_source_url}` : "Document source : —",
-        `Email : https://mail.google.com/mail/u/0/#all/${params.gmail_message_id}`,
+        `Email : https://mail.ionos.fr/`,
         "Registre : /espace/conformite (onglet Veille réglementaire)",
       ].join("\n"),
       priorite: "normale",

@@ -42,7 +42,7 @@ export interface SendTemplateEmailOptions {
  * Rend un template enregistré et l'envoie directement à l'API Brevo — y compris
  * les quatre courriers d'accompagnement DDA (DER, lettre de mission, devoir de
  * conseil, signature de souscription), dont la traçabilité ACPR est assurée par
- * la copie automatique déposée dans la boîte Gmail du cabinet. La génération des
+ * la copie automatique déposée dans la boîte IONOS du cabinet. La génération des
  * PDF reste inchangée : seul le texte du mail passe par Brevo. Toute erreur
  * d'envoi lève une exception.
  */
@@ -123,7 +123,7 @@ export async function sendTemplateEmail(
     `[email] OK template=${templateName} destinataire=${recipient} messageId=${messageId ?? 'n/a'}`
   )
 
-  // Trace de l'envoi dans la boîte Gmail du cabinet (copie dans « Envoyés »,
+  // Trace de l'envoi dans la boîte IONOS du cabinet (copie dans « Envoyés »,
   // libellée « Envoyé via Brevo »), puis rattachement de cette copie à la fiche
   // client / au dossier. Aucun échec silencieux : si la copie n'a pas pu être
   // déposée, une tâche admin de vérification est créée.
@@ -140,7 +140,7 @@ export async function sendTemplateEmail(
       attachments: options.attachments,
     })
     copieId = copie?.id ?? null
-    if (!copieId) copieErreur = 'dépôt de la copie refusé par Gmail'
+    if (!copieId) copieErreur = 'dépôt de la copie refusé par IONOS'
   } catch (e) {
     copieErreur = e instanceof Error ? e.message : 'erreur inconnue'
   }
@@ -165,20 +165,20 @@ export async function sendTemplateEmail(
         )
       }
     } else {
-      console.error(`[email] copie Gmail de l’envoi Brevo impossible: ${copieErreur}`)
+      console.error(`[email] copie IONOS de l’envoi Brevo impossible: ${copieErreur}`)
       const { creerTacheAdmin } = await import('@/lib/agent-taches.server')
       await creerTacheAdmin(supabaseAdmin, {
-        titre: `Vérifier la trace Gmail d'un envoi (${templateName})`,
+        titre: `Vérifier la trace IONOS d'un envoi (${templateName})`,
         description:
-          `L'e-mail « ${subject} » a bien été envoyé à ${recipient} via Brevo, mais la copie dans la boîte Gmail ` +
+          `L'e-mail « ${subject} » a bien été envoyé à ${recipient} via Brevo, mais la copie dans la boîte IONOS ` +
           `du cabinet n'a pas pu être déposée (${copieErreur ?? 'raison inconnue'}). ` +
-          `Vérifier la connexion Gmail et déposer la trace manuellement si nécessaire (exigence ACPR).`,
+          `Vérifier la connexion IONOS et déposer la trace manuellement si nécessaire (exigence ACPR).`,
         client_id: options.liens?.client_id ?? null,
         priorite: 'haute',
       })
     }
   } catch (e) {
-    console.error('[email] suivi de la copie Gmail impossible:', e)
+    console.error('[email] suivi de la copie IONOS impossible:', e)
   }
 
 

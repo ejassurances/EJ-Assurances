@@ -36,11 +36,18 @@ type MandataireContract = {
   created_at: string;
 };
 
+type CrmEmailLabel = {
+  message_id: string;
+  label: string;
+  created_at: string;
+};
+
 type PendingDatabase = Omit<Database, "public"> & {
   public: Omit<Database["public"], "Tables" | "Functions"> & {
     Tables: Database["public"]["Tables"] & {
       dossiers_lies: PendingTable<DossierLink, "dossier_id_1" | "dossier_id_2">;
       mandataires_contrats: PendingTable<MandataireContract, "user_id" | "reference">;
+      crm_email_labels: PendingTable<CrmEmailLabel, "message_id" | "label">;
     };
     Functions: Database["public"]["Functions"] & {
       creer_client_dossier_rapide: {

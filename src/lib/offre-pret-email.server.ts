@@ -37,7 +37,7 @@ const BUCKET = "dossier-documents";
 const TAILLE_MAX = 12 * 1024 * 1024;
 const STATUTS_CLOS = ["cloture", "perdu"];
 
-const lienMail = (id: string) => `https://mail.google.com/mail/u/0/#all/${id}`;
+const lienMail = (id: string) => `https://mail.ionos.fr/`;
 
 /** Une pièce peut-elle être une offre de prêt / un tableau d'amortissement ? */
 export function piecePretProbable(nom: string, sujet?: string | null): boolean {

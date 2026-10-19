@@ -89,8 +89,8 @@ function Confidentialite() {
           </li>
           <li>
             Les prestataires techniques utilisés par la plateforme : Cloudflare (hébergement et exécution), Supabase
-            (authentification, base de données et stockage), Google (Gmail, Drive et, lorsque l'IA est activée,
-            Gemini) et Brevo (emails transactionnels).
+            (authentification, base de données et stockage), IONOS (messagerie), Google Drive et Gemini lorsque l'IA est
+            activée, ainsi que Brevo (emails transactionnels).
           </li>
         </ul>
         <p>Aucune donnée n'est vendue ni cédée à des fins commerciales tierces.</p>

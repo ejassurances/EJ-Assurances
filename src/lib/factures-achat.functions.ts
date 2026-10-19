@@ -25,7 +25,7 @@ export const importerFactureDepuisEmail = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z
       .object({
-        gmail_message_id: z.string().min(5).max(80),
+        gmail_message_id: z.string().min(5).max(1024),
         attachment_id: z.string().min(5).max(600),
         nom_fichier: z.string().min(1).max(300),
         mime: z.string().max(120).optional().nullable(),

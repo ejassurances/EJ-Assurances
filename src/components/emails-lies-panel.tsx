@@ -71,7 +71,7 @@ type EmailAffiche = LienEmail & {
 /**
  * Historique des échanges rattachés à un client, un dossier, un contrat ou une
  * compagnie. Affichage passif en lecture seule : seul le lien vers le message
- * Gmail est conservé en base, le contenu est lu en direct via l'API Gmail.
+ * L'identifiant historique est conservé en base, le contenu est lu en direct via IMAP IONOS.
  */
 export function EmailsLiesPanel({
   liens,
@@ -175,12 +175,12 @@ export function EmailsLiesPanel({
                 return t ? <TriageBadge t={t} /> : null;
               })()}
               <a
-                href={`https://mail.google.com/mail/u/0/#all/${m.gmail_message_id}`}
+                href={`https://mail.ionos.fr/`}
                 target="_blank"
                 rel="noreferrer"
                 className="mt-2 inline-block text-xs underline text-ink-muted"
               >
-                Ouvrir dans Gmail
+                Ouvrir le webmail IONOS
               </a>
             </li>
           ))}

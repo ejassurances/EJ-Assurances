@@ -226,7 +226,7 @@ export async function noterCommunicationPartenaire(
   },
 ): Promise<boolean> {
   const titre = `Communication partenaire reçue — ${params.compagnie}`;
-  const lien = `https://mail.google.com/mail/u/0/#all/${params.gmail_message_id}`;
+  const lien = `https://mail.ionos.fr/`;
 
   const { data: deja } = await admin
     .from("activites")

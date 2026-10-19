@@ -368,7 +368,7 @@ async function journaliser(
 }
 
 function lienMail(messageId: string | null): string {
-  return messageId ? `https://mail.google.com/mail/u/0/#all/${messageId}` : "";
+  return messageId ? `https://mail.ionos.fr/` : "";
 }
 
 async function enregistrerReponse(
@@ -920,7 +920,7 @@ async function routerAutresPieces(
           `Objet du mail : ${email.sujet ?? "(sans objet)"}`,
           `Erreur : ${e instanceof Error ? e.message : "erreur inconnue"}`,
           `Email : ${lienMail(params.gmail_message_id)}`,
-          "Action : récupérer la pièce dans Gmail et la déposer manuellement.",
+          "Action : récupérer la pièce dans le webmail IONOS et la déposer manuellement.",
         ].join("\n"),
         client_id: client.id,
         created_by: params.userId,

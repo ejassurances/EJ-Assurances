@@ -129,7 +129,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Journal d’audit", to: "/espace/audit-logs", icon: IconFileText, roles: ["admin"] },
       { label: "Comptabilité", to: "/espace/comptabilite", icon: IconCoin, roles: STAFF },
       { label: "Fournisseurs", to: "/espace/fournisseurs", icon: IconBuildingBank, roles: STAFF },
-      { label: "Contrôle Gmail", to: "/espace/gmail-controle", icon: IconMail, roles: STAFF },
+      { label: "Contrôle des e-mails", to: "/espace/gmail-controle", icon: IconMail, roles: STAFF },
       {
         label: "Espace mandataire",
         to: "/espace/mon-espace-mandataire",

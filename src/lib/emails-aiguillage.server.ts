@@ -197,7 +197,7 @@ function corpsHtml(params: {
     `Objet : ${echapper(params.sujet ?? "(sans objet)")}<br />`,
     `Date : ${echapper(params.date ?? "non précisée")}<br />`,
     `Pièces jointes : ${echapper(params.pieces.join(", ") || "aucune")}<br />`,
-    `Message Gmail : <a href="https://mail.google.com/mail/u/0/#all/${echapper(params.gmailId)}">ouvrir dans Gmail</a>`,
+    `Message : <a href="https://mail.ionos.fr/">ouvrir dans le webmail IONOS</a>`,
     "</p>",
     `<blockquote style="margin:0;padding:10px 14px;border-left:3px solid #ccc;color:#333;white-space:pre-wrap">${echapper(
       origine,
