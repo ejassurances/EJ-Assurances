@@ -114,7 +114,9 @@ function ProfilAssuranceVie() {
   const [erreur, setErreur] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
   const dossierId =
-    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("dossier_id") : null;
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("dossier_id")
+      : null;
 
   const envoyer = async () => {
     if (!dossierId && (!c.nom.trim() || !c.email.trim())) {
@@ -168,8 +170,8 @@ function ProfilAssuranceVie() {
             Votre profil épargne
           </h1>
           <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/70">
-            En le remplissant avant notre rendez-vous, celui-ci pourra se concentrer directement
-            sur la mise en place de votre contrat, plutôt que sur la découverte de votre situation.
+            En le remplissant avant notre rendez-vous, celui-ci pourra se concentrer directement sur
+            la mise en place de votre contrat, plutôt que sur la découverte de votre situation.
           </p>
         </div>
       </div>
@@ -177,117 +179,146 @@ function ProfilAssuranceVie() {
       <div className="mx-auto -mt-8 max-w-2xl space-y-5 px-6 pb-16">
         <div className="rounded-2xl border border-[color:var(--crm-gold)]/30 bg-white p-4 text-xs leading-relaxed text-ink-muted shadow-sm">
           Version de travail (brouillon) — ce questionnaire sera complété avant mise en production
-          pour respecter les exigences réglementaires DDA (connaissance client, objectifs,
-          horizon, tolérance au risque).
+          pour respecter les exigences réglementaires DDA (connaissance client, objectifs, horizon,
+          tolérance au risque).
         </div>
 
-      <div className="crm-card space-y-4 rounded-2xl p-6">
-        <p className="crm-eyebrow">Vous</p>
-        {dossierId ? (
-          <p className="text-sm text-ink-soft">Vos coordonnées sont déjà connues de votre dossier.</p>
-        ) : (
+        <div className="crm-card space-y-4 rounded-2xl p-6">
+          <p className="crm-eyebrow">Vous</p>
+          {dossierId ? (
+            <p className="text-sm text-ink-soft">
+              Vos coordonnées sont déjà connues de votre dossier.
+            </p>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Champ label="Nom *" value={c.nom} onChange={set("nom")} />
+              <Champ label="Prénom" value={c.prenom} onChange={set("prenom")} />
+              <Champ label="Email *" type="email" value={c.email} onChange={set("email")} />
+              <Champ label="Téléphone" value={c.telephone} onChange={set("telephone")} />
+            </div>
+          )}
+          <ChampChoix
+            label="Situation familiale"
+            value={c.situation_familiale}
+            onChange={set("situation_familiale")}
+            options={["Célibataire", "En couple / pacsé(e)", "Marié(e)", "Divorcé(e)", "Veuf(ve)"]}
+          />
+          <ChampChoix
+            label="Situation professionnelle"
+            value={c.situation_professionnelle}
+            onChange={set("situation_professionnelle")}
+            options={[
+              "Salarié(e)",
+              "Indépendant(e) / profession libérale",
+              "Fonctionnaire",
+              "Retraité(e)",
+              "Sans emploi",
+              "Étudiant(e)",
+            ]}
+          />
+        </div>
+
+        <div className="crm-card space-y-4 rounded-2xl p-6">
+          <p className="crm-eyebrow">Votre situation financière</p>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Champ label="Nom *" value={c.nom} onChange={set("nom")} />
-            <Champ label="Prénom" value={c.prenom} onChange={set("prenom")} />
-            <Champ label="Email *" type="email" value={c.email} onChange={set("email")} />
-            <Champ label="Téléphone" value={c.telephone} onChange={set("telephone")} />
+            <Champ
+              label="Revenus mensuels du foyer (€, approximatif)"
+              type="number"
+              value={c.revenus_mensuels}
+              onChange={set("revenus_mensuels")}
+            />
+            <Champ
+              label="Charges mensuelles du foyer (€, approximatif)"
+              type="number"
+              value={c.charges_mensuelles}
+              onChange={set("charges_mensuelles")}
+            />
+            <Champ
+              label="Épargne déjà disponible (€, approximatif)"
+              type="number"
+              value={c.epargne_disponible}
+              onChange={set("epargne_disponible")}
+            />
           </div>
-        )}
-        <ChampChoix
-          label="Situation familiale"
-          value={c.situation_familiale}
-          onChange={set("situation_familiale")}
-          options={["Célibataire", "En couple / pacsé(e)", "Marié(e)", "Divorcé(e)", "Veuf(ve)"]}
-        />
-        <ChampChoix
-          label="Situation professionnelle"
-          value={c.situation_professionnelle}
-          onChange={set("situation_professionnelle")}
-          options={["Salarié(e)", "Indépendant(e) / profession libérale", "Fonctionnaire", "Retraité(e)", "Sans emploi", "Étudiant(e)"]}
-        />
-      </div>
-
-      <div className="crm-card space-y-4 rounded-2xl p-6">
-        <p className="crm-eyebrow">Votre situation financière</p>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Champ label="Revenus mensuels du foyer (€, approximatif)" type="number" value={c.revenus_mensuels} onChange={set("revenus_mensuels")} />
-          <Champ label="Charges mensuelles du foyer (€, approximatif)" type="number" value={c.charges_mensuelles} onChange={set("charges_mensuelles")} />
-          <Champ label="Épargne déjà disponible (€, approximatif)" type="number" value={c.epargne_disponible} onChange={set("epargne_disponible")} />
+          <ChampChoix
+            label="Origine des fonds à placer"
+            value={c.origine_fonds}
+            onChange={set("origine_fonds")}
+            options={[
+              "Épargne salariale progressive",
+              "Économies d'assurance emprunteur",
+              "Vente d'un bien",
+              "Héritage / donation",
+              "Autre",
+            ]}
+          />
         </div>
-        <ChampChoix
-          label="Origine des fonds à placer"
-          value={c.origine_fonds}
-          onChange={set("origine_fonds")}
-          options={["Épargne salariale progressive", "Économies d'assurance emprunteur", "Vente d'un bien", "Héritage / donation", "Autre"]}
-        />
-      </div>
 
-      <div className="crm-card space-y-4 rounded-2xl p-6">
-        <p className="crm-eyebrow">Votre profil d'investisseur</p>
-        <ChampChoix
-          label="Avez-vous déjà investi dans des produits financiers (assurance vie, bourse, immobilier locatif...) ?"
-          value={c.experience_placements}
-          onChange={set("experience_placements")}
-          options={["Jamais", "Un peu, occasionnellement", "Oui, régulièrement"]}
-        />
-        <ChampChoix
-          label="Objectif principal de ce placement"
-          value={c.objectif_principal}
-          onChange={set("objectif_principal")}
-          options={[
-            "Faire fructifier une épargne de précaution",
-            "Préparer ma retraite",
-            "Transmettre un capital à mes proches",
-            "Financer un projet à moyen terme",
-            "Autre",
-          ]}
-        />
-        <ChampChoix
-          label="Horizon de placement envisagé"
-          value={c.horizon_placement}
-          onChange={set("horizon_placement")}
-          options={["Moins de 4 ans", "4 à 8 ans", "Plus de 8 ans"]}
-        />
-        <ChampChoix
-          label="Face aux fluctuations des marchés, vous préférez..."
-          value={c.tolerance_risque}
-          onChange={set("tolerance_risque")}
-          options={[
-            "Aucun risque, même avec un rendement faible",
-            "Un peu de risque pour un meilleur rendement",
-            "Un risque assumé pour viser une performance plus élevée",
-          ]}
-        />
-      </div>
+        <div className="crm-card space-y-4 rounded-2xl p-6">
+          <p className="crm-eyebrow">Votre profil d'investisseur</p>
+          <ChampChoix
+            label="Avez-vous déjà investi dans des produits financiers (assurance vie, bourse, immobilier locatif...) ?"
+            value={c.experience_placements}
+            onChange={set("experience_placements")}
+            options={["Jamais", "Un peu, occasionnellement", "Oui, régulièrement"]}
+          />
+          <ChampChoix
+            label="Objectif principal de ce placement"
+            value={c.objectif_principal}
+            onChange={set("objectif_principal")}
+            options={[
+              "Faire fructifier une épargne de précaution",
+              "Préparer ma retraite",
+              "Transmettre un capital à mes proches",
+              "Financer un projet à moyen terme",
+              "Autre",
+            ]}
+          />
+          <ChampChoix
+            label="Horizon de placement envisagé"
+            value={c.horizon_placement}
+            onChange={set("horizon_placement")}
+            options={["Moins de 4 ans", "4 à 8 ans", "Plus de 8 ans"]}
+          />
+          <ChampChoix
+            label="Face aux fluctuations des marchés, vous préférez..."
+            value={c.tolerance_risque}
+            onChange={set("tolerance_risque")}
+            options={[
+              "Aucun risque, même avec un rendement faible",
+              "Un peu de risque pour un meilleur rendement",
+              "Un risque assumé pour viser une performance plus élevée",
+            ]}
+          />
+        </div>
 
-      <div className="crm-card space-y-3 rounded-2xl p-6">
-        <label className="text-xs font-medium text-ink-muted">
-          Toute autre information que vous jugez utile (facultatif)
-        </label>
-        <textarea
-          value={c.commentaire}
-          onChange={(e) => setC((p) => ({ ...p, commentaire: e.target.value }))}
-          rows={3}
-          className="w-full rounded-lg border border-line bg-background px-3 py-2 text-sm"
-        />
-      </div>
+        <div className="crm-card space-y-3 rounded-2xl p-6">
+          <label className="text-xs font-medium text-ink-muted">
+            Toute autre information que vous jugez utile (facultatif)
+          </label>
+          <textarea
+            value={c.commentaire}
+            onChange={(e) => setC((p) => ({ ...p, commentaire: e.target.value }))}
+            rows={3}
+            className="w-full rounded-lg border border-line bg-background px-3 py-2 text-sm"
+          />
+        </div>
 
-      {erreur && <p className="text-sm text-destructive">{erreur}</p>}
-      <button
-        type="button"
-        onClick={() => void envoyer()}
-        disabled={envoi}
-        className="w-full rounded-full bg-[color:var(--crm-gold)] px-5 py-3 text-sm font-semibold text-[color:var(--crm-navy)] shadow-sm transition hover:brightness-95 disabled:opacity-50"
-      >
-        {envoi ? "Envoi…" : "Envoyer mon profil"}
-      </button>
-      <p className="text-center text-xs text-ink-muted">
-        <Link to="/" className="underline">
-          EJ Partners Assurances
-        </Link>
-      </p>
+        {erreur && <p className="text-sm text-destructive">{erreur}</p>}
+        <button
+          type="button"
+          onClick={() => void envoyer()}
+          disabled={envoi}
+          className="w-full rounded-full bg-[color:var(--crm-gold)] px-5 py-3 text-sm font-semibold text-[color:var(--crm-navy)] shadow-sm transition hover:brightness-95 disabled:opacity-50"
+        >
+          {envoi ? "Envoi…" : "Envoyer mon profil"}
+        </button>
+        <p className="text-center text-xs text-ink-muted">
+          <Link to="/" className="underline">
+            EJ Partners Assurances
+          </Link>
+        </p>
       </div>
     </div>
-
   );
 }

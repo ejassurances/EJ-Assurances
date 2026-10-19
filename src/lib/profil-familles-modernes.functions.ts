@@ -45,7 +45,8 @@ export const creerProfilFamillesModernes = createServerFn({ method: "POST" })
       })
       .select("id, reference")
       .single();
-    if (errClient || !client) throw new Error(errClient?.message ?? "Création du client impossible");
+    if (errClient || !client)
+      throw new Error(errClient?.message ?? "Création du client impossible");
 
     const nomComplet = [data.prenom, data.nom].filter(Boolean).join(" ");
     const { data: dossierVie, error: errVie } = await supabaseAdmin

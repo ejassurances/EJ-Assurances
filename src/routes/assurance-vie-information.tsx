@@ -96,7 +96,9 @@ function DemandeInfoVie() {
           <p className="mt-6 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--crm-gold)]">
             EJ Partners Assurances
           </p>
-          <h1 className="mt-2 font-serif text-3xl font-medium text-white sm:text-4xl">Assurance vie</h1>
+          <h1 className="mt-2 font-serif text-3xl font-medium text-white sm:text-4xl">
+            Assurance vie
+          </h1>
           <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/70">
             Vous vous renseignez sur l'assurance vie ? Laissez-nous vos coordonnées, un conseiller
             vous recontacte pour en discuter.
@@ -113,7 +115,9 @@ function DemandeInfoVie() {
             <Champ label="Téléphone" value={c.telephone} onChange={set("telephone")} />
           </div>
           <div>
-            <label className="text-xs font-medium text-ink-muted">Votre question (facultatif)</label>
+            <label className="text-xs font-medium text-ink-muted">
+              Votre question (facultatif)
+            </label>
             <textarea
               value={c.motif}
               onChange={(e) => setC((p) => ({ ...p, motif: e.target.value }))}

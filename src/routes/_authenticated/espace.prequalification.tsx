@@ -28,7 +28,9 @@ function Prequalification() {
     setEnvoi(true);
     setErreur(null);
     try {
-      const res = await creer({ data: { nom: nom.trim(), prenom: prenom.trim() || undefined, email: email.trim() } });
+      const res = await creer({
+        data: { nom: nom.trim(), prenom: prenom.trim() || undefined, email: email.trim() },
+      });
       setResultat(res);
       setNom("");
       setPrenom("");
@@ -49,8 +51,8 @@ function Prequalification() {
         <h1 className="mt-2 font-serif text-2xl font-medium text-ink">Pré-qualification rapide</h1>
         <p className="mt-1 text-sm text-ink-muted">
           Assurance emprunteur — pour un contact reçu par WhatsApp ou en direct. Crée
-          automatiquement la fiche client et le dossier, puis envoie le mail de demande
-          d'éléments, avec la référence du dossier dans l'objet pour un suivi optimal.
+          automatiquement la fiche client et le dossier, puis envoie le mail de demande d'éléments,
+          avec la référence du dossier dans l'objet pour un suivi optimal.
         </p>
       </div>
 
@@ -94,7 +96,9 @@ function Prequalification() {
       {resultat && (
         <div className="crm-card space-y-2 p-6 text-sm">
           <p className="font-medium text-emerald-700">
-            {resultat.email_envoye ? "Mail envoyé." : "Dossier créé, mais le mail n'a pas pu être envoyé."}
+            {resultat.email_envoye
+              ? "Mail envoyé."
+              : "Dossier créé, mais le mail n'a pas pu être envoyé."}
           </p>
           <p>
             Client : <span className="font-medium">{resultat.client_reference}</span>

@@ -32,7 +32,8 @@ export const creerDemandeInfoVie = createServerFn({ method: "POST" })
       })
       .select("id, reference")
       .single();
-    if (errClient || !client) throw new Error(errClient?.message ?? "Création du client impossible");
+    if (errClient || !client)
+      throw new Error(errClient?.message ?? "Création du client impossible");
 
     const nomComplet = [data.prenom, data.nom].filter(Boolean).join(" ");
     const { data: dossier, error: errDossier } = await supabaseAdmin
@@ -53,7 +54,8 @@ export const creerDemandeInfoVie = createServerFn({ method: "POST" })
       })
       .select("id, reference")
       .single();
-    if (errDossier || !dossier) throw new Error(errDossier?.message ?? "Création du dossier impossible");
+    if (errDossier || !dossier)
+      throw new Error(errDossier?.message ?? "Création du dossier impossible");
 
     await supabaseAdmin.from("taches").insert({
       dossier_id: dossier.id,

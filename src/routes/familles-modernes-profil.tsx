@@ -70,10 +70,14 @@ function FamillesModernes() {
   const [souhaiteEmprunteur, setSouhaiteEmprunteur] = useState(false);
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
-  const [resultat, setResultat] = useState<{ dossier_emprunteur_reference: string | null } | null>(null);
+  const [resultat, setResultat] = useState<{ dossier_emprunteur_reference: string | null } | null>(
+    null,
+  );
 
   const origine =
-    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("origine") : null;
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("origine")
+      : null;
 
   const envoyer = async () => {
     if (!c.nom.trim() || !c.email.trim()) {
@@ -162,7 +166,11 @@ function FamillesModernes() {
         <div className="crm-card space-y-4 rounded-2xl p-6">
           <p className="crm-eyebrow">Votre enfant social</p>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Champ label="Prénom de l'enfant" value={c.prenom_enfant} onChange={set("prenom_enfant")} />
+            <Champ
+              label="Prénom de l'enfant"
+              value={c.prenom_enfant}
+              onChange={set("prenom_enfant")}
+            />
             <Champ
               label="Votre lien avec l'enfant"
               value={c.lien_avec_enfant}

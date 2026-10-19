@@ -33,7 +33,8 @@ export const creerPrequalificationEmprunteur = createServerFn({ method: "POST" }
       })
       .select("id, reference, nom, prenom")
       .single();
-    if (errClient || !client) throw new Error(errClient?.message ?? "Création du client impossible");
+    if (errClient || !client)
+      throw new Error(errClient?.message ?? "Création du client impossible");
 
     const nomComplet = [client.prenom, client.nom].filter(Boolean).join(" ");
     const { data: dossier, error: errDossier } = await supabase
@@ -48,7 +49,8 @@ export const creerPrequalificationEmprunteur = createServerFn({ method: "POST" }
       })
       .select("id, reference")
       .single();
-    if (errDossier || !dossier) throw new Error(errDossier?.message ?? "Création du dossier impossible");
+    if (errDossier || !dossier)
+      throw new Error(errDossier?.message ?? "Création du dossier impossible");
 
     const result = await sendTemplateEmail("prequalification-emprunteur", data.email, {
       templateData: {
