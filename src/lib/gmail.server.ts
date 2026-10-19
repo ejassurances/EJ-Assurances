@@ -10,29 +10,25 @@ import {
 
 
 /**
- * Accès Gmail (boîte du cabinet) via la passerelle de connecteurs Lovable.
+ * Accès direct à l'API Gmail via OAuth Google.
  * Server-only : n'importez jamais ce fichier depuis un composant.
  */
 
-const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_mail/gmail/v1";
+const GMAIL_API_URL = "https://gmail.googleapis.com/gmail/v1";
 
 /** Requête « boîte principale » : onglet Principal de la boîte de réception. */
 export const REQUETE_BOITE_PRINCIPALE = "in:inbox category:primary";
 
-function headers() {
-  const lovableKey = process.env["LOVABLE_API_KEY"];
-  const gmailKey = process.env["GOOGLE_MAIL_API_KEY"];
-  if (!lovableKey) throw new Error("LOVABLE_API_KEY n'est pas configurée");
-  if (!gmailKey) throw new Error("GOOGLE_MAIL_API_KEY n'est pas configurée (connecteur Gmail)");
+async function headers() {
+  const { obtenirJetonGoogle } = await import("@/lib/google-oauth.server");
   return {
-    Authorization: `Bearer ${lovableKey}`,
-    "X-Connection-Api-Key": gmailKey,
+    Authorization: `Bearer ${await obtenirJetonGoogle()}`,
     "Content-Type": "application/json",
   };
 }
 
 async function gmailFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${GATEWAY_URL}${path}`, { ...init, headers: headers() });
+  const res = await fetch(`${GMAIL_API_URL}${path}`, { ...init, headers: await headers() });
   if (!res.ok) {
     const body = await res.text();
     console.error(`Gmail ${path} [${res.status}]: ${body}`);

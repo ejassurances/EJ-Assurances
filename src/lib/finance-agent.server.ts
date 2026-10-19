@@ -1,3 +1,4 @@
+import { geminiFetch } from "@/lib/gemini-gateway.server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -11,8 +12,8 @@ import type { Database } from "@/integrations/supabase/types";
  * automatique. Rien n'est marqué « payé », et toute anomalie ouvre une tâche.
  */
 
-const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODELES = ["google/gemini-3.6-flash", "google/gemini-2.5-flash"];
+const GATEWAY = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const MODELES = ["gemini-3.6-flash", "gemini-2.5-flash"];
 
 type Admin = SupabaseClient<Database>;
 
@@ -86,12 +87,12 @@ function consigne(email: EmailFinance): string {
 
 /** Classification IA d'un email entrant non rattaché à un client. */
 export async function classifierEmailFinance(email: EmailFinance): Promise<ClassificationFinance> {
-  const cle = process.env["LOVABLE_API_KEY"];
+  const cle = process.env["GEMINI_API_KEY"];
   if (!cle) throw new Error("Analyse indisponible : clé IA absente du projet.");
 
   let derniere = "";
   for (const modele of MODELES) {
-    const res = await fetch(GATEWAY, {
+    const res = await geminiFetch(GATEWAY, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${cle}` },
       body: JSON.stringify({ model: modele, messages: [{ role: "user", content: consigne(email) }] }),

@@ -15,7 +15,7 @@ import { STATUTS_DOSSIER_AMONT_ANALYSE } from "./referentiels";
 type Db = SupabaseClient<any, any, any>;
 
 const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
-const MODELES = ["gemini-3.6-flash", "gemini-2.5-flash", "gemini-2.0-flash"];
+const MODELES = ["gemini-3.6-flash", "gemini-2.5-flash"];
 
 export interface AnalyseRecueil {
   synthese: string;
@@ -51,45 +51,14 @@ function listeTexte(valeur: unknown, max = 8): string[] {
     .slice(0, max);
 }
 
-/** Repli sur la passerelle IA du projet (mêmes modèles Gemini). */
-async function appelPasserelle(
-  consigne: string,
-): Promise<{ json: Record<string, unknown>; modele: string }> {
-  const cle = process.env["LOVABLE_API_KEY"];
-  if (!cle) throw new Error("Aucune clé IA disponible pour l'analyse.");
-  let derniere = "";
-  for (const modele of MODELES) {
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${cle}` },
-      body: JSON.stringify({
-        model: `google/${modele}`,
-        messages: [{ role: "user", content: consigne }],
-      }),
-    });
-    if (res.ok) {
-      const json = (await res.json()) as any;
-      const contenu: string = json?.choices?.[0]?.message?.content ?? "";
-      if (!contenu) throw new Error("Réponse IA vide");
-      return { json: extraireJson(contenu), modele: `google/${modele}` };
-    }
-    derniere = `${res.status} ${(await res.text()).slice(0, 300)}`;
-    if (res.status !== 400 && res.status !== 404) break;
-  }
-  throw new Error(`Analyse IA impossible : ${derniere}`);
-}
-
 /**
- * Appel de l'API Gemini avec la clé du projet (GEMINI_API_KEY).
- * Si cette clé est absente ou refusée par Google (403 / quota / modèle
- * indisponible), repli automatique sur la passerelle IA du projet afin que
- * l'analyse du recueil ne soit jamais bloquée.
+ * Appel direct à l'API Gemini avec la clé serveur GEMINI_API_KEY.
  */
 async function appelGemini(
   consigne: string,
 ): Promise<{ json: Record<string, unknown>; modele: string }> {
   const cle = process.env["GEMINI_API_KEY"];
-  if (!cle) return appelPasserelle(consigne);
+  if (!cle) throw new Error("GEMINI_API_KEY n'est pas configurée.");
   let derniere = "";
   for (const modele of MODELES) {
     const res = await fetch(`${ENDPOINT}/${modele}:generateContent`, {
@@ -111,9 +80,9 @@ async function appelGemini(
     if (res.status !== 400 && res.status !== 404 && res.status !== 403 && res.status !== 429) break;
   }
   console.warn(
-    `[analyse-recueil] API Gemini indisponible (${derniere}) — repli sur la passerelle IA.`,
+    `[analyse-recueil] API Gemini indisponible (${derniere}).`,
   );
-  return appelPasserelle(consigne);
+  throw new Error(`Analyse IA impossible : ${derniere}`);
 }
 
 /**

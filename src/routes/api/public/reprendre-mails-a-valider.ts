@@ -19,7 +19,7 @@ export const Route = createFileRoute("/api/public/reprendre-mails-a-valider")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        if (!authorizePublicJob(request)) return new Response("Unauthorized", { status: 401 });
+        if (!(await authorizePublicJob(request))) return new Response("Unauthorized", { status: 401 });
 
         const url = new URL(request.url);
         const brut = Number(url.searchParams.get("limite") ?? 50);

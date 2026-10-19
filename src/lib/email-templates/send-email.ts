@@ -2,12 +2,12 @@ import * as React from 'react'
 import { render } from '@react-email/render'
 import { TEMPLATES } from './registry'
 
-// Server-only: reads LOVABLE_API_KEY / BREVO_API_KEY. Never import from client components.
+// Server-only: reads BREVO_API_KEY. Never import from client components.
 
 const SITE_NAME = 'EJ Partners Assurances'
 /** Adresse expéditrice (doit être un expéditeur/domaine vérifié dans Brevo). */
 const FROM_EMAIL = 'contact@ej-assurances.fr'
-const GATEWAY_URL = 'https://connector-gateway.lovable.dev/brevo'
+const BREVO_API_URL = 'https://api.brevo.com/v3'
 
 export type SendTemplateEmailResult =
   | { sent: true }
@@ -39,7 +39,7 @@ export interface SendTemplateEmailOptions {
 }
 
 /**
- * Rend un template enregistré et l'envoie via le connecteur Brevo — y compris
+ * Rend un template enregistré et l'envoie directement à l'API Brevo — y compris
  * les quatre courriers d'accompagnement DDA (DER, lettre de mission, devoir de
  * conseil, signature de souscription), dont la traçabilité ACPR est assurée par
  * la copie automatique déposée dans la boîte Gmail du cabinet. La génération des
@@ -52,11 +52,6 @@ export async function sendTemplateEmail(
   to: string,
   options: SendTemplateEmailOptions = {}
 ): Promise<SendTemplateEmailResult> {
-  const lovableApiKey = process.env['LOVABLE_API_KEY']
-  if (!lovableApiKey) {
-    throw new Error('LOVABLE_API_KEY is not configured')
-  }
-
   const template = TEMPLATES[templateName]
   if (!template) {
     throw new Error(
@@ -87,12 +82,11 @@ export async function sendTemplateEmail(
 
 
 
-  const response = await fetch(`${GATEWAY_URL}/smtp/email`, {
+  const response = await fetch(`${BREVO_API_URL}/smtp/email`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${lovableApiKey}`,
-      'X-Connection-Api-Key': brevoKey,
+      'api-key': brevoKey,
     },
     body: JSON.stringify({
       sender: { name: SITE_NAME, email: FROM_EMAIL },

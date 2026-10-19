@@ -1,3 +1,4 @@
+import { geminiFetch } from "@/lib/gemini-gateway.server";
 /**
  * ANALYSE IA D'UNE OFFRE DE PRÊT (ou tableau d'amortissement) DÉPOSÉE À LA
  * CRÉATION D'UN DOSSIER EMPRUNTEUR.
@@ -13,8 +14,8 @@
  *  - aucune écriture en base ici : ce module lit uniquement le document.
  */
 
-const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODELES = ["google/gemini-3.6-flash", "google/gemini-2.5-flash"];
+const GATEWAY = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const MODELES = ["gemini-3.6-flash", "gemini-2.5-flash"];
 
 export interface EmprunteurDetecte {
   prenom: string;
@@ -180,7 +181,7 @@ export async function analyserOffrePretFichier(fichier: {
   mime: string;
   base64: string;
 }): Promise<AnalyseOffrePret> {
-  const cle = process.env["LOVABLE_API_KEY"];
+  const cle = process.env["GEMINI_API_KEY"];
   if (!cle) throw new Error("Analyse indisponible : clé IA absente du projet.");
 
   const dataUrl = `data:${fichier.mime || "application/pdf"};base64,${fichier.base64}`;
@@ -197,7 +198,7 @@ export async function analyserOffrePretFichier(fichier: {
   let derniere = "";
   let brut: Record<string, unknown> | null = null;
   for (const model of MODELES) {
-    const res = await fetch(GATEWAY, {
+    const res = await geminiFetch(GATEWAY, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${cle}` },
       body: JSON.stringify({ model, messages: [{ role: "user", content: contenu }] }),

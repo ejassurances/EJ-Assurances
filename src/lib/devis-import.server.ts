@@ -7,13 +7,14 @@
  * seulement proposées au conseiller, qui les vérifie et valide la création du
  * devis. Aucune décision assurantielle n'est prise par l'IA.
  */
+import { geminiFetch } from "@/lib/gemini-gateway.server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Admin = SupabaseClient<any, any, any>;
 
-const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODELES = ["google/gemini-3.6-flash", "google/gemini-2.5-flash"];
+const GATEWAY = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const MODELES = ["gemini-3.6-flash", "gemini-2.5-flash"];
 const BUCKETS = ["dossier-documents", "conformite-documents"];
 const TAILLE_MAX = 12 * 1024 * 1024;
 
@@ -92,7 +93,7 @@ function texte(v: unknown, max = 200): string | null {
  * Aucune écriture en base.
  */
 export async function lireDevisDocument(admin: Admin, documentId: string): Promise<DevisImporte> {
-  const cle = process.env["LOVABLE_API_KEY"];
+  const cle = process.env["GEMINI_API_KEY"];
   if (!cle) throw new Error("Lecture indisponible : clé IA absente du projet.");
 
   const { data: doc } = await admin
@@ -131,7 +132,7 @@ export async function lireDevisDocument(admin: Admin, documentId: string): Promi
   let derniere = "";
   let brut: Record<string, unknown> | null = null;
   for (const model of MODELES) {
-    const res = await fetch(GATEWAY, {
+    const res = await geminiFetch(GATEWAY, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${cle}` },
       body: JSON.stringify({ model, messages: [{ role: "user", content: contenu }] }),

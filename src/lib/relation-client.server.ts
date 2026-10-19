@@ -15,14 +15,15 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { geminiFetch } from "@/lib/gemini-gateway.server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { creerTacheAdmin } from "@/lib/agent-taches.server";
 import { grillePourFamille, synthetiserGaranties, type ValeursGrille } from "@/lib/garanties-grille";
 
 type Admin = SupabaseClient<any, any, any>;
 
-const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODELES = ["google/gemini-3.6-flash", "google/gemini-2.5-flash"];
+const GATEWAY = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const MODELES = ["gemini-3.6-flash", "gemini-2.5-flash"];
 const CABINET = "EJ Partners Assurances";
 const BUCKET = "dossier-documents";
 const SEUIL_NIVEAU_1 = 0.8;
@@ -169,7 +170,7 @@ function consigne(email: EmailClient, reglesTon: string): string {
 
 /** Analyse IA d'un email client. Toute incertitude retombe en niveau_2. */
 export async function analyserEmailClient(email: EmailClient): Promise<ClassificationRelation> {
-  const cle = process.env["LOVABLE_API_KEY"];
+  const cle = process.env["GEMINI_API_KEY"];
   if (!cle) throw new Error("Analyse indisponible : clé IA absente du projet.");
 
   // Règles de ton de la Direction Commerciale (document Drive, cache 5 min).
@@ -178,7 +179,7 @@ export async function analyserEmailClient(email: EmailClient): Promise<Classific
 
   let derniere = "";
   for (const modele of MODELES) {
-    const res = await fetch(GATEWAY, {
+    const res = await geminiFetch(GATEWAY, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${cle}` },
       body: JSON.stringify({

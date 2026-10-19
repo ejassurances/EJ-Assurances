@@ -190,7 +190,7 @@ function FournisseursPage() {
             <input
               value={nom}
               onChange={(e) => setNom(e.target.value)}
-              placeholder="ex : +Simple, Lovable, Orias…"
+              placeholder="ex : +Simple, Allianz, Orias…"
               className="w-full rounded-md border border-line bg-background px-3 py-2 text-sm"
               required
             />

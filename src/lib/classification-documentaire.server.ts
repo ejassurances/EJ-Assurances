@@ -1,3 +1,4 @@
+import { geminiFetch } from "@/lib/gemini-gateway.server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { toutesPiecesConnues } from "@/lib/pieces-requises";
@@ -21,8 +22,8 @@ import { toutesPiecesConnues } from "@/lib/pieces-requises";
 
 type Admin = SupabaseClient<Database>;
 
-const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODELES = ["google/gemini-3.6-flash", "google/gemini-2.5-flash"];
+const GATEWAY = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const MODELES = ["gemini-3.6-flash", "gemini-2.5-flash"];
 const BUCKETS = ["dossier-documents", "conformite-documents"];
 const TAILLE_MAX = 12 * 1024 * 1024;
 
@@ -133,7 +134,7 @@ async function appelerGemini(fichier: {
   mime: string;
   base64: string;
 }): Promise<{ brut: Record<string, unknown>; model: string }> {
-  const cle = process.env["LOVABLE_API_KEY"];
+  const cle = process.env["GEMINI_API_KEY"];
   if (!cle) throw new Error("Classification indisponible : clé IA absente du projet.");
 
   const dataUrl = `data:${fichier.mime};base64,${fichier.base64}`;
@@ -149,7 +150,7 @@ async function appelerGemini(fichier: {
 
   let derniere = "";
   for (const model of MODELES) {
-    const res = await fetch(GATEWAY, {
+    const res = await geminiFetch(GATEWAY, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${cle}` },
       body: JSON.stringify({ model, messages: [{ role: "user", content: contenu }] }),

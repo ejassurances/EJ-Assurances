@@ -10,7 +10,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 type Admin = SupabaseClient<any, any, any>;
 
-const GATEWAY_URL = "https://connector-gateway.lovable.dev/brevo";
+const BREVO_API_URL = "https://api.brevo.com/v3";
 const DOSSIER_BREVO = "CRM EJ Partners";
 
 /** Listes gérées : libellé Brevo → branches CRM qui l'alimentent. */
@@ -36,19 +36,16 @@ export const NOMS_LISTES = [
 ];
 
 function entetes(): Record<string, string> {
-  const lovableApiKey = process.env["LOVABLE_API_KEY"];
-  if (!lovableApiKey) throw new Error("LOVABLE_API_KEY is not configured");
   const brevoKey = process.env["BREVO_API_KEY"];
   if (!brevoKey) throw new Error("BREVO_API_KEY is not configured");
   return {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${lovableApiKey}`,
-    "X-Connection-Api-Key": brevoKey,
+    "api-key": brevoKey,
   };
 }
 
 async function appel(method: string, chemin: string, body?: unknown): Promise<any> {
-  const res = await fetch(`${GATEWAY_URL}${chemin}`, {
+  const res = await fetch(`${BREVO_API_URL}${chemin}`, {
     method,
     headers: entetes(),
     ...(body ? { body: JSON.stringify(body) } : {}),

@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { sendTemplateEmail } from "@/lib/email-templates/send-email";
 import { SITE } from "@/lib/site";
@@ -22,8 +23,24 @@ const schema = z.object({
  * pré-rattaché à ce nouveau dossier.
  */
 export const signalerInteretAssuranceVie = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => schema.parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { data: client, error: clientError } = await context.supabase
+      .from("clients")
+      .select("id")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (clientError || !client) throw new Error("Aucune fiche client rattachée à ce compte.");
+
+    const { data: devoirAutorise, error: devoirError } = await context.supabase
+      .from("devoirs_conseil")
+      .select("id")
+      .eq("id", data.devoir_id)
+      .eq("client_id", client.id)
+      .maybeSingle();
+    if (devoirError || !devoirAutorise) throw new Error("Devoir de conseil introuvable.");
+
     const { supabaseAdmin: generatedAdmin } = await import("@/integrations/supabase/client.server");
     const supabaseAdmin = withPendingSchema(generatedAdmin);
 
