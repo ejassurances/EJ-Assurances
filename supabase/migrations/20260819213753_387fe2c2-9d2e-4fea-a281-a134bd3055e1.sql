@@ -17,6 +17,16 @@ BEGIN
     RETURN;
   END IF;
 
+  -- Keep this historical correction subject to the KYC contract guard.
+  -- Preview databases may contain the source client but not its private KYC documents.
+  IF NOT EXISTS (
+    SELECT 1 FROM public.clients
+    WHERE id = _client AND COALESCE(conformite_score, 0) >= 50
+  ) THEN
+    RAISE NOTICE 'Skipping historical contract backfill: client KYC score is below the contract threshold.';
+    RETURN;
+  END IF;
+
   IF EXISTS (SELECT 1 FROM public.contrats WHERE dossier_id = _dossier) THEN
     RETURN;
   END IF;
