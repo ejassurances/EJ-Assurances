@@ -625,18 +625,15 @@ function ProduitsTab({
     };
   }, [produitIds]);
 
-  const produitsEnAttente = useMemo(
-    () => {
-      const nomsDejaVus = new Set(produits.map((produit) => normaliserNomProduit(produit.nom)));
-      return produitsCatalogue.filter((produit) => {
-        const nom = normaliserNomProduit(produit.nom);
-        if (!produit.inclure || produit.existeDeja || !nom || nomsDejaVus.has(nom)) return false;
-        nomsDejaVus.add(nom);
-        return true;
-      });
-    },
-    [produits, produitsCatalogue],
-  );
+  const produitsEnAttente = useMemo(() => {
+    const nomsDejaVus = new Set(produits.map((produit) => normaliserNomProduit(produit.nom)));
+    return produitsCatalogue.filter((produit) => {
+      const nom = normaliserNomProduit(produit.nom);
+      if (!produit.inclure || produit.existeDeja || !nom || nomsDejaVus.has(nom)) return false;
+      nomsDejaVus.add(nom);
+      return true;
+    });
+  }, [produits, produitsCatalogue]);
   const active = useMemo(() => produits.find((p) => p.id === selected), [produits, selected]);
 
   async function analyserFichierCatalogue() {
