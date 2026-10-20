@@ -1,20 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   assurerChemin,
-  deposerFichier,
   telechargerFichier,
   urlDossierDrive,
-  urlFichierDrive,
 } from "@/lib/google-drive.server";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Client = SupabaseClient<any, any, any>;
 
-/**
- * Règle d'architecture n°2 — les CGV, IPID et notices compagnies ne sont jamais
- * stockées dans le CRM : le fichier vit dans le dossier Drive des CG du cabinet,
- * sous [Compagnie]/[Branche], et le CRM n'en conserve que le lien.
- */
+/** Les nouveaux PDF produit sont stockés dans le bucket privé Supabase. */
 
 /**
  * Dossier Drive officiel des conditions générales / notices compagnies :
@@ -45,72 +39,6 @@ export async function assurerDossierPartenaire(compagnie: string | null, branche
   return { folder_id: folderId, chemin: chemin.join("/"), url: urlDossierDrive(folderId) };
 }
 
-/**
- * Dépose un document produit (CG, IPID, tableau de garanties…) sur le Drive du
- * cabinet et enregistre uniquement son lien dans le CRM.
- */
-export async function deposerDocumentProduitSurDrive(
-  supabase: Client,
-  params: {
-    produit_id: string;
-    type: string;
-    nom: string;
-    version?: string | null;
-    mime_type?: string | null;
-    taille_bytes?: number | null;
-    interne?: boolean;
-    contenu: Uint8Array;
-    uploaded_by?: string | null;
-  },
-) {
-  const { data: produit, error } = await supabase
-    .from("produits")
-    .select(
-      "id, nom, compagnies!produits_compagnie_id_fkey(nom), produit_familles!produits_famille_id_fkey(nom)",
-    )
-    .eq("id", params.produit_id)
-    .maybeSingle();
-  if (error || !produit) throw new Error(error?.message ?? "Produit introuvable ou accès refusé");
-
-  const p = produit as any;
-  const compagnie: string | null = p.compagnies?.nom ?? null;
-  const branche: string | null = p.produit_familles?.nom ?? null;
-
-  const dossier = await assurerDossierPartenaire(compagnie, branche);
-  const depot = await deposerFichier({
-    folderId: dossier.folder_id,
-    nom: params.nom,
-    contenu: params.contenu,
-    mimeType: params.mime_type ?? "application/pdf",
-  });
-
-  const { data: ligne, error: insErr } = await supabase
-    .from("produit_documents")
-    .insert({
-      produit_id: params.produit_id,
-      type: params.type,
-      nom: params.nom,
-      version: params.version ?? null,
-      mime_type: params.mime_type ?? null,
-      taille_bytes: params.taille_bytes ?? params.contenu.byteLength,
-      interne: params.interne ?? false,
-      storage_path: null,
-      drive_file_id: depot.id,
-      drive_url: depot.webViewLink ?? urlFichierDrive(depot.id),
-      drive_chemin: dossier.chemin,
-      uploaded_by: params.uploaded_by ?? null,
-    })
-    .select("id, drive_url, drive_chemin")
-    .maybeSingle();
-  if (insErr) throw new Error(insErr.message);
-
-  return {
-    id: (ligne as any)?.id as string,
-    drive_url: (ligne as any)?.drive_url as string,
-    drive_chemin: dossier.chemin,
-  };
-}
-
 /** Extrait l'identifiant Drive d'une URL de partage (/file/d/<id>/… ou ?id=<id>). */
 export function idFichierDepuisUrlDrive(url: string | null | undefined): string | null {
   if (!url) return null;
@@ -122,7 +50,7 @@ export function idFichierDepuisUrlDrive(url: string | null | undefined): string 
 
 /**
  * Contenu binaire d'un document produit, quelle que soit sa source :
- * Drive (nouveau standard) ou stockage CRM historique.
+ * Supabase Storage (nouveaux dépôts) ou Google Drive (documents historiques).
  */
 export async function contenuDocumentProduit(
   supabase: Client,
@@ -133,8 +61,7 @@ export async function contenuDocumentProduit(
     drive_url?: string | null;
   },
 ): Promise<Buffer> {
-  // Le Drive est la source officielle : on accepte aussi une simple URL de partage
-  // (documents rattachés à la main), d'où l'on déduit l'identifiant du fichier.
+  // Les anciens documents Drive restent lisibles à partir de leur identifiant ou URL.
   const fileId = doc.drive_file_id ?? idFichierDepuisUrlDrive(doc.drive_url);
   if (fileId) {
     const bytes = await telechargerFichier(fileId);

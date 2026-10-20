@@ -13,8 +13,6 @@ import { CompagnieTauxCommission } from "@/components/compagnie-taux-commission"
 import { PageHeader } from "@/components/page-header";
 import { SectionNav, type SectionNavItem } from "@/components/section-nav";
 import { IconBuildingBank } from "@tabler/icons-react";
-import { useServerFn } from "@tanstack/react-start";
-import { deposerDocumentProduitDrive } from "@/lib/documents-partenaires.functions";
 
 type CompagnieDocRow = {
   id: string;
@@ -128,7 +126,7 @@ type ProduitDoc = {
   version: string | null;
   date_effet: string | null;
   storage_path: string | null;
-  /** CGV / IPID : le fichier vit sur le Drive du cabinet, le CRM ne garde que le lien. */
+  /** Les anciens documents Drive restent liés ici ; les nouveaux PDF sont stockés dans Supabase Storage. */
   drive_url: string | null;
   drive_chemin: string | null;
   interne: boolean;
@@ -1095,40 +1093,56 @@ function DocumentsBlock({
   const [version, setVersion] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const deposerSurDrive = useServerFn(deposerDocumentProduitDrive);
+  const { user } = useAuth();
 
-  /**
-   * Règle d'architecture n°2 : le fichier est déposé sur le Drive du cabinet
-   * (04_PARTENAIRES_ET_COMPAGNIES/[Compagnie]/[Branche]) ; le CRM ne conserve
-   * que le lien de consultation.
-   */
   async function upload(e: React.FormEvent) {
     e.preventDefault();
     if (!file) return;
     setUploading(true);
     try {
-      const buffer = await file.arrayBuffer();
-      const octets = new Uint8Array(buffer);
-      let binaire = "";
-      for (let i = 0; i < octets.length; i += 0x8000) {
-        binaire += String.fromCharCode(...octets.subarray(i, i + 0x8000));
+      if (!file.name.toLowerCase().endsWith(".pdf")) {
+        throw new Error("Le document doit être au format PDF.");
       }
-      await deposerSurDrive({
-        data: {
-          produit_id: produitId,
-          type: typeEffectif,
-          nom: file.name,
-          version: version || null,
-          mime_type: file.type || "application/pdf",
-          interne: typeEffectif === "fiche_produit",
-          contenu_base64: btoa(binaire),
-        },
+      if (file.size > 25 * 1024 * 1024) {
+        throw new Error("Le PDF ne peut pas dépasser 25 Mo.");
+      }
+      if ((await file.slice(0, 5).text()) !== "%PDF-") {
+        throw new Error("Le fichier sélectionné n'est pas un PDF valide.");
+      }
+
+      const nomStockage = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-");
+      const { data: depot, error: depotError } = await supabase.storage
+        .from("produits-documents")
+        .upload(`${produitId}/${crypto.randomUUID()}-${nomStockage}`, file, {
+          contentType: "application/pdf",
+          upsert: false,
+        });
+      if (depotError) throw depotError;
+
+      const { error: insertionError } = await supabase.from("produit_documents").insert({
+        produit_id: produitId,
+        type: typeEffectif,
+        nom: file.name,
+        version: version || null,
+        mime_type: "application/pdf",
+        taille_bytes: file.size,
+        interne: typeEffectif === "fiche_produit",
+        storage_path: depot.path,
+        uploaded_by: user?.id ?? null,
       });
+      if (insertionError) {
+        const { error: nettoyageError } = await supabase.storage
+          .from("produits-documents")
+          .remove([depot.path]);
+        if (nettoyageError) console.error("[produit-documents] nettoyage après échec", nettoyageError);
+        throw insertionError;
+      }
+
       setFile(null);
       setVersion("");
       onChange();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Dépôt sur Google Drive impossible");
+      alert(err instanceof Error ? err.message : "Dépôt du PDF impossible");
     } finally {
       setUploading(false);
     }
@@ -1165,8 +1179,7 @@ function DocumentsBlock({
         <h3 className="font-serif text-lg">Documents du produit</h3>
         <p className="text-xs text-ink-muted">
           Liste adaptée à la branche : {typesDisponibles.map((t) => DOC_TYPE_LABEL[t]).join(" · ")}. Les fiches produit
-          sont marquées internes. Les fichiers sont déposés sur le Drive du cabinet
-          (04_PARTENAIRES_ET_COMPAGNIES/[Compagnie]/[Branche]) — le CRM ne conserve que le lien.
+          sont marquées internes. Les PDF sont conservés dans l'espace privé du CRM.
         </p>
       </div>
 
@@ -1200,10 +1213,12 @@ function DocumentsBlock({
             <label className="mb-1 block text-xs font-medium text-ink-muted">Fichier</label>
             <input
               type="file"
+              accept="application/pdf,.pdf"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               className="w-full text-sm"
               required
             />
+            <p className="mt-1 text-xs text-ink-muted">PDF uniquement, 25 Mo maximum.</p>
           </div>
           <button
             type="submit"

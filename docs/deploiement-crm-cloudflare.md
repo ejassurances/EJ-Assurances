@@ -47,6 +47,8 @@ Les étiquettes métier (directions, brouillons à relire, alertes et archives) 
 
 Seule l'intégration Drive utilise OAuth Google. Le projet Google doit activer Drive API et le jeton d'actualisation doit autoriser `https://www.googleapis.com/auth/drive`. Google documente le renouvellement des jetons dans [OAuth 2.0 pour les applications Web serveur](https://developers.google.com/identity/protocols/oauth2/web-server).
 
+Les nouveaux PDF des produits (CG, IPID, tarifs, tableaux de garanties et fiches produit) sont déposés dans le bucket privé Supabase Storage `produits-documents` ; leur ajout ne dépend pas de ces secrets OAuth. Les documents produit déjà liés à Drive restent consultables. Les autres fonctions qui utilisent Google Drive peuvent encore nécessiter les trois variables OAuth.
+
 ## Intégrations facultatives
 
 Les intégrations assureurs/partenaires ne sont pas nécessaires pour ouvrir une première version interne. Leurs variables (`NEOLIANE_*`, `SIMULASSUR_*`, `UGIP_*`, `OPENSANCTIONS_API_KEY` et jetons de webhooks) ne doivent être ajoutées que si le flux correspondant est activé et configuré.
