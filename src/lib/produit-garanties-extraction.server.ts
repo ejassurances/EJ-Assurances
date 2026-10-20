@@ -117,7 +117,8 @@ export type PorteurPropose = {
 
 function normaliserPorteur(brut: unknown): PorteurPropose {
   const raw = ((brut ?? {}) as Record<string, unknown>)["assureur_porteur"] as
-    Record<string, unknown> | undefined;
+    | Record<string, unknown>
+    | undefined;
   const texte = (v: unknown, max: number) => {
     const s = typeof v === "string" ? v.trim() : "";
     return s.length > 1 ? s.slice(0, max) : null;
