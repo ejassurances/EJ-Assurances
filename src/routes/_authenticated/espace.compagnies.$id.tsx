@@ -625,9 +625,17 @@ function ProduitsTab({
     };
   }, [produitIds]);
 
-  const produitsActifs = useMemo(
-    () => produits.filter((produit) => produit.statut === "actif"),
-    [produits],
+  const produitsEnAttente = useMemo(
+    () => {
+      const nomsDejaVus = new Set(produits.map((produit) => normaliserNomProduit(produit.nom)));
+      return produitsCatalogue.filter((produit) => {
+        const nom = normaliserNomProduit(produit.nom);
+        if (!produit.inclure || produit.existeDeja || !nom || nomsDejaVus.has(nom)) return false;
+        nomsDejaVus.add(nom);
+        return true;
+      });
+    },
+    [produits, produitsCatalogue],
   );
   const active = useMemo(() => produits.find((p) => p.id === selected), [produits, selected]);
 
@@ -780,32 +788,36 @@ function ProduitsTab({
   }
 
   async function telechargerComparatif() {
-    if (produitsActifs.length === 0) {
+    if (produits.length === 0 && produitsEnAttente.length === 0) {
       toast.error(
-        "Créez ou activez un produit dans ce catalogue avant de télécharger le comparatif.",
+        "Importez le PDF contenant la liste complète des produits puis analysez-le pour préparer le comparatif.",
       );
       return;
     }
 
     setGeneratingComparatif(true);
     try {
-      const ids = produitsActifs.map((produit) => produit.id);
-      const [grillesResult, formulesResult] = await Promise.all([
-        supabase
-          .from("produit_garanties")
-          .select("produit_id,famille_code,grille_version,statut,valide_le,valeurs")
-          .in("produit_id", ids),
-        supabase
-          .from("produit_formules")
-          .select("id,produit_id,nom,ordre,base_calcul,tarif_fixe")
-          .eq("actif", true)
-          .in("produit_id", ids)
-          .order("ordre"),
-      ]);
-      if (grillesResult.error) throw new Error(grillesResult.error.message);
-      if (formulesResult.error) throw new Error(formulesResult.error.message);
-
-      const formules = (formulesResult.data ?? []) as FormuleComparatif[];
+      const ids = produits.map((produit) => produit.id);
+      let grillesProduit: GrilleProduitComparatif[] = [];
+      let formules: FormuleComparatif[] = [];
+      if (ids.length > 0) {
+        const [grillesResult, formulesResult] = await Promise.all([
+          supabase
+            .from("produit_garanties")
+            .select("produit_id,famille_code,grille_version,statut,valide_le,valeurs")
+            .in("produit_id", ids),
+          supabase
+            .from("produit_formules")
+            .select("id,produit_id,nom,ordre,base_calcul,tarif_fixe")
+            .eq("actif", true)
+            .in("produit_id", ids)
+            .order("ordre"),
+        ]);
+        if (grillesResult.error) throw new Error(grillesResult.error.message);
+        if (formulesResult.error) throw new Error(formulesResult.error.message);
+        grillesProduit = (grillesResult.data ?? []) as unknown as GrilleProduitComparatif[];
+        formules = (formulesResult.data ?? []) as FormuleComparatif[];
+      }
       const idsFormules = formules.map((formule) => formule.id);
       let grillesFormule: {
         formule_id: string;
@@ -823,28 +835,48 @@ function ProduitsTab({
       }
 
       const { genererComparatifCompagniePdf } = await import("@/lib/comparatif-compagnie-pdf");
-      const produitsComparatifs: ProduitComparatif[] = produitsActifs.map((produit) => {
-        const famille = familles.find((item) => item.id === produit.famille_id);
-        return {
-          id: produit.id,
-          familleCode: famille?.code ?? null,
-          familleNom: famille?.nom ?? "Famille non définie",
-          champsStandards: famille?.champs_standards ?? [],
-          nom: produit.nom,
-          code_produit: produit.code_produit,
-          assureur_porteur: produit.assureur_porteur,
-          description: produit.description,
-          statut: produit.statut,
-          caracteristiques: produit.caracteristiques ?? {},
-          points_forts: produit.points_forts,
-          points_vigilance: produit.points_vigilance,
-          cible: produit.cible,
-        };
-      });
+      const produitsComparatifs: ProduitComparatif[] = [
+        ...produits.map((produit) => {
+          const famille = familles.find((item) => item.id === produit.famille_id);
+          return {
+            id: produit.id,
+            familleCode: famille?.code ?? null,
+            familleNom: famille?.nom ?? "Famille non définie",
+            champsStandards: famille?.champs_standards ?? [],
+            nom: produit.nom,
+            code_produit: produit.code_produit,
+            assureur_porteur: produit.assureur_porteur,
+            description: produit.description,
+            statut: produit.statut,
+            caracteristiques: produit.caracteristiques ?? {},
+            points_forts: produit.points_forts,
+            points_vigilance: produit.points_vigilance,
+            cible: produit.cible,
+          };
+        }),
+        ...produitsEnAttente.map((produit) => {
+          const famille = familles.find((item) => item.code === produit.famille_code);
+          return {
+            id: produit.id,
+            familleCode: famille?.code ?? null,
+            familleNom: famille?.nom ?? "Famille à définir",
+            champsStandards: famille?.champs_standards ?? [],
+            nom: produit.nom,
+            code_produit: produit.code_produit,
+            assureur_porteur: null,
+            description: produit.description,
+            statut: "en_test",
+            caracteristiques: {},
+            points_forts: null,
+            points_vigilance: null,
+            cible: null,
+          };
+        }),
+      ];
       const pdf = await genererComparatifCompagniePdf({
         compagnieNom,
         produits: produitsComparatifs,
-        grillesProduit: (grillesResult.data ?? []) as unknown as GrilleProduitComparatif[],
+        grillesProduit,
         formules,
         grillesFormule: grillesFormule as unknown as GrilleFormuleComparatif[],
       });
@@ -875,21 +907,19 @@ function ProduitsTab({
             Importez la liste complète de la compagnie pour créer les fiches en une seule fois.
           </p>
           <p className="mt-1 text-xs text-ink-muted">
-            {produitsActifs.length === 0
-              ? "Aucun produit n’est requis avant l’import. Le comparatif PDF sera disponible après l’ajout des produits."
-              : `${produitsActifs.length} produit${produitsActifs.length > 1 ? "s" : ""} actif${produitsActifs.length > 1 ? "s" : ""} inclus dans le comparatif.`}
+            Le comparatif reprend tous les produits du catalogue, quel que soit leur statut, ainsi
+            que les produits détectés dans le PDF en cours d’import. Pour les produits en attente,
+            les garanties apparaissent comme non renseignées jusqu’à leur analyse.
           </p>
         </div>
-        {produitsActifs.length > 0 && (
-          <button
-            type="button"
-            onClick={telechargerComparatif}
-            disabled={generatingComparatif}
-            className="rounded-md bg-[#0A192F] px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {generatingComparatif ? "Préparation du PDF…" : "Télécharger le comparatif PDF"}
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={telechargerComparatif}
+          disabled={generatingComparatif}
+          className="rounded-md bg-[#0A192F] px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {generatingComparatif ? "Préparation du PDF…" : "Télécharger le comparatif PDF"}
+        </button>
       </div>
       {isAdmin && (
         <section className="crm-card space-y-4 p-4">

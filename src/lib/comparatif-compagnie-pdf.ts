@@ -368,17 +368,14 @@ function dessinerEntetePage(
     color: NAVY,
     maxWidth: PAGE.width - MARGE * 2,
   });
-  page.drawText(
-    textePdf(`${familleNom} · Produits actifs · Produits ${debut + 1} à ${fin} sur ${total}`),
-    {
-      x: MARGE,
-      y: PAGE.height - 84,
-      size: 8,
-      font,
-      color: GREY,
-      maxWidth: PAGE.width - MARGE * 2,
-    },
-  );
+  page.drawText(textePdf(`${familleNom} · Produits ${debut + 1} à ${fin} sur ${total}`), {
+    x: MARGE,
+    y: PAGE.height - 84,
+    size: 8,
+    font,
+    color: GREY,
+    maxWidth: PAGE.width - MARGE * 2,
+  });
   page.drawText(`Données du ${new Date().toLocaleDateString("fr-FR")}`, {
     x: MARGE,
     y: PAGE.height - 97,
@@ -529,7 +526,8 @@ export async function genererComparatifCompagniePdf(args: {
   formules: FormuleComparatif[];
   grillesFormule: GrilleFormuleComparatif[];
 }): Promise<Blob> {
-  if (args.produits.length === 0) throw new Error("Aucun produit actif à comparer.");
+  if (args.produits.length === 0)
+    throw new Error("Aucun produit disponible dans le catalogue à comparer.");
   const document = await PDFDocument.create();
   const font = await document.embedFont(StandardFonts.Helvetica);
   const bold = await document.embedFont(StandardFonts.HelveticaBold);
@@ -598,7 +596,7 @@ export async function genererComparatifCompagniePdf(args: {
       color: GOLD,
     });
     page.drawText(
-      "Document interne établi depuis les fiches CRM. Les grilles non validées ne sont pas présentées comme acquises ; les documents contractuels en vigueur font foi.",
+      "Document interne établi depuis le catalogue de la compagnie. Les grilles non validées ne sont pas présentées comme acquises ; les documents contractuels en vigueur font foi.",
       {
         x: MARGE,
         y: 34,
