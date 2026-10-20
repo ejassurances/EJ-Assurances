@@ -1,7 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { analyserGarantiesAutomatiquement } from "@/lib/produit-garanties.functions";
 import { CompagnieDocsTable, UploadCompagnieDocForm } from "./espace.conformite";
 import { ProduitGarantiesTab } from "@/components/produit-garanties-tab";
 import { ProduitFormulesTab } from "@/components/produit-formules-tab";
@@ -638,6 +641,7 @@ function ProduitEditor({
   const [p, setP] = useState<Produit>(produit);
   const [saving, setSaving] = useState(false);
   const [docs, setDocs] = useState<ProduitDoc[]>([]);
+  const [garantiesRefreshKey, setGarantiesRefreshKey] = useState(0);
   useEffect(() => setP(produit), [produit]);
 
   const readOnly = !isAdmin;
@@ -938,6 +942,7 @@ function ProduitEditor({
         docs={docs}
         isAdmin={isAdmin}
         onChange={loadDocs}
+        onAnalyseTerminee={() => setGarantiesRefreshKey((key) => key + 1)}
       />
 
 
@@ -947,6 +952,7 @@ function ProduitEditor({
         familleNom={famille?.nom}
         isAdmin={isAdmin}
         docs={docs.map((d) => ({ id: d.id, nom: d.nom, type: d.type }))}
+        refreshKey={garantiesRefreshKey}
         titre="Garanties, exclusions et options du produit"
       />
 
@@ -1078,13 +1084,16 @@ function DocumentsBlock({
   docs,
   isAdmin,
   onChange,
+  onAnalyseTerminee,
 }: {
   produitId: string;
   familleCode: string | null;
   docs: ProduitDoc[];
   isAdmin: boolean;
   onChange: () => void;
+  onAnalyseTerminee: () => void;
 }) {
+  const analyserAutomatiquement = useServerFn(analyserGarantiesAutomatiquement);
   const typesDisponibles = docTypesPour(familleCode);
   const [type, setType] = useState<ProduitDoc["type"]>("conditions_generales");
   /** Type retenu : le choix courant s'il est valide pour la branche, sinon le premier proposé. */
@@ -1138,9 +1147,26 @@ function DocumentsBlock({
         throw insertionError;
       }
 
+      const analyserApresDepot =
+        typeEffectif === "fiche_produit" ||
+        (typeEffectif === "conditions_generales" && !docs.some((document) => document.type === "fiche_produit"));
+
       setFile(null);
       setVersion("");
       onChange();
+      if (analyserApresDepot) {
+        void analyserAutomatiquement({ data: { produit_id: produitId } })
+          .then((resultat) => {
+            const source = resultat.document_source.type === "fiche_produit" ? "la fiche produit" : "les conditions générales";
+            toast.success(`Proposition IA créée depuis ${source}. Relisez puis validez les garanties dans l'onglet Garanties.`);
+            onAnalyseTerminee();
+          })
+          .catch((erreurAnalyse) => {
+            const detail = erreurAnalyse instanceof Error ? erreurAnalyse.message : "erreur inconnue";
+            toast.error(`PDF enregistré, mais l'analyse IA n'a pas abouti : ${detail}. Vous pourrez la relancer dans l'onglet Garanties.`);
+            onAnalyseTerminee();
+          });
+      }
     } catch (err) {
       alert(err instanceof Error ? err.message : "Dépôt du PDF impossible");
     } finally {

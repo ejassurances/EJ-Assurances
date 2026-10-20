@@ -13,6 +13,7 @@ import {
   type ValeursGrille,
 } from "@/lib/garanties-grille";
 import {
+  analyserGarantiesAutomatiquement,
   analyserDocumentsGaranties,
   enregistrerGrilleBrouillon,
   rejeterPropositionGaranties,
@@ -74,6 +75,7 @@ export function ProduitGarantiesTab({
   familleNom,
   isAdmin,
   docs,
+  refreshKey = 0,
   formuleId = null,
   titre,
 }: {
@@ -82,6 +84,8 @@ export function ProduitGarantiesTab({
   familleNom?: string;
   isAdmin: boolean;
   docs: DocAnalysable[];
+  /** Incrémenté quand l'extraction déclenchée depuis le dépôt d'un document se termine. */
+  refreshKey?: number;
   /** Si renseigné, la grille est celle de la FORMULE (table formule_garanties). */
   formuleId?: string | null;
   titre?: string;
@@ -101,6 +105,7 @@ export function ProduitGarantiesTab({
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   const analyser = useServerFn(analyserDocumentsGaranties);
+  const analyserAutomatiquement = useServerFn(analyserGarantiesAutomatiquement);
   const brouillon = useServerFn(enregistrerGrilleBrouillon);
   const valider = useServerFn(validerGrilleGaranties);
   const rejeter = useServerFn(rejeterPropositionGaranties);
@@ -112,6 +117,10 @@ export function ProduitGarantiesTab({
     ? ["conditions_generales", "ipid", "fiche_produit", "ccsf"]
     : ["conditions_generales", "ipid", "fiche_produit", "ccsf", "tableau_garanties"];
   const analysables = docs.filter((d) => typesAnalysables.includes(d.type));
+  const sourceAutomatique =
+    analysables.find((d) => d.type === "fiche_produit") ??
+    analysables.find((d) => d.type === "conditions_generales") ??
+    null;
   const nbTableaux = docs.filter((d) => d.type === "tableau_garanties").length;
 
   const toggleDoc = (id: string) =>
@@ -173,7 +182,7 @@ export function ProduitGarantiesTab({
 
   useEffect(() => {
     load();
-  }, [load]);
+  }, [load, refreshKey]);
 
 
   if (!familleCode || !grille) {
@@ -275,42 +284,69 @@ export function ProduitGarantiesTab({
         </p>
       )}
 
-      {/* Extraction automatique (grille produit uniquement) */}
+      {/* Extraction assistée (grille produit uniquement) */}
       <div className={`space-y-2 rounded-md border border-line bg-background p-3 ${modeFormule ? "hidden" : ""}`}>
-
         <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-          Standardisation assistée depuis les documents du contrat
+          Préremplir les garanties avec l'IA
         </p>
-        {analysables.length === 0 ? (
-          <p className="text-xs text-ink-muted">
-            Ajoutez d'abord des conditions générales, un IPID, une fiche produit ou une fiche CCSF dans les documents du
-            produit.
-          </p>
-        ) : (
-          <div className="space-y-2">
+        {sourceAutomatique ? (
+          <>
             <p className="text-xs text-ink-muted">
-              Sélectionnez les documents à croiser (4 maximum). Les conditions générales font foi en cas de
-              contradiction avec la fiche produit ou l'IPID.
+              Le CRM utilise automatiquement la fiche produit si elle existe. Sinon, il prend les conditions générales.
+              La proposition reste à relire et à valider avant d'alimenter le produit.
             </p>
-            <div className="flex flex-wrap gap-2">
-              {analysables.map((d) => {
-                const actif = docIds.includes(d.id);
-                return (
-                  <label
-                    key={d.id}
-                    className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-1.5 text-xs ${
-                      actif ? "border-ink bg-ink/5" : "border-line"
-                    }`}
-                  >
-                    <input type="checkbox" checked={actif} onChange={() => toggleDoc(d.id)} className="accent-ink" />
-                    <span>
-                      {DOC_LABEL[d.type] ?? d.type} — {d.nom}
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xs font-medium text-ink">
+              Source prévue : {sourceAutomatique.type === "fiche_produit" ? "fiche produit" : "conditions générales"}
+              {sourceAutomatique.nom ? ` — ${sourceAutomatique.nom}` : ""}
+            </p>
+            <button
+              type="button"
+              disabled={busy !== null}
+              onClick={() =>
+                run(
+                  "analyse-auto",
+                  () => analyserAutomatiquement({ data: { produit_id: produitId } }),
+                  `Proposition générée depuis ${sourceAutomatique.type === "fiche_produit" ? "la fiche produit" : "les conditions générales"} — à vérifier.`,
+                )
+              }
+              className="rounded-md bg-[#0A192F] px-3 py-2 text-sm text-white disabled:opacity-50"
+            >
+              {busy === "analyse-auto" ? "Analyse en cours…" : "Remplir automatiquement les garanties"}
+            </button>
+          </>
+        ) : (
+          <p className="text-xs text-ink-muted">
+            Ajoutez une fiche produit ou, à défaut, les conditions générales dans les documents du produit.
+          </p>
+        )}
+        {analysables.length > 0 && (
+          <details className="rounded-md border border-line p-3">
+            <summary className="cursor-pointer text-xs font-medium text-ink-muted">
+              Analyse manuelle de plusieurs documents
+            </summary>
+            <div className="mt-3 space-y-2">
+              <p className="text-xs text-ink-muted">
+                Choisissez jusqu'à 4 documents à croiser. Les conditions générales font foi en cas de contradiction
+                contractuelle.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {analysables.map((d) => {
+                  const actif = docIds.includes(d.id);
+                  return (
+                    <label
+                      key={d.id}
+                      className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-1.5 text-xs ${
+                        actif ? "border-ink bg-ink/5" : "border-line"
+                      }`}
+                    >
+                      <input type="checkbox" checked={actif} onChange={() => toggleDoc(d.id)} className="accent-ink" />
+                      <span>
+                        {DOC_LABEL[d.type] ?? d.type} — {d.nom}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
               <button
                 type="button"
                 disabled={docIds.length === 0 || busy !== null}
@@ -322,17 +358,12 @@ export function ProduitGarantiesTab({
                     "Proposition générée — à valider.",
                   );
                 }}
-                className="rounded-md bg-[#0A192F] px-3 py-2 text-sm text-white disabled:opacity-50"
+                className="rounded-md border border-line px-3 py-2 text-sm disabled:opacity-50"
               >
-                {busy === "analyse"
-                  ? "Analyse en cours…"
-                  : `Analyser ${docIds.length > 1 ? `ces ${docIds.length} documents` : "ce document"}`}
+                {busy === "analyse" ? "Analyse en cours…" : "Analyser la sélection"}
               </button>
-              <span className="text-xs text-ink-muted">
-                L'analyse ne produit qu'une proposition de grille produit : rien n'est appliqué sans validation.
-              </span>
             </div>
-          </div>
+          </details>
         )}
         {estSante && nbTableaux > 0 && (
           <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">

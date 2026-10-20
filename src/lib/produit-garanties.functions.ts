@@ -154,6 +154,19 @@ export const analyserDocumentsGaranties = createServerFn({ method: "POST" })
     return analyserDocumentsProduit(context.supabase, data.document_ids, context.userId);
   });
 
+/**
+ * Préremplit une proposition depuis la fiche produit, ou depuis les CG si
+ * aucune fiche produit n'est enregistrée. La validation reste humaine.
+ */
+export const analyserGarantiesAutomatiquement = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ produit_id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertStaff(context.supabase, context.userId);
+    const { analyserGarantiesProduitAutomatiquement } = await import("./produit-garanties-extraction.server");
+    return analyserGarantiesProduitAutomatiquement(context.supabase, data.produit_id, context.userId);
+  });
+
 /** Enregistre la grille comme brouillon (saisie humaine en cours). */
 export const enregistrerGrilleBrouillon = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

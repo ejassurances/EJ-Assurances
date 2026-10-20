@@ -322,6 +322,41 @@ export async function analyserDocumentProduit(
 }
 
 /**
+ * Prépare automatiquement une proposition de garanties pour un produit :
+ * la fiche produit la plus récente est prioritaire ; à défaut, les dernières
+ * conditions générales disponibles sont utilisées.
+ */
+export async function analyserGarantiesProduitAutomatiquement(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: SupabaseClient<any, any, any>,
+  produitId: string,
+  userId: string,
+) {
+  const { data, error } = await supabase
+    .from("produit_documents")
+    .select("id, nom, type, created_at")
+    .eq("produit_id", produitId)
+    .in("type", ["fiche_produit", "conditions_generales"])
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  const documents = (data ?? []) as { id: string; nom: string; type: string; created_at: string }[];
+  const source =
+    documents.find((document) => document.type === "fiche_produit") ??
+    documents.find((document) => document.type === "conditions_generales");
+
+  if (!source) {
+    throw new Error("Ajoutez une fiche produit ou, à défaut, les conditions générales pour remplir les garanties avec l'IA.");
+  }
+
+  const proposition = await analyserDocumentsProduit(supabase, [source.id], userId);
+  return {
+    ...proposition,
+    document_source: { id: source.id, nom: source.nom, type: source.type },
+  };
+}
+
+/**
  * Analyse générique de documents contractuels (mêmes consignes, même trame que
  * pour les CG partenaires) sans écriture en base : utilisée par la bibliothèque
  * des CG apportées par les clients.
