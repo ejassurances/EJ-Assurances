@@ -15,17 +15,20 @@ import { ImageUploadField, StoredImage } from "@/components/image-upload-field";
 import { CompagnieTauxCommission } from "@/components/compagnie-taux-commission";
 import { PageHeader } from "@/components/page-header";
 import { SectionNav, type SectionNavItem } from "@/components/section-nav";
+import { telechargerPdfBlob } from "@/lib/telecharger-pdf";
+import type {
+  GrilleFormuleComparatif,
+  GrilleProduitComparatif,
+  FormuleComparatif,
+  ProduitComparatif,
+} from "@/lib/comparatif-compagnie-pdf";
 import { IconBuildingBank } from "@tabler/icons-react";
 
 type CompagnieDocRow = {
   id: string;
   compagnie_id: string;
   type:
-    | "contrat_partenariat"
-    | "avenant"
-    | "protocole_commissions"
-    | "conditions_apporteur"
-    | "autre";
+    "contrat_partenariat" | "avenant" | "protocole_commissions" | "conditions_apporteur" | "autre";
   nom: string;
   storage_path: string;
   date_signature: string | null;
@@ -311,6 +314,7 @@ function CompagnieDetail() {
           {tab === "produits" && (
             <ProduitsTab
               compagnieId={c.id}
+              compagnieNom={c.nom}
               produits={produits}
               familles={familles}
               isAdmin={isAdmin}
@@ -526,6 +530,7 @@ function GrilleBadge({ etat }: { etat: GrilleEtat }) {
 
 function ProduitsTab({
   compagnieId,
+  compagnieNom,
   produits,
   familles,
   isAdmin,
@@ -534,6 +539,7 @@ function ProduitsTab({
   onChange,
 }: {
   compagnieId: string;
+  compagnieNom: string;
   produits: Produit[];
   familles: Famille[];
   isAdmin: boolean;
@@ -544,6 +550,7 @@ function ProduitsTab({
   const [nom, setNom] = useState("");
   const [familleId, setFamilleId] = useState(familles[0]?.id ?? "");
   const [creating, setCreating] = useState(false);
+  const [generatingComparatif, setGeneratingComparatif] = useState(false);
   const [grilles, setGrilles] = useState<Record<string, GrilleEtat>>({});
   useEffect(() => {
     if (!familleId && familles[0]) setFamilleId(familles[0].id);
@@ -608,106 +615,214 @@ function ProduitsTab({
     if (data) onSelect(data.id);
   }
 
-  return (
-    <div className="grid gap-6 md:grid-cols-[280px_1fr]">
-      <aside className="space-y-3">
-        {isAdmin && (
-          <form onSubmit={create} className="crm-card space-y-2 p-3">
-            <p className="crm-eyebrow">Nouveau produit</p>
-            <input
-              value={nom}
-              onChange={(e) => setNom(e.target.value)}
-              placeholder="Nom du produit"
-              className="w-full rounded-md border border-line bg-background px-2 py-1.5 text-sm"
-              required
-            />
-            <select
-              value={familleId}
-              onChange={(e) => setFamilleId(e.target.value)}
-              className="w-full rounded-md border border-line bg-background px-2 py-1.5 text-sm"
-            >
-              {familles.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.nom}
-                </option>
-              ))}
-            </select>
-            <button
-              type="submit"
-              disabled={creating}
-              className="w-full rounded-md bg-[#0A192F] py-1.5 text-xs font-medium text-white disabled:opacity-60"
-            >
-              {creating ? "…" : "Ajouter"}
-            </button>
-          </form>
-        )}
+  async function telechargerComparatif() {
+    const produitsActifs = produits.filter((produit) => produit.statut === "actif");
+    if (produitsActifs.length === 0) {
+      toast.error("Aucun produit actif à comparer.");
+      return;
+    }
 
-        <div className="space-y-1">
-          {produits.length === 0 && <p className="text-sm text-ink-muted">Aucun produit.</p>}
-          {produits.map((p) => {
-            const f = familles.find((x) => x.id === p.famille_id);
-            const isActive = p.id === selected;
-            const etat = grilles[p.id] ?? "absente";
-            return (
-              <button
-                key={p.id}
-                onClick={() => onSelect(p.id)}
-                className={
-                  "w-full rounded-md px-3 py-2 text-left text-sm transition-colors " +
-                  (isActive ? "bg-[#D4AF37]/25 font-semibold text-[#0A192F]" : "hover:bg-surface")
-                }
+    setGeneratingComparatif(true);
+    try {
+      const ids = produitsActifs.map((produit) => produit.id);
+      const [grillesResult, formulesResult] = await Promise.all([
+        supabase
+          .from("produit_garanties")
+          .select("produit_id,famille_code,grille_version,statut,valide_le,valeurs")
+          .in("produit_id", ids),
+        supabase
+          .from("produit_formules")
+          .select("id,produit_id,nom,ordre,base_calcul,tarif_fixe")
+          .eq("actif", true)
+          .in("produit_id", ids)
+          .order("ordre"),
+      ]);
+      if (grillesResult.error) throw new Error(grillesResult.error.message);
+      if (formulesResult.error) throw new Error(formulesResult.error.message);
+
+      const formules = (formulesResult.data ?? []) as FormuleComparatif[];
+      const idsFormules = formules.map((formule) => formule.id);
+      let grillesFormule: {
+        formule_id: string;
+        grille_version: number;
+        statut: string;
+        valeurs: Record<string, unknown>;
+      }[] = [];
+      if (idsFormules.length > 0) {
+        const result = await supabase
+          .from("formule_garanties")
+          .select("formule_id,grille_version,statut,valeurs")
+          .in("formule_id", idsFormules);
+        if (result.error) throw new Error(result.error.message);
+        grillesFormule = (result.data ?? []) as typeof grillesFormule;
+      }
+
+      const { genererComparatifCompagniePdf } = await import("@/lib/comparatif-compagnie-pdf");
+      const produitsComparatifs: ProduitComparatif[] = produitsActifs.map((produit) => {
+        const famille = familles.find((item) => item.id === produit.famille_id);
+        return {
+          id: produit.id,
+          familleCode: famille?.code ?? null,
+          familleNom: famille?.nom ?? "Famille non définie",
+          champsStandards: famille?.champs_standards ?? [],
+          nom: produit.nom,
+          code_produit: produit.code_produit,
+          assureur_porteur: produit.assureur_porteur,
+          description: produit.description,
+          statut: produit.statut,
+          caracteristiques: produit.caracteristiques ?? {},
+          points_forts: produit.points_forts,
+          points_vigilance: produit.points_vigilance,
+          cible: produit.cible,
+        };
+      });
+      const pdf = await genererComparatifCompagniePdf({
+        compagnieNom,
+        produits: produitsComparatifs,
+        grillesProduit: (grillesResult.data ?? []) as unknown as GrilleProduitComparatif[],
+        formules,
+        grillesFormule: grillesFormule as unknown as GrilleFormuleComparatif[],
+      });
+      const slug =
+        compagnieNom
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "") || "compagnie";
+      telechargerPdfBlob(pdf, `comparatif-${slug}-${new Date().toISOString().slice(0, 10)}.pdf`);
+      toast.success("Le comparatif PDF a été téléchargé.");
+    } catch (cause) {
+      toast.error(
+        cause instanceof Error ? cause.message : "Impossible de générer le comparatif PDF.",
+      );
+    } finally {
+      setGeneratingComparatif(false);
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-background p-4">
+        <div>
+          <p className="text-sm font-medium">Catalogue de {compagnieNom}</p>
+          <p className="text-xs text-ink-muted">
+            Création directement depuis cette fiche ; seuls les produits actifs figurent dans le
+            comparatif.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={telechargerComparatif}
+          disabled={generatingComparatif || !produits.some((produit) => produit.statut === "actif")}
+          className="rounded-md bg-[#0A192F] px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {generatingComparatif ? "Préparation du PDF…" : "Télécharger le comparatif PDF"}
+        </button>
+      </div>
+      <div className="grid gap-6 md:grid-cols-[280px_1fr]">
+        <aside className="space-y-3">
+          {isAdmin && (
+            <form onSubmit={create} className="crm-card space-y-2 p-3">
+              <p className="crm-eyebrow">Nouveau produit</p>
+              <p className="text-[11px] text-ink-muted">
+                Il sera rattaché automatiquement à {compagnieNom}.
+              </p>
+              <input
+                value={nom}
+                onChange={(e) => setNom(e.target.value)}
+                placeholder="Nom du produit"
+                className="w-full rounded-md border border-line bg-background px-2 py-1.5 text-sm"
+                required
+              />
+              <select
+                value={familleId}
+                onChange={(e) => setFamilleId(e.target.value)}
+                className="w-full rounded-md border border-line bg-background px-2 py-1.5 text-sm"
               >
-                <div className="flex items-center gap-2">
-                  <StoredImage
-                    bucket="produits-images"
-                    value={p.image_url}
-                    alt={p.nom}
-                    className="size-7 shrink-0 rounded bg-background object-contain"
-                  />
-                  <span className="font-medium">{p.nom}</span>
-                  {varianteCapital(p.nom) && (
-                    <span
-                      className="shrink-0 rounded border border-[#B99B3F]/50 bg-[#B99B3F]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#8a7226]"
-                      title={libelleVariante(varianteCapital(p.nom)!)}
-                    >
-                      {varianteCapital(p.nom)}
-                    </span>
-                  )}
-                </div>
-                <div
+                {familles.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.nom}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="submit"
+                disabled={creating || familles.length === 0}
+                className="w-full rounded-md bg-[#0A192F] py-1.5 text-xs font-medium text-white disabled:opacity-60"
+              >
+                {creating ? "Création…" : "Créer le produit"}
+              </button>
+            </form>
+          )}
+
+          <div className="space-y-1">
+            {produits.length === 0 && <p className="text-sm text-ink-muted">Aucun produit.</p>}
+            {produits.map((p) => {
+              const f = familles.find((x) => x.id === p.famille_id);
+              const isActive = p.id === selected;
+              const etat = grilles[p.id] ?? "absente";
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => onSelect(p.id)}
                   className={
-                    "text-xs " + (isActive ? "text-primary-foreground/70" : "text-ink-muted")
+                    "w-full rounded-md px-3 py-2 text-left text-sm transition-colors " +
+                    (isActive ? "bg-[#D4AF37]/25 font-semibold text-[#0A192F]" : "hover:bg-surface")
                   }
                 >
-                  {f?.nom ?? "—"} · {p.statut}
-                  {varianteCapital(p.nom) ? ` · ${libelleVariante(varianteCapital(p.nom)!)}` : ""}
-                </div>
-                <div className="mt-1">
-                  <GrilleBadge etat={etat} />
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </aside>
+                  <div className="flex items-center gap-2">
+                    <StoredImage
+                      bucket="produits-images"
+                      value={p.image_url}
+                      alt={p.nom}
+                      className="size-7 shrink-0 rounded bg-background object-contain"
+                    />
+                    <span className="font-medium">{p.nom}</span>
+                    {varianteCapital(p.nom) && (
+                      <span
+                        className="shrink-0 rounded border border-[#B99B3F]/50 bg-[#B99B3F]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#8a7226]"
+                        title={libelleVariante(varianteCapital(p.nom)!)}
+                      >
+                        {varianteCapital(p.nom)}
+                      </span>
+                    )}
+                  </div>
+                  <div
+                    className={
+                      "text-xs " + (isActive ? "text-primary-foreground/70" : "text-ink-muted")
+                    }
+                  >
+                    {f?.nom ?? "—"} · {p.statut}
+                    {varianteCapital(p.nom) ? ` · ${libelleVariante(varianteCapital(p.nom)!)}` : ""}
+                  </div>
+                  <div className="mt-1">
+                    <GrilleBadge etat={etat} />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
 
-      <div>
-        {active ? (
-          <ProduitEditor
-            key={active.id}
-            produit={active}
-            famille={familles.find((f) => f.id === active.famille_id)}
-            familles={familles}
-            autresProduits={produits.filter((x) => x.id !== active.id)}
-            isAdmin={isAdmin}
-            onChange={onChange}
-            onDelete={() => onSelect(null)}
-          />
-        ) : (
-          <p className="rounded-lg border border-dashed border-line p-8 text-center text-sm text-ink-muted">
-            Sélectionnez un produit à gauche pour éditer ses caractéristiques et ses documents.
-          </p>
-        )}
+        <div>
+          {active ? (
+            <ProduitEditor
+              key={active.id}
+              produit={active}
+              famille={familles.find((f) => f.id === active.famille_id)}
+              familles={familles}
+              autresProduits={produits.filter((x) => x.id !== active.id)}
+              isAdmin={isAdmin}
+              onChange={onChange}
+              onDelete={() => onSelect(null)}
+            />
+          ) : (
+            <p className="rounded-lg border border-dashed border-line p-8 text-center text-sm text-ink-muted">
+              Sélectionnez un produit à gauche pour éditer ses caractéristiques et ses documents.
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
