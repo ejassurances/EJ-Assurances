@@ -28,7 +28,11 @@ type CompagnieDocRow = {
   id: string;
   compagnie_id: string;
   type:
-    "contrat_partenariat" | "avenant" | "protocole_commissions" | "conditions_apporteur" | "autre";
+    | "contrat_partenariat"
+    | "avenant"
+    | "protocole_commissions"
+    | "conditions_apporteur"
+    | "autre";
   nom: string;
   storage_path: string;
   date_signature: string | null;
