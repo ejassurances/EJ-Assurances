@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { analyserGarantiesAutomatiquement } from "@/lib/produit-garanties.functions";
+import { analyserCatalogueProduitsCompagnie } from "@/lib/produit-catalogue.functions";
 import { CompagnieDocsTable, UploadCompagnieDocForm } from "./espace.conformite";
 import { ProduitGarantiesTab } from "@/components/produit-garanties-tab";
 import { ProduitFormulesTab } from "@/components/produit-formules-tab";
@@ -142,6 +143,24 @@ type Produit = {
   /** Origine du tarif : API compagnie, saisie manuelle de devis, ou tarif fixe connu. */
   mode_tarification: "api" | "manuel" | "fixe";
 };
+type ProduitCatalogueBrouillon = {
+  id: string;
+  nom: string;
+  code_produit: string | null;
+  famille_code: string | null;
+  description: string | null;
+  existeDeja: boolean;
+  inclure: boolean;
+};
+
+function normaliserNomProduit(nom: string): string {
+  return nom
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLocaleLowerCase("fr-FR")
+    .replace(/\s+/g, " ");
+}
 type ProduitDoc = {
   id: string;
   produit_id: string;
@@ -551,10 +570,15 @@ function ProduitsTab({
   onSelect: (id: string | null) => void;
   onChange: () => void;
 }) {
+  const analyserCatalogue = useServerFn(analyserCatalogueProduitsCompagnie);
   const [nom, setNom] = useState("");
   const [familleId, setFamilleId] = useState(familles[0]?.id ?? "");
   const [creating, setCreating] = useState(false);
   const [generatingComparatif, setGeneratingComparatif] = useState(false);
+  const [fichierCatalogue, setFichierCatalogue] = useState<File | null>(null);
+  const [analyseCatalogueEnCours, setAnalyseCatalogueEnCours] = useState(false);
+  const [importCatalogueEnCours, setImportCatalogueEnCours] = useState(false);
+  const [produitsCatalogue, setProduitsCatalogue] = useState<ProduitCatalogueBrouillon[]>([]);
   const [grilles, setGrilles] = useState<Record<string, GrilleEtat>>({});
   useEffect(() => {
     if (!familleId && familles[0]) setFamilleId(familles[0].id);
@@ -606,6 +630,138 @@ function ProduitsTab({
     [produits],
   );
   const active = useMemo(() => produits.find((p) => p.id === selected), [produits, selected]);
+
+  async function analyserFichierCatalogue() {
+    if (!fichierCatalogue) return;
+    if (!fichierCatalogue.name.toLowerCase().endsWith(".pdf")) {
+      toast.error("Sélectionnez un catalogue au format PDF.");
+      return;
+    }
+    if (fichierCatalogue.size > 12 * 1024 * 1024) {
+      toast.error("Le PDF du catalogue ne doit pas dépasser 12 Mo.");
+      return;
+    }
+
+    setAnalyseCatalogueEnCours(true);
+    setProduitsCatalogue([]);
+    let fichierTemporaire: string | null = null;
+    try {
+      const storagePath = `catalogue-imports/${compagnieId}/${crypto.randomUUID()}.pdf`;
+      fichierTemporaire = storagePath;
+      const { error: uploadError } = await supabase.storage
+        .from("produits-documents")
+        .upload(storagePath, fichierCatalogue, { contentType: "application/pdf", upsert: false });
+      if (uploadError) throw new Error(uploadError.message);
+
+      const resultat = (await analyserCatalogue({
+        data: { compagnie_id: compagnieId, storage_path: storagePath },
+      })) as {
+        produits: {
+          nom: string;
+          code_produit: string | null;
+          famille_code: string | null;
+          description: string | null;
+        }[];
+      };
+      fichierTemporaire = null;
+      const dejaPresents = new Set(produits.map((produit) => normaliserNomProduit(produit.nom)));
+      const vusDansLePdf = new Set<string>();
+      const brouillons = resultat.produits.map((produit, index) => {
+        const cle = normaliserNomProduit(produit.nom);
+        const existeDeja = dejaPresents.has(cle) || vusDansLePdf.has(cle);
+        vusDansLePdf.add(cle);
+        return {
+          id: `${index}-${crypto.randomUUID()}`,
+          nom: produit.nom,
+          code_produit: produit.code_produit,
+          famille_code: produit.famille_code,
+          description: produit.description,
+          existeDeja,
+          inclure: !existeDeja,
+        };
+      });
+      setProduitsCatalogue(brouillons);
+      toast.success(
+        `${brouillons.length} produit(s) détecté(s). Vérifiez la liste avant l’import.`,
+      );
+    } catch (cause) {
+      if (fichierTemporaire) {
+        try {
+          await supabase.storage.from("produits-documents").remove([fichierTemporaire]);
+        } catch {
+          // Le serveur tente aussi de supprimer le PDF temporaire après l’analyse.
+        }
+      }
+      toast.error(
+        cause instanceof Error ? cause.message : "Impossible d’analyser le catalogue PDF.",
+      );
+    } finally {
+      setAnalyseCatalogueEnCours(false);
+    }
+  }
+
+  async function importerProduitsCatalogue() {
+    const selection = produitsCatalogue.filter((produit) => produit.inclure && !produit.existeDeja);
+    if (selection.length === 0) {
+      toast.error("Sélectionnez au moins un produit à importer.");
+      return;
+    }
+    const nomVide = selection.find((produit) => !produit.nom.trim());
+    if (nomVide) {
+      toast.error("Le nom de chaque produit importé est obligatoire.");
+      return;
+    }
+    const sansFamille = selection.find(
+      (produit) => !familles.some((famille) => famille.code === produit.famille_code),
+    );
+    if (sansFamille) {
+      toast.error(`Choisissez une famille pour « ${sansFamille.nom} ».`);
+      return;
+    }
+    const nomsSelection = selection.map((produit) => normaliserNomProduit(produit.nom));
+    if (
+      selection.some(
+        (produit, index) =>
+          produits.some(
+            (existant) => normaliserNomProduit(existant.nom) === nomsSelection[index],
+          ) || nomsSelection.indexOf(nomsSelection[index]) !== index,
+      )
+    ) {
+      toast.error(
+        "Un produit sélectionné existe déjà dans le catalogue ou en doublon dans la liste.",
+      );
+      return;
+    }
+
+    const produitsAInserer = selection.map((produit) => {
+      const famille = familles.find((item) => item.code === produit.famille_code)!;
+      return {
+        compagnie_id: compagnieId,
+        famille_id: famille.id,
+        nom: produit.nom.trim(),
+        code_produit: produit.code_produit?.trim() || null,
+        description: produit.description?.trim() || null,
+        statut: "actif" as const,
+      };
+    });
+
+    setImportCatalogueEnCours(true);
+    try {
+      const { data, error } = await supabase.from("produits").insert(produitsAInserer).select("id");
+      if (error) throw new Error(error.message);
+      toast.success(
+        `${produitsAInserer.length} produit(s) ajouté(s) au catalogue de ${compagnieNom}.`,
+      );
+      setProduitsCatalogue([]);
+      setFichierCatalogue(null);
+      onChange();
+      if (data?.[0]) onSelect(data[0].id);
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Impossible d’importer les produits.");
+    } finally {
+      setImportCatalogueEnCours(false);
+    }
+  }
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
@@ -716,24 +872,190 @@ function ProduitsTab({
         <div>
           <p className="text-sm font-medium">Catalogue de {compagnieNom}</p>
           <p className="text-xs text-ink-muted">
-            Création directement depuis cette fiche ; seuls les produits actifs figurent dans le
-            comparatif.
+            Importez la liste complète de la compagnie pour créer les fiches en une seule fois.
           </p>
           <p className="mt-1 text-xs text-ink-muted">
             {produitsActifs.length === 0
-              ? "Aucun produit actif : créez un produit ou passez son statut à Actif pour générer le PDF."
+              ? "Aucun produit n’est requis avant l’import. Le comparatif PDF sera disponible après l’ajout des produits."
               : `${produitsActifs.length} produit${produitsActifs.length > 1 ? "s" : ""} actif${produitsActifs.length > 1 ? "s" : ""} inclus dans le comparatif.`}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={telechargerComparatif}
-          disabled={generatingComparatif}
-          className="rounded-md bg-[#0A192F] px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {generatingComparatif ? "Préparation du PDF…" : "Télécharger le comparatif PDF"}
-        </button>
+        {produitsActifs.length > 0 && (
+          <button
+            type="button"
+            onClick={telechargerComparatif}
+            disabled={generatingComparatif}
+            className="rounded-md bg-[#0A192F] px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {generatingComparatif ? "Préparation du PDF…" : "Télécharger le comparatif PDF"}
+          </button>
+        )}
       </div>
+      {isAdmin && (
+        <section className="crm-card space-y-4 p-4">
+          <div>
+            <h3 className="text-sm font-semibold">Importer la liste des produits</h3>
+            <p className="mt-1 text-xs text-ink-muted">
+              Déposez le PDF catalogue de la compagnie. L’IA en extrait les produits ; vous vérifiez
+              et complétez les familles avant leur création groupée.
+            </p>
+            <p className="mt-1 text-xs text-ink-muted">
+              Le PDF est supprimé du stockage temporaire après l’analyse.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="min-w-64 flex-1 text-xs font-medium text-ink-muted">
+              Catalogue PDF (12 Mo maximum)
+              <input
+                type="file"
+                accept=".pdf,application/pdf"
+                onChange={(event) => {
+                  setFichierCatalogue(event.target.files?.[0] ?? null);
+                  setProduitsCatalogue([]);
+                }}
+                className="mt-1 block w-full rounded-md border border-line bg-background px-3 py-2 text-sm text-ink"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={analyserFichierCatalogue}
+              disabled={analyseCatalogueEnCours || !fichierCatalogue}
+              className="rounded-md bg-[#0A192F] px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {analyseCatalogueEnCours ? "Analyse du catalogue…" : "Analyser la liste"}
+            </button>
+          </div>
+
+          {produitsCatalogue.length > 0 && (
+            <div className="space-y-3 border-t border-line pt-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-medium">
+                  {produitsCatalogue.length} produit(s) détecté(s) ·{" "}
+                  {produitsCatalogue.filter((produit) => produit.existeDeja).length} déjà présent(s)
+                </p>
+                <button
+                  type="button"
+                  onClick={importerProduitsCatalogue}
+                  disabled={
+                    importCatalogueEnCours ||
+                    !produitsCatalogue.some((produit) => produit.inclure && !produit.existeDeja) ||
+                    produitsCatalogue.some(
+                      (produit) =>
+                        produit.inclure &&
+                        !produit.existeDeja &&
+                        !familles.some((famille) => famille.code === produit.famille_code),
+                    )
+                  }
+                  className="rounded-md bg-[#0A192F] px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {importCatalogueEnCours
+                    ? "Création des produits…"
+                    : "Créer les produits sélectionnés"}
+                </button>
+              </div>
+              <div className="space-y-2">
+                {produitsCatalogue.map((produit) => (
+                  <div
+                    key={produit.id}
+                    className="grid gap-2 rounded-md border border-line bg-background p-3 md:grid-cols-[auto_minmax(0,1fr)_200px_170px]"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={produit.inclure}
+                      disabled={produit.existeDeja}
+                      aria-label={`Importer ${produit.nom}`}
+                      onChange={(event) =>
+                        setProduitsCatalogue((actuels) =>
+                          actuels.map((item) =>
+                            item.id === produit.id
+                              ? { ...item, inclure: event.target.checked }
+                              : item,
+                          ),
+                        )
+                      }
+                      className="mt-2"
+                    />
+                    <div className="space-y-1">
+                      <input
+                        value={produit.nom}
+                        onChange={(event) =>
+                          setProduitsCatalogue((actuels) =>
+                            actuels.map((item) =>
+                              item.id === produit.id ? { ...item, nom: event.target.value } : item,
+                            ),
+                          )
+                        }
+                        aria-label="Nom du produit"
+                        className="w-full rounded-md border border-line bg-background px-2 py-1.5 text-sm"
+                      />
+                      <input
+                        value={produit.description ?? ""}
+                        onChange={(event) =>
+                          setProduitsCatalogue((actuels) =>
+                            actuels.map((item) =>
+                              item.id === produit.id
+                                ? { ...item, description: event.target.value || null }
+                                : item,
+                            ),
+                          )
+                        }
+                        placeholder="Description (facultatif)"
+                        aria-label="Description du produit"
+                        className="w-full rounded-md border border-line bg-background px-2 py-1.5 text-xs"
+                      />
+                      {produit.existeDeja && (
+                        <p className="text-xs text-amber-700">
+                          Produit déjà présent, ignoré pour éviter un doublon.
+                        </p>
+                      )}
+                    </div>
+                    <select
+                      value={produit.famille_code ?? ""}
+                      onChange={(event) =>
+                        setProduitsCatalogue((actuels) =>
+                          actuels.map((item) =>
+                            item.id === produit.id
+                              ? { ...item, famille_code: event.target.value || null }
+                              : item,
+                          ),
+                        )
+                      }
+                      aria-label={`Famille de ${produit.nom}`}
+                      className="h-9 rounded-md border border-line bg-background px-2 text-sm"
+                    >
+                      <option value="">Choisir une famille</option>
+                      {familles.map((famille) => (
+                        <option key={famille.id} value={famille.code}>
+                          {famille.nom}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      value={produit.code_produit ?? ""}
+                      onChange={(event) =>
+                        setProduitsCatalogue((actuels) =>
+                          actuels.map((item) =>
+                            item.id === produit.id
+                              ? { ...item, code_produit: event.target.value || null }
+                              : item,
+                          ),
+                        )
+                      }
+                      placeholder="Code produit"
+                      aria-label={`Code du produit ${produit.nom}`}
+                      className="h-9 rounded-md border border-line bg-background px-2 text-sm"
+                    />
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-ink-muted">
+                Vérifiez chaque produit détecté par l’IA avant l’import. Les produits créés auront
+                le statut Actif ; aucun produit n’est ajouté tant que vous ne confirmez pas.
+              </p>
+            </div>
+          )}
+        </section>
+      )}
       <div className="grid gap-6 md:grid-cols-[280px_1fr]">
         <aside className="space-y-3">
           {isAdmin && (
