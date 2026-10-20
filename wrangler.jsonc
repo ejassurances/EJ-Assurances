@@ -2,18 +2,18 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "ej-assurances",
   "compatibility_date": "2026-10-19",
-  "compatibility_flags": [
-    "nodejs_compat",
-    "nodejs_compat_populate_process_env"
-  ],
+  "compatibility_flags": ["nodejs_compat", "nodejs_compat_populate_process_env"],
+  "ai": {
+    "binding": "AI",
+  },
   "main": "@tanstack/react-start/server-entry",
   "vars": {
     "SUPABASE_URL": "https://ljquiweziktbjxldfztk.supabase.co",
-    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_ep3uSXHgzsJr1Q7L80rwYA_lVpre7uZ"
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_ep3uSXHgzsJr1Q7L80rwYA_lVpre7uZ",
   },
   "workers_dev": true,
   "preview_urls": false,
   "observability": {
-    "enabled": true
-  }
+    "enabled": true,
+  },
 }
