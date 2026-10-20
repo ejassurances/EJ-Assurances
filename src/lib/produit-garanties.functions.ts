@@ -64,8 +64,8 @@ async function detecterDoublonsGrossiste(
     .eq("id", produitId)
     .maybeSingle();
   if (!produit?.assureur_porteur) return [];
-  const typePartenaireCible = (produit as { compagnies: { type_partenaire: string } | null }).compagnies
-    ?.type_partenaire as string | null;
+  const typePartenaireCible = (produit as { compagnies: { type_partenaire: string } | null })
+    .compagnies?.type_partenaire as string | null;
 
   const { data: grille } = await supabase
     .from("produit_garanties")
@@ -163,8 +163,13 @@ export const analyserGarantiesAutomatiquement = createServerFn({ method: "POST" 
   .inputValidator((input: unknown) => z.object({ produit_id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     await assertStaff(context.supabase, context.userId);
-    const { analyserGarantiesProduitAutomatiquement } = await import("./produit-garanties-extraction.server");
-    return analyserGarantiesProduitAutomatiquement(context.supabase, data.produit_id, context.userId);
+    const { analyserGarantiesProduitAutomatiquement } =
+      await import("./produit-garanties-extraction.server");
+    return analyserGarantiesProduitAutomatiquement(
+      context.supabase,
+      data.produit_id,
+      context.userId,
+    );
   });
 
 /** Enregistre la grille comme brouillon (saisie humaine en cours). */
@@ -217,7 +222,6 @@ export const validerGrilleGaranties = createServerFn({ method: "POST" })
         /** Validation humaine explicite de l'assureur porteur proposé par l'IA. */
         assureur_porteur: z.string().max(120).nullable().optional(),
         reference_contrat: z.string().max(120).nullable().optional(),
-
       })
       .parse(input),
   )
@@ -253,11 +257,14 @@ export const validerGrilleGaranties = createServerFn({ method: "POST" })
       if (pErr) throw new Error(pErr.message);
     }
 
-
     if (data.proposition_id) {
       await context.supabase
         .from("produit_garanties_propositions")
-        .update({ statut: "acceptee", traite_par: context.userId, traite_le: new Date().toISOString() })
+        .update({
+          statut: "acceptee",
+          traite_par: context.userId,
+          traite_le: new Date().toISOString(),
+        })
         .eq("id", data.proposition_id);
     }
 
@@ -272,7 +279,6 @@ export const validerGrilleGaranties = createServerFn({ method: "POST" })
         reference_contrat: data.reference_contrat ?? null,
       },
     });
-
 
     const doublons = await detecterDoublonsGrossiste(context.supabase, data.produit_id);
 
@@ -299,7 +305,11 @@ export const rejeterPropositionGaranties = createServerFn({ method: "POST" })
     await assertStaff(context.supabase, context.userId);
     const { error } = await context.supabase
       .from("produit_garanties_propositions")
-      .update({ statut: "rejetee", traite_par: context.userId, traite_le: new Date().toISOString() })
+      .update({
+        statut: "rejetee",
+        traite_par: context.userId,
+        traite_le: new Date().toISOString(),
+      })
       .eq("id", data.proposition_id);
     if (error) throw new Error(error.message);
 
@@ -318,7 +328,8 @@ export const analyserTableauGaranties = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ document_id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     await assertStaff(context.supabase, context.userId);
-    const { analyserTableauGarantiesFormules } = await import("./formule-garanties-extraction.server");
+    const { analyserTableauGarantiesFormules } =
+      await import("./formule-garanties-extraction.server");
     return analyserTableauGarantiesFormules(context.supabase, data.document_id, context.userId);
   });
 
@@ -336,7 +347,12 @@ export const accepterPropositionFormule = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertStaff(context.supabase, context.userId, data.statut === "valide");
     const { traiterPropositionFormule } = await import("./formule-garanties.server");
-    return traiterPropositionFormule(context.supabase, data.proposition_id, data.statut, context.userId);
+    return traiterPropositionFormule(
+      context.supabase,
+      data.proposition_id,
+      data.statut,
+      context.userId,
+    );
   });
 
 /** Rejet d'une proposition de formule (aucune donnée reprise). */
@@ -347,7 +363,11 @@ export const rejeterPropositionFormule = createServerFn({ method: "POST" })
     await assertStaff(context.supabase, context.userId);
     const { error } = await context.supabase
       .from("formule_garanties_propositions")
-      .update({ statut: "rejetee", traite_par: context.userId, traite_le: new Date().toISOString() })
+      .update({
+        statut: "rejetee",
+        traite_par: context.userId,
+        traite_le: new Date().toISOString(),
+      })
       .eq("id", data.proposition_id);
     if (error) throw new Error(error.message);
     await context.supabase.rpc("log_audit", {

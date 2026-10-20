@@ -20,7 +20,8 @@ import { IconBuildingBank } from "@tabler/icons-react";
 type CompagnieDocRow = {
   id: string;
   compagnie_id: string;
-  type: "contrat_partenariat" | "avenant" | "protocole_commissions" | "conditions_apporteur" | "autre";
+  type:
+    "contrat_partenariat" | "avenant" | "protocole_commissions" | "conditions_apporteur" | "autre";
   nom: string;
   storage_path: string;
   date_signature: string | null;
@@ -30,7 +31,15 @@ type CompagnieDocRow = {
   created_at: string;
 };
 
-function PartenariatsTab({ compagnieId, compagnieNom, isAdmin }: { compagnieId: string; compagnieNom: string; isAdmin: boolean }) {
+function PartenariatsTab({
+  compagnieId,
+  compagnieNom,
+  isAdmin,
+}: {
+  compagnieId: string;
+  compagnieNom: string;
+  isAdmin: boolean;
+}) {
   const [docs, setDocs] = useState<CompagnieDocRow[]>([]);
   const [loading, setLoading] = useState(true);
   const load = async () => {
@@ -43,7 +52,9 @@ function PartenariatsTab({ compagnieId, compagnieNom, isAdmin }: { compagnieId: 
     setDocs((data as CompagnieDocRow[]) ?? []);
     setLoading(false);
   };
-  useEffect(() => { load(); }, [compagnieId]);
+  useEffect(() => {
+    load();
+  }, [compagnieId]);
   return (
     <div className="space-y-4">
       {isAdmin && (
@@ -119,12 +130,18 @@ type Produit = {
   image_url: string | null;
   /** Origine du tarif : API compagnie, saisie manuelle de devis, ou tarif fixe connu. */
   mode_tarification: "api" | "manuel" | "fixe";
-
 };
 type ProduitDoc = {
   id: string;
   produit_id: string;
-  type: "conditions_generales" | "ipid" | "tableau_garanties" | "fiche_produit" | "tarifs" | "ccsf" | "autre";
+  type:
+    | "conditions_generales"
+    | "ipid"
+    | "tableau_garanties"
+    | "fiche_produit"
+    | "tarifs"
+    | "ccsf"
+    | "autre";
   nom: string;
   version: string | null;
   date_effet: string | null;
@@ -153,7 +170,14 @@ const DOC_TYPE_LABEL: Record<ProduitDoc["type"], string> = {
 const DOC_TYPES_PAR_FAMILLE: Record<string, ProduitDoc["type"][]> = {
   emprunteur: ["conditions_generales", "ipid", "fiche_produit", "ccsf", "tarifs", "autre"],
   sante: ["conditions_generales", "ipid", "tableau_garanties", "fiche_produit", "tarifs", "autre"],
-  prevoyance: ["conditions_generales", "ipid", "tableau_garanties", "fiche_produit", "tarifs", "autre"],
+  prevoyance: [
+    "conditions_generales",
+    "ipid",
+    "tableau_garanties",
+    "fiche_produit",
+    "tarifs",
+    "autre",
+  ],
 };
 
 const DOC_TYPES_DEFAUT: ProduitDoc["type"][] = [
@@ -167,7 +191,6 @@ const DOC_TYPES_DEFAUT: ProduitDoc["type"][] = [
 function docTypesPour(familleCode: string | null): ProduitDoc["type"][] {
   return (familleCode && DOC_TYPES_PAR_FAMILLE[familleCode]) || DOC_TYPES_DEFAUT;
 }
-
 
 type Tab = "infos" | "produits" | "partenariats" | "emails" | "api";
 
@@ -207,7 +230,10 @@ function CompagnieDetail() {
   async function saveInfos(patch: Partial<Compagnie>) {
     if (!c) return;
     setSaving(true);
-    const { error } = await supabase.from("compagnies").update(patch as never).eq("id", c.id);
+    const { error } = await supabase
+      .from("compagnies")
+      .update(patch as never)
+      .eq("id", c.id);
     setSaving(false);
     if (error) setError(error.message);
     else setC({ ...c, ...patch });
@@ -231,7 +257,9 @@ function CompagnieDetail() {
     emails: "Emails",
     api: "API compagnie",
   };
-  const navItems: SectionNavItem<Tab>[] = (["infos", "produits", "partenariats", "emails", "api"] as Tab[]).map((t) => ({
+  const navItems: SectionNavItem<Tab>[] = (
+    ["infos", "produits", "partenariats", "emails", "api"] as Tab[]
+  ).map((t) => ({
     key: t,
     label: TAB_LABEL[t],
   }));
@@ -244,11 +272,17 @@ function CompagnieDetail() {
         description={`${produits.length} produit${produits.length > 1 ? "s" : ""} référencé${produits.length > 1 ? "s" : ""}`}
         icon={IconBuildingBank}
       >
-        <Link to="/espace/compagnies" className="text-xs text-white/70 underline underline-offset-4 hover:text-white">
+        <Link
+          to="/espace/compagnies"
+          className="text-xs text-white/70 underline underline-offset-4 hover:text-white"
+        >
           ← Toutes les compagnies
         </Link>
         {isAdmin && (
-          <button onClick={del} className="text-xs text-red-300 underline underline-offset-4 hover:text-red-200">
+          <button
+            onClick={del}
+            className="text-xs text-red-300 underline underline-offset-4 hover:text-red-200"
+          >
             Supprimer
           </button>
         )}
@@ -290,7 +324,14 @@ function CompagnieDetail() {
           {tab === "emails" && (
             <EmailsLiesPanel liens={{ compagnie_id: c.id }} titre="Historique des échanges" />
           )}
-          {tab === "api" && <ApiTab compagnieId={c.id} apiActive={c.api_active} isAdmin={isAdmin} onApiActiveChange={(v) => saveInfos({ api_active: v })} />}
+          {tab === "api" && (
+            <ApiTab
+              compagnieId={c.id}
+              apiActive={c.api_active}
+              isAdmin={isAdmin}
+              onApiActiveChange={(v) => saveInfos({ api_active: v })}
+            />
+          )}
         </div>
         <SectionNav title="Sections" items={navItems} active={tab} onSelect={setTab} />
       </div>
@@ -321,8 +362,18 @@ function InfosTab({
       }}
       className="crm-card grid gap-4 p-6 md:grid-cols-2"
     >
-      <Field label="Nom" value={form.nom} onChange={(v) => setForm({ ...form, nom: v })} readOnly={readOnly} />
-      <Field label="Site web" value={form.site_web ?? ""} onChange={(v) => setForm({ ...form, site_web: v })} readOnly={readOnly} />
+      <Field
+        label="Nom"
+        value={form.nom}
+        onChange={(v) => setForm({ ...form, nom: v })}
+        readOnly={readOnly}
+      />
+      <Field
+        label="Site web"
+        value={form.site_web ?? ""}
+        onChange={(v) => setForm({ ...form, site_web: v })}
+        readOnly={readOnly}
+      />
       <ImageUploadField
         bucket="compagnies-logos"
         prefix={c.id}
@@ -359,9 +410,24 @@ function InfosTab({
           <option value="inactif">Inactif</option>
         </select>
       </div>
-      <Field label="Contact — Nom" value={form.contact_nom ?? ""} onChange={(v) => setForm({ ...form, contact_nom: v })} readOnly={readOnly} />
-      <Field label="Contact — Email" value={form.contact_email ?? ""} onChange={(v) => setForm({ ...form, contact_email: v })} readOnly={readOnly} />
-      <Field label="Contact — Téléphone" value={form.contact_telephone ?? ""} onChange={(v) => setForm({ ...form, contact_telephone: v })} readOnly={readOnly} />
+      <Field
+        label="Contact — Nom"
+        value={form.contact_nom ?? ""}
+        onChange={(v) => setForm({ ...form, contact_nom: v })}
+        readOnly={readOnly}
+      />
+      <Field
+        label="Contact — Email"
+        value={form.contact_email ?? ""}
+        onChange={(v) => setForm({ ...form, contact_email: v })}
+        readOnly={readOnly}
+      />
+      <Field
+        label="Contact — Téléphone"
+        value={form.contact_telephone ?? ""}
+        onChange={(v) => setForm({ ...form, contact_telephone: v })}
+        readOnly={readOnly}
+      />
       <div className="md:col-span-2">
         <label className="mb-1 block text-xs font-medium text-ink-muted">Description</label>
         <textarea
@@ -428,16 +494,27 @@ function Field({
 type GrilleEtat = "validee" | "proposition" | "brouillon" | "absente";
 
 const GRILLE_BADGE: Record<GrilleEtat, { label: string; className: string }> = {
-  validee: { label: "Garanties validées", className: "border-emerald-300 bg-emerald-50 text-emerald-800" },
-  proposition: { label: "Proposition IA à valider", className: "border-amber-300 bg-amber-50 text-amber-800" },
-  brouillon: { label: "Garanties en brouillon", className: "border-amber-300 bg-amber-50 text-amber-800" },
+  validee: {
+    label: "Garanties validées",
+    className: "border-emerald-300 bg-emerald-50 text-emerald-800",
+  },
+  proposition: {
+    label: "Proposition IA à valider",
+    className: "border-amber-300 bg-amber-50 text-amber-800",
+  },
+  brouillon: {
+    label: "Garanties en brouillon",
+    className: "border-amber-300 bg-amber-50 text-amber-800",
+  },
   absente: { label: "Garanties à renseigner", className: "border-red-300 bg-red-50 text-red-800" },
 };
 
 function GrilleBadge({ etat }: { etat: GrilleEtat }) {
   const b = GRILLE_BADGE[etat];
   return (
-    <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-medium ${b.className}`}>
+    <span
+      className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-medium ${b.className}`}
+    >
       {b.label}
     </span>
   );
@@ -468,7 +545,14 @@ function ProduitsTab({
     if (!familleId && familles[0]) setFamilleId(familles[0].id);
   }, [familles, familleId]);
 
-  const produitIds = useMemo(() => produits.map((p) => p.id).sort().join(","), [produits]);
+  const produitIds = useMemo(
+    () =>
+      produits
+        .map((p) => p.id)
+        .sort()
+        .join(","),
+    [produits],
+  );
   useEffect(() => {
     const ids = produitIds ? produitIds.split(",") : [];
     if (ids.length === 0) {
@@ -586,7 +670,11 @@ function ProduitsTab({
                     </span>
                   )}
                 </div>
-                <div className={"text-xs " + (isActive ? "text-primary-foreground/70" : "text-ink-muted")}>
+                <div
+                  className={
+                    "text-xs " + (isActive ? "text-primary-foreground/70" : "text-ink-muted")
+                  }
+                >
                   {f?.nom ?? "—"} · {p.statut}
                   {varianteCapital(p.nom) ? ` · ${libelleVariante(varianteCapital(p.nom)!)}` : ""}
                 </div>
@@ -682,7 +770,6 @@ function ProduitEditor({
         famille_requise_id: p.famille_requise_id,
         image_url: p.image_url,
         mode_tarification: p.mode_tarification,
-
       })
       .eq("id", p.id);
     setSaving(false);
@@ -705,7 +792,12 @@ function ProduitEditor({
   return (
     <div className="space-y-6">
       <div className="crm-card grid gap-4 p-5 md:grid-cols-2">
-        <Field label="Nom du produit" value={p.nom} onChange={(v) => setP({ ...p, nom: v })} readOnly={readOnly} />
+        <Field
+          label="Nom du produit"
+          value={p.nom}
+          onChange={(v) => setP({ ...p, nom: v })}
+          readOnly={readOnly}
+        />
         <Field
           label="Référence interne compagnie"
           value={p.code_produit ?? ""}
@@ -727,7 +819,10 @@ function ProduitEditor({
             canEdit={!readOnly}
             onUploaded={async (path) => {
               setP({ ...p, image_url: path });
-              const { error } = await supabase.from("produits").update({ image_url: path }).eq("id", p.id);
+              const { error } = await supabase
+                .from("produits")
+                .update({ image_url: path })
+                .eq("id", p.id);
               if (error) return alert(error.message);
               onChange();
             }}
@@ -748,10 +843,14 @@ function ProduitEditor({
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-ink-muted">Mode de tarification</label>
+          <label className="mb-1 block text-xs font-medium text-ink-muted">
+            Mode de tarification
+          </label>
           <select
             value={p.mode_tarification ?? "manuel"}
-            onChange={(e) => setP({ ...p, mode_tarification: e.target.value as Produit["mode_tarification"] })}
+            onChange={(e) =>
+              setP({ ...p, mode_tarification: e.target.value as Produit["mode_tarification"] })
+            }
             disabled={readOnly}
             className="w-full rounded-md border border-line bg-background px-3 py-2 text-sm"
           >
@@ -760,8 +859,8 @@ function ProduitEditor({
             <option value="fixe">Tarif fixe — cotisation connue par formule</option>
           </select>
           <p className="mt-1 text-[11px] text-ink-muted">
-            En mode « tarif fixe », le devis du dossier est généré depuis la formule et les options renseignées
-            ci-dessous, sans ressaisie ni classement IA.
+            En mode « tarif fixe », le devis du dossier est généré depuis la formule et les options
+            renseignées ci-dessous, sans ressaisie ni classement IA.
           </p>
         </div>
         <div>
@@ -770,35 +869,40 @@ function ProduitEditor({
             type="number"
             step="0.01"
             value={p.commission_taux ?? ""}
-            onChange={(e) => setP({ ...p, commission_taux: e.target.value === "" ? null : Number(e.target.value) })}
+            onChange={(e) =>
+              setP({ ...p, commission_taux: e.target.value === "" ? null : Number(e.target.value) })
+            }
             readOnly={readOnly}
             className="w-full rounded-md border border-line bg-background px-3 py-2 text-sm"
           />
         </div>
 
-        {(["frais_versement_pct", "frais_gestion_pct", "frais_arbitrage_pct"] as const).map((cle) => (
-          <div key={cle}>
-            <label className="mb-1 block text-xs font-medium text-ink-muted">
-              {cle === "frais_versement_pct"
-                ? "Frais sur versement (%)"
-                : cle === "frais_gestion_pct"
-                  ? "Frais de gestion annuels (%)"
-                  : "Frais d'arbitrage (%)"}
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              value={p[cle] ?? ""}
-              onChange={(e) => setP({ ...p, [cle]: e.target.value === "" ? null : Number(e.target.value) })}
-              readOnly={readOnly}
-              className="w-full rounded-md border border-line bg-background px-3 py-2 text-sm"
-            />
-            <p className="mt-1 text-[11px] text-ink-muted">
-              Épargne / PER : sert au comparatif et aux projections 3 / 8 / 10 ans.
-            </p>
-          </div>
-        ))}
-
+        {(["frais_versement_pct", "frais_gestion_pct", "frais_arbitrage_pct"] as const).map(
+          (cle) => (
+            <div key={cle}>
+              <label className="mb-1 block text-xs font-medium text-ink-muted">
+                {cle === "frais_versement_pct"
+                  ? "Frais sur versement (%)"
+                  : cle === "frais_gestion_pct"
+                    ? "Frais de gestion annuels (%)"
+                    : "Frais d'arbitrage (%)"}
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={p[cle] ?? ""}
+                onChange={(e) =>
+                  setP({ ...p, [cle]: e.target.value === "" ? null : Number(e.target.value) })
+                }
+                readOnly={readOnly}
+                className="w-full rounded-md border border-line bg-background px-3 py-2 text-sm"
+              />
+              <p className="mt-1 text-[11px] text-ink-muted">
+                Épargne / PER : sert au comparatif et aux projections 3 / 8 / 10 ans.
+              </p>
+            </div>
+          ),
+        )}
 
         <div className="md:col-span-2">
           <label className="mb-1 block text-xs font-medium text-ink-muted">Description</label>
@@ -864,7 +968,9 @@ function ProduitEditor({
           />
         </div>
         <div className="md:col-span-2">
-          <label className="mb-1 block text-xs font-medium text-ink-muted">Points de vigilance</label>
+          <label className="mb-1 block text-xs font-medium text-ink-muted">
+            Points de vigilance
+          </label>
           <textarea
             value={p.points_vigilance ?? ""}
             onChange={(e) => setP({ ...p, points_vigilance: e.target.value })}
@@ -880,8 +986,8 @@ function ProduitEditor({
         <div className="md:col-span-2">
           <h3 className="font-serif text-lg">Contrainte de vente couplée</h3>
           <p className="text-xs text-ink-muted">
-            Ce produit ne peut pas être souscrit seul : le CRM bloque la création du contrat si le prérequis n'est pas
-            déjà présent sur le dossier ou le client.
+            Ce produit ne peut pas être souscrit seul : le CRM bloque la création du contrat si le
+            prérequis n'est pas déjà présent sur le dossier ou le client.
           </p>
         </div>
         <div>
@@ -945,7 +1051,6 @@ function ProduitEditor({
         onAnalyseTerminee={() => setGarantiesRefreshKey((key) => key + 1)}
       />
 
-
       <ProduitGarantiesTab
         produitId={p.id}
         familleCode={famille?.code ?? null}
@@ -956,7 +1061,9 @@ function ProduitEditor({
         titre="Garanties, exclusions et options du produit"
       />
 
-      {(famille?.code === "sante" || famille?.code === "emprunteur" || p.mode_tarification === "fixe") && (
+      {(famille?.code === "sante" ||
+        famille?.code === "emprunteur" ||
+        p.mode_tarification === "fixe") && (
         <ProduitFormulesTab
           produitId={p.id}
           familleCode={famille?.code ?? null}
@@ -964,10 +1071,8 @@ function ProduitEditor({
           isAdmin={isAdmin}
           modeFixe={p.mode_tarification === "fixe"}
           docs={docs.map((d) => ({ id: d.id, nom: d.nom, type: d.type }))}
-
         />
       )}
-
     </div>
   );
 }
@@ -1034,7 +1139,9 @@ function ChampInput({
                 onClick={() => onChange(on ? arr.filter((x) => x !== o) : [...arr, o])}
                 className={
                   "rounded-full border px-3 py-1 text-xs " +
-                  (on ? "border-transparent bg-[#0A192F] text-white" : "border-line bg-background text-ink-soft")
+                  (on
+                    ? "border-transparent bg-[#0A192F] text-white"
+                    : "border-line bg-background text-ink-soft")
                 }
               >
                 {o}
@@ -1143,13 +1250,15 @@ function DocumentsBlock({
         const { error: nettoyageError } = await supabase.storage
           .from("produits-documents")
           .remove([depot.path]);
-        if (nettoyageError) console.error("[produit-documents] nettoyage après échec", nettoyageError);
+        if (nettoyageError)
+          console.error("[produit-documents] nettoyage après échec", nettoyageError);
         throw insertionError;
       }
 
       const analyserApresDepot =
         typeEffectif === "fiche_produit" ||
-        (typeEffectif === "conditions_generales" && !docs.some((document) => document.type === "fiche_produit"));
+        (typeEffectif === "conditions_generales" &&
+          !docs.some((document) => document.type === "fiche_produit"));
 
       setFile(null);
       setVersion("");
@@ -1157,13 +1266,21 @@ function DocumentsBlock({
       if (analyserApresDepot) {
         void analyserAutomatiquement({ data: { produit_id: produitId } })
           .then((resultat) => {
-            const source = resultat.document_source.type === "fiche_produit" ? "la fiche produit" : "les conditions générales";
-            toast.success(`Proposition IA créée depuis ${source}. Relisez puis validez les garanties dans l'onglet Garanties.`);
+            const source =
+              resultat.document_source.type === "fiche_produit"
+                ? "la fiche produit"
+                : "les conditions générales";
+            toast.success(
+              `Proposition IA créée depuis ${source}. Relisez puis validez les garanties dans l'onglet Garanties.`,
+            );
             onAnalyseTerminee();
           })
           .catch((erreurAnalyse) => {
-            const detail = erreurAnalyse instanceof Error ? erreurAnalyse.message : "erreur inconnue";
-            toast.error(`PDF enregistré, mais l'analyse IA n'a pas abouti : ${detail}. Vous pourrez la relancer dans l'onglet Garanties.`);
+            const detail =
+              erreurAnalyse instanceof Error ? erreurAnalyse.message : "erreur inconnue";
+            toast.error(
+              `PDF enregistré, mais l'analyse IA n'a pas abouti : ${detail}. Vous pourrez la relancer dans l'onglet Garanties.`,
+            );
             onAnalyseTerminee();
           });
       }
@@ -1180,7 +1297,9 @@ function DocumentsBlock({
       return;
     }
     if (!d.storage_path) return alert("Aucun fichier rattaché à ce document.");
-    const { data, error } = await supabase.storage.from("produits-documents").createSignedUrl(d.storage_path, 60);
+    const { data, error } = await supabase.storage
+      .from("produits-documents")
+      .createSignedUrl(d.storage_path, 60);
     if (error || !data) return alert(error?.message ?? "Erreur");
     window.open(data.signedUrl, "_blank");
   }
@@ -1204,13 +1323,17 @@ function DocumentsBlock({
       <div>
         <h3 className="font-serif text-lg">Documents du produit</h3>
         <p className="text-xs text-ink-muted">
-          Liste adaptée à la branche : {typesDisponibles.map((t) => DOC_TYPE_LABEL[t]).join(" · ")}. Les fiches produit
-          sont marquées internes. Les PDF sont conservés dans l'espace privé du CRM.
+          Liste adaptée à la branche : {typesDisponibles.map((t) => DOC_TYPE_LABEL[t]).join(" · ")}.
+          Les fiches produit sont marquées internes. Les PDF sont conservés dans l'espace privé du
+          CRM.
         </p>
       </div>
 
       {isAdmin && (
-        <form onSubmit={upload} className="flex flex-wrap items-end gap-2 rounded-md bg-background p-3">
+        <form
+          onSubmit={upload}
+          className="flex flex-wrap items-end gap-2 rounded-md bg-background p-3"
+        >
           <div>
             <label className="mb-1 block text-xs font-medium text-ink-muted">Type</label>
             <select
@@ -1219,7 +1342,6 @@ function DocumentsBlock({
               className="rounded-md border border-line bg-background px-2 py-1.5 text-sm"
             >
               {typesDisponibles.map((k) => (
-
                 <option key={k} value={k}>
                   {DOC_TYPE_LABEL[k]}
                 </option>
@@ -1268,7 +1390,9 @@ function DocumentsBlock({
                     {DOC_TYPE_LABEL[d.type]}
                   </span>
                   {d.interne && (
-                    <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-900">Interne</span>
+                    <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-900">
+                      Interne
+                    </span>
                   )}
                   <span className="truncate font-medium">{d.nom}</span>
                 </div>
@@ -1278,11 +1402,17 @@ function DocumentsBlock({
                 </div>
               </div>
               <div className="flex gap-3 text-xs">
-                <button onClick={() => download(d)} className="text-ink underline underline-offset-4">
+                <button
+                  onClick={() => download(d)}
+                  className="text-ink underline underline-offset-4"
+                >
                   Ouvrir
                 </button>
                 {isAdmin && (
-                  <button onClick={() => del(d)} className="text-red-700 underline underline-offset-4">
+                  <button
+                    onClick={() => del(d)}
+                    className="text-red-700 underline underline-offset-4"
+                  >
                     Supprimer
                   </button>
                 )}
@@ -1385,10 +1515,11 @@ function ApiTab({
   return (
     <form onSubmit={submit} className="crm-card space-y-5 p-6">
       <div className="rounded-md bg-amber-50 p-3 text-xs text-amber-900">
-        Les identifiants API (clé, mot de passe, secret OAuth) ne sont jamais stockés en clair dans cette fiche. Créez-les
-        dans les secrets du backend, puis renseignez ci-dessous le <strong>nom du secret</strong> (par exemple
-        <code className="mx-1 rounded bg-amber-100 px-1">APRIL_API_KEY</code>). Le code serveur lit alors la valeur depuis
-        l'environnement lors des appels.
+        Les identifiants API (clé, mot de passe, secret OAuth) ne sont jamais stockés en clair dans
+        cette fiche. Créez-les dans les secrets du backend, puis renseignez ci-dessous le{" "}
+        <strong>nom du secret</strong> (par exemple
+        <code className="mx-1 rounded bg-amber-100 px-1">APRIL_API_KEY</code>). Le code serveur lit
+        alors la valeur depuis l'environnement lors des appels.
       </div>
 
       <label className="flex items-center gap-2 text-sm">
@@ -1409,7 +1540,9 @@ function ApiTab({
           readOnly={readOnly}
         />
         <div>
-          <label className="mb-1 block text-xs font-medium text-ink-muted">Type d'authentification</label>
+          <label className="mb-1 block text-xs font-medium text-ink-muted">
+            Type d'authentification
+          </label>
           <select
             value={form.api_auth_type}
             onChange={(e) => setForm({ ...form, api_auth_type: e.target.value as ApiAuthType })}

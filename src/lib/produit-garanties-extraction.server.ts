@@ -36,7 +36,11 @@ const TYPE_LABEL: Record<string, string> = {
 
 const COUVERTURES = new Set(["oui", "non", "option", "inconnu"]);
 
-function consigne(grille: GrilleGaranties, docs: { nom: string; type: string }[], produitNom: string) {
+function consigne(
+  grille: GrilleGaranties,
+  docs: { nom: string; type: string }[],
+  produitNom: string,
+) {
   const sections = groupesGrille(grille)
     .map((s) => {
       const lignes = s.garanties
@@ -47,7 +51,9 @@ function consigne(grille: GrilleGaranties, docs: { nom: string; type: string }[]
     .join("\n\n");
 
   const champs = libellesChamps(grille);
-  const liste = docs.map((d, i) => `${i + 1}. ${TYPE_LABEL[d.type] ?? d.type} — ${d.nom}`).join("\n");
+  const liste = docs
+    .map((d, i) => `${i + 1}. ${TYPE_LABEL[d.type] ?? d.type} — ${d.nom}`)
+    .join("\n");
 
   return [
     `Tu analyses les documents contractuels du produit d'assurance français « ${produitNom} ».`,
@@ -62,11 +68,11 @@ function consigne(grille: GrilleGaranties, docs: { nom: string; type: string }[]
     "",
     "Règles impératives :",
     "- Croise les documents : les conditions générales prévalent sur la fiche produit ou l'IPID en cas de contradiction ; signale la contradiction dans avertissements.",
-    "- N'infère jamais : si aucun document ne mentionne explicitement la ligne, réponds \"inconnu\" ; réponds \"non\" seulement lorsqu'un document l'exclut.",
+    '- N\'infère jamais : si aucun document ne mentionne explicitement la ligne, réponds "inconnu" ; réponds "non" seulement lorsqu\'un document l\'exclut.',
     '- "option" uniquement si la garantie est présentée comme facultative ou en supplément de cotisation.',
     `- Pour les lignes qui décrivent une modalité et non une garantie, mets couverture="oui" si l'information figure au contrat et place la valeur exacte dans plafond (${champs.plafond}), franchise (${champs.franchise}), delai_carence (${champs.delai_carence}) ou conditions (${champs.conditions}), en texte court et littéral.`,
     "- Renseigne delai_carence quand un délai d'attente ou de carence spécifique s'applique à la ligne.",
-    "- Pour chaque ligne, cite un extrait littéral court (champ extrait) issu des documents, en précisant le document si utile ; laisse-le vide si tu réponds \"inconnu\".",
+    '- Pour chaque ligne, cite un extrait littéral court (champ extrait) issu des documents, en précisant le document si utile ; laisse-le vide si tu réponds "inconnu".',
     "- confiance : nombre entre 0 et 1.",
     "",
     `Grille de lecture propre à la branche « ${grille.libelle} » — n'applique aucune autre trame :`,
@@ -88,7 +94,6 @@ function consigne(grille: GrilleGaranties, docs: { nom: string; type: string }[]
     'Réponds STRICTEMENT en JSON : {"garanties":{"<code>":{"couverture":"oui|non|option|inconnu","plafond":null,"franchise":null,"delai_carence":null,"conditions":null,"extrait":"...","confiance":0.9}},"assureur_porteur":{"nom":null,"reference_contrat":null,"extrait":null,"confiance":0.0},"avertissements":"..."}',
   ].join("\n");
 }
-
 
 /** Distributeurs / grossistes : jamais l'assureur porteur du risque. */
 const DISTRIBUTEURS = [
@@ -113,16 +118,14 @@ export type PorteurPropose = {
 
 function normaliserPorteur(brut: unknown): PorteurPropose {
   const raw = ((brut ?? {}) as Record<string, unknown>)["assureur_porteur"] as
-    | Record<string, unknown>
-    | undefined;
+    Record<string, unknown> | undefined;
   const texte = (v: unknown, max: number) => {
     const s = typeof v === "string" ? v.trim() : "";
     return s.length > 1 ? s.slice(0, max) : null;
   };
   const nom = texte(raw?.["nom"], 120);
   // Un grossiste distributeur n'est pas un assureur porteur : proposition écartée.
-  const estDistributeur =
-    nom !== null && DISTRIBUTEURS.some((d) => nom.toLowerCase().includes(d));
+  const estDistributeur = nom !== null && DISTRIBUTEURS.some((d) => nom.toLowerCase().includes(d));
   return {
     nom: estDistributeur ? null : nom,
     reference_contrat: texte(raw?.["reference_contrat"], 120),
@@ -151,7 +154,8 @@ function normaliser(
       delai_carence: raw["delai_carence"] ? String(raw["delai_carence"]).slice(0, 300) : null,
       conditions: raw["conditions"] ? String(raw["conditions"]).slice(0, 800) : null,
       extrait: raw["extrait"] ? String(raw["extrait"]).slice(0, 1200) : null,
-      confiance: typeof raw["confiance"] === "number" ? Math.max(0, Math.min(1, raw["confiance"])) : null,
+      confiance:
+        typeof raw["confiance"] === "number" ? Math.max(0, Math.min(1, raw["confiance"])) : null,
     };
     valeurs[g.code] = v;
   }
@@ -159,9 +163,11 @@ function normaliser(
   return { valeurs, avertissements, porteur: normaliserPorteur(brut) };
 }
 
-
 function extraireJson(texte: string): unknown {
-  const nettoye = texte.replace(/```json/gi, "").replace(/```/g, "").trim();
+  const nettoye = texte
+    .replace(/```json/gi, "")
+    .replace(/```/g, "")
+    .trim();
   try {
     return JSON.parse(nettoye);
   } catch {
@@ -172,7 +178,10 @@ function extraireJson(texte: string): unknown {
   }
 }
 
-async function appelerIa(prompt: string, fichiers: { nom: string; mime: string; base64: string }[]) {
+async function appelerIa(
+  prompt: string,
+  fichiers: { nom: string; mime: string; base64: string }[],
+) {
   const cle = process.env["GEMINI_API_KEY"];
   if (!cle) throw new Error("Analyse indisponible : clé IA absente du projet.");
 
@@ -198,7 +207,8 @@ async function appelerIa(prompt: string, fichiers: { nom: string; mime: string; 
       return { modele, brut: extraireJson(texte) };
     }
     derniere = `${res.status} ${await res.text()}`;
-    if (res.status === 429) throw new Error("Analyse IA momentanément saturée, réessayez dans une minute.");
+    if (res.status === 429)
+      throw new Error("Analyse IA momentanément saturée, réessayez dans une minute.");
     if (res.status !== 400 && res.status !== 404) break;
   }
   throw new Error(`Analyse IA impossible : ${derniere}`);
@@ -217,7 +227,9 @@ export async function analyserDocumentsProduit(
 ) {
   if (documentIds.length === 0) throw new Error("Sélectionnez au moins un document à analyser.");
   if (documentIds.length > DOCS_MAX) {
-    throw new Error(`Analyse limitée à ${DOCS_MAX} documents à la fois (privilégiez CG + IPID + fiche produit + CCSF).`);
+    throw new Error(
+      `Analyse limitée à ${DOCS_MAX} documents à la fois (privilégiez CG + IPID + fiche produit + CCSF).`,
+    );
   }
 
   const { data: rows, error: dErr } = await supabase
@@ -250,7 +262,8 @@ export async function analyserDocumentsProduit(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const p = produit as any;
   const grille = grillePourFamille(p.produit_familles?.code ?? null);
-  if (!grille) throw new Error("Aucune grille de garanties n'est définie pour cette famille de produits.");
+  if (!grille)
+    throw new Error("Aucune grille de garanties n'est définie pour cette famille de produits.");
 
   const { contenuDocumentProduit } = await import("@/lib/documents-partenaires.server");
   const fichiers: { nom: string; mime: string; base64: string }[] = [];
@@ -259,7 +272,9 @@ export async function analyserDocumentsProduit(
     const buffer = await contenuDocumentProduit(supabase as never, d);
     if (buffer.byteLength === 0) throw new Error(`Document vide : ${d.nom}`);
     if (buffer.byteLength > TAILLE_MAX_PDF) {
-      throw new Error(`Document trop volumineux pour l'analyse automatique (12 Mo maximum) : ${d.nom}`);
+      throw new Error(
+        `Document trop volumineux pour l'analyse automatique (12 Mo maximum) : ${d.nom}`,
+      );
     }
     total += buffer.byteLength;
     if (total > TAILLE_MAX_TOTALE) {
@@ -305,10 +320,16 @@ export async function analyserDocumentsProduit(
     })
     .select("id")
     .single();
-  if (iErr || !inserted) throw new Error(iErr?.message ?? "Enregistrement de la proposition impossible");
+  if (iErr || !inserted)
+    throw new Error(iErr?.message ?? "Enregistrement de la proposition impossible");
 
-  return { proposition_id: inserted.id as string, valeurs, avertissements: remarques, modele, porteur };
-
+  return {
+    proposition_id: inserted.id as string,
+    valeurs,
+    avertissements: remarques,
+    modele,
+    porteur,
+  };
 }
 
 /** Analyse d'un document isolé (compatibilité). */
@@ -346,7 +367,9 @@ export async function analyserGarantiesProduitAutomatiquement(
     documents.find((document) => document.type === "conditions_generales");
 
   if (!source) {
-    throw new Error("Ajoutez une fiche produit ou, à défaut, les conditions générales pour remplir les garanties avec l'IA.");
+    throw new Error(
+      "Ajoutez une fiche produit ou, à défaut, les conditions générales pour remplir les garanties avec l'IA.",
+    );
   }
 
   const proposition = await analyserDocumentsProduit(supabase, [source.id], userId);
