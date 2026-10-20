@@ -601,6 +601,10 @@ function ProduitsTab({
     };
   }, [produitIds]);
 
+  const produitsActifs = useMemo(
+    () => produits.filter((produit) => produit.statut === "actif"),
+    [produits],
+  );
   const active = useMemo(() => produits.find((p) => p.id === selected), [produits, selected]);
 
   async function create(e: React.FormEvent) {
@@ -620,9 +624,10 @@ function ProduitsTab({
   }
 
   async function telechargerComparatif() {
-    const produitsActifs = produits.filter((produit) => produit.statut === "actif");
     if (produitsActifs.length === 0) {
-      toast.error("Aucun produit actif à comparer.");
+      toast.error(
+        "Créez ou activez un produit dans ce catalogue avant de télécharger le comparatif.",
+      );
       return;
     }
 
@@ -714,11 +719,16 @@ function ProduitsTab({
             Création directement depuis cette fiche ; seuls les produits actifs figurent dans le
             comparatif.
           </p>
+          <p className="mt-1 text-xs text-ink-muted">
+            {produitsActifs.length === 0
+              ? "Aucun produit actif : créez un produit ou passez son statut à Actif pour générer le PDF."
+              : `${produitsActifs.length} produit${produitsActifs.length > 1 ? "s" : ""} actif${produitsActifs.length > 1 ? "s" : ""} inclus dans le comparatif.`}
+          </p>
         </div>
         <button
           type="button"
           onClick={telechargerComparatif}
-          disabled={generatingComparatif || !produits.some((produit) => produit.statut === "actif")}
+          disabled={generatingComparatif}
           className="rounded-md bg-[#0A192F] px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           {generatingComparatif ? "Préparation du PDF…" : "Télécharger le comparatif PDF"}
