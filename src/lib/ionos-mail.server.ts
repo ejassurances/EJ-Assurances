@@ -955,6 +955,42 @@ export async function deposerCopieEnvoyee(params: {
         error instanceof Error ? error.message : error,
       );
     });
+
+    // Relier automatiquement les envois aux fiches client quand le destinataire
+    // correspond à une seule fiche. Les appelants qui connaissent déjà le
+    // dossier fournissent leur rattachement explicite après ce dépôt.
+    const adresseExacte = params.to.trim().replace(/[\\%_]/g, "\\$&");
+    const recherches = await Promise.all([
+      db.from("clients").select("id").ilike("email", adresseExacte).limit(2),
+      db.from("clients").select("id").ilike("email2", adresseExacte).limit(2),
+    ]);
+    const erreursRecherche = recherches.find(({ error }) => error)?.error;
+    if (erreursRecherche) {
+      throw new Error(`Recherche du client destinataire impossible: ${erreursRecherche.message}`);
+    }
+    const clientsTrouves = new Set(
+      recherches.flatMap(({ data }) => (data ?? []).map((client) => client.id)),
+    );
+    if (clientsTrouves.size === 1) {
+      const expediteur = parseFrom(params.from);
+      const { error } = await db.from("crm_emails").upsert(
+        {
+          gmail_message_id: id,
+          direction: "sortant",
+          recu_le: (params.date ?? new Date()).toISOString(),
+          client_id: [...clientsTrouves][0],
+          sujet: params.sujet,
+          expediteur_nom: expediteur.nom,
+          expediteur_email: expediteur.email,
+          notes: "Envoi automatique via Brevo",
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "gmail_message_id" },
+      );
+      if (error) throw new Error(`Rattachement de la copie Brevo impossible: ${error.message}`);
+    } else if (clientsTrouves.size > 1) {
+      console.warn(`[ionos] Rattachement Brevo ambigu pour ${params.to}; aucun client choisi`);
+    }
     return { id };
   } catch (error) {
     console.error(
