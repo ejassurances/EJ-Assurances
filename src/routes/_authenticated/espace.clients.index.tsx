@@ -1,7 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { STATUTS_CLIENT } from "@/lib/referentiels";
 import { useServerFn } from "@tanstack/react-start";
-import { creerClientManuel } from "@/lib/clients.functions";
+import {
+  creerClientManuel,
+  type ClientCandidatCreationManuelle,
+} from "@/lib/clients.functions";
 import { lancerLcbClientsManquants } from "@/lib/lcb-ft.functions";
 import { toast } from "sonner";
 import { useEffect, useMemo, useState } from "react";
@@ -138,6 +141,10 @@ function ClientsList() {
       {showForm && canCreate && (
         <NewClientForm
           onCreated={(id) => {
+            setShowForm(false);
+            navigate({ to: "/espace/clients/$id", params: { id } });
+          }}
+          onOpenExisting={(id) => {
             setShowForm(false);
             navigate({ to: "/espace/clients/$id", params: { id } });
           }}
@@ -296,9 +303,17 @@ function ClientsList() {
   );
 }
 
-function NewClientForm({ onCreated }: { onCreated: (id: string) => void }) {
+function NewClientForm({
+  onCreated,
+  onOpenExisting,
+}: {
+  onCreated: (id: string) => void;
+  onOpenExisting: (id: string) => void;
+}) {
   const creerClient = useServerFn(creerClientManuel);
   const [saving, setSaving] = useState(false);
+  const [candidatDoublon, setCandidatDoublon] = useState<ClientCandidatCreationManuelle | null>(null);
+  const [erreur, setErreur] = useState<string | null>(null);
   const [form, setForm] = useState({
     civilite: "M.",
     prenom: "",
@@ -311,12 +326,20 @@ function NewClientForm({ onCreated }: { onCreated: (id: string) => void }) {
     marque: "ej_assurances",
   });
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const modifierFormulaire = (patch: Partial<typeof form>) => {
+    setForm((courant) => ({ ...courant, ...patch }));
+    setCandidatDoublon(null);
+    setErreur(null);
+  };
+
+  const submit = async (e?: React.FormEvent, confirmerDoublonId: string | null = null) => {
+    e?.preventDefault();
+    if (saving) return;
     if (!form.nom.trim()) return;
     setSaving(true);
+    setErreur(null);
     try {
-      // Passe par le server fn : insert + contrôle LCB-FT automatique.
+      // Le serveur vérifie l’identité dans la même transaction que l’insertion.
       const res = await creerClient({
         data: {
           civilite: form.civilite,
@@ -328,11 +351,21 @@ function NewClientForm({ onCreated }: { onCreated: (id: string) => void }) {
           origine: form.origine,
           client_origine_id: origineAvecClientSource(form.origine) ? form.client_origine_id : null,
           marque: form.marque,
+          confirmer_doublon_id: confirmerDoublonId,
         },
       });
+      if (res.status === "duplicate_required") {
+        setCandidatDoublon(res.candidate);
+        return;
+      }
+      if (res.status === "invalid_confirmation") {
+        setCandidatDoublon(null);
+        setErreur("La fiche proposée a changé ou n’existe plus. Vérifiez les informations avant de réessayer.");
+        return;
+      }
       onCreated(res.id);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Création impossible");
+      setErreur(err instanceof Error ? err.message : "Création impossible");
     } finally {
       setSaving(false);
     }
@@ -343,7 +376,7 @@ function NewClientForm({ onCreated }: { onCreated: (id: string) => void }) {
     <form onSubmit={submit} className="mt-6 grid gap-3 rounded-2xl border border-line bg-surface-elevated p-5 sm:grid-cols-3">
       <select
         value={form.civilite}
-        onChange={(e) => setForm({ ...form, civilite: e.target.value })}
+        onChange={(e) => modifierFormulaire({ civilite: e.target.value })}
         className="rounded-md border border-line bg-background px-3 py-2 text-sm"
       >
         <option>M.</option>
@@ -353,38 +386,38 @@ function NewClientForm({ onCreated }: { onCreated: (id: string) => void }) {
       <input
         placeholder="Prénom"
         value={form.prenom}
-        onChange={(e) => setForm({ ...form, prenom: e.target.value })}
+        onChange={(e) => modifierFormulaire({ prenom: e.target.value })}
         className="rounded-md border border-line bg-background px-3 py-2 text-sm"
       />
       <input
         required
         placeholder="Nom *"
         value={form.nom}
-        onChange={(e) => setForm({ ...form, nom: e.target.value })}
+        onChange={(e) => modifierFormulaire({ nom: e.target.value })}
         className="rounded-md border border-line bg-background px-3 py-2 text-sm"
       />
       <input
         type="email"
         placeholder="Email"
         value={form.email}
-        onChange={(e) => setForm({ ...form, email: e.target.value })}
+        onChange={(e) => modifierFormulaire({ email: e.target.value })}
         className="rounded-md border border-line bg-background px-3 py-2 text-sm"
       />
       <input
         placeholder="Mobile"
         value={form.mobile}
-        onChange={(e) => setForm({ ...form, mobile: e.target.value })}
+        onChange={(e) => modifierFormulaire({ mobile: e.target.value })}
         className="rounded-md border border-line bg-background px-3 py-2 text-sm"
       />
       <input
         placeholder="Ville"
         value={form.ville}
-        onChange={(e) => setForm({ ...form, ville: e.target.value })}
+        onChange={(e) => modifierFormulaire({ ville: e.target.value })}
         className="rounded-md border border-line bg-background px-3 py-2 text-sm"
       />
       <select
         value={form.origine}
-        onChange={(e) => setForm({ ...form, origine: e.target.value as OrigineKey })}
+        onChange={(e) => modifierFormulaire({ origine: e.target.value as OrigineKey })}
         className="rounded-md border border-line bg-background px-3 py-2 text-sm"
       >
         {ORIGINES.map((o) => (
@@ -404,7 +437,7 @@ function NewClientForm({ onCreated }: { onCreated: (id: string) => void }) {
 
       <select
         value={form.marque}
-        onChange={(e) => setForm({ ...form, marque: e.target.value })}
+        onChange={(e) => modifierFormulaire({ marque: e.target.value })}
         className="rounded-md border border-line bg-background px-3 py-2 text-sm sm:col-span-2"
       >
         {MARQUE_KEYS.map((k) => (
@@ -413,15 +446,60 @@ function NewClientForm({ onCreated }: { onCreated: (id: string) => void }) {
           </option>
         ))}
       </select>
-      <div className="sm:col-span-3">
-        <button
-          type="submit"
-          disabled={saving}
-          className="rounded-full bg-[#0A192F] px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-        >
-          {saving ? "Création…" : "Créer la fiche"}
-        </button>
-      </div>
+      {erreur && (
+        <p role="alert" className="sm:col-span-3 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900">
+          {erreur}
+        </p>
+      )}
+      {candidatDoublon ? (
+        <section role="alert" className="sm:col-span-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
+          <h3 className="font-semibold">Une fiche client correspond peut-être déjà</h3>
+          <p className="mt-1 text-sm">
+            Correspondance détectée par {candidatDoublon.via === "email"
+              ? "adresse e-mail"
+              : candidatDoublon.via === "telephone"
+                ? "numéro de téléphone"
+                : "nom et prénom, y compris s’ils sont inversés"}.
+            Vérifiez cette fiche avant d’en créer une autre.
+          </p>
+          <p className="mt-2 text-sm font-medium">
+            {candidatDoublon.prenom ? `${candidatDoublon.prenom} ` : ""}
+            {candidatDoublon.nom} · {candidatDoublon.reference}
+            {candidatDoublon.email ? ` · ${candidatDoublon.email}` : ""}
+            {candidatDoublon.mobile || candidatDoublon.telephone
+              ? ` · ${candidatDoublon.mobile ?? candidatDoublon.telephone}`
+              : ""}
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => onOpenExisting(candidatDoublon.client_id)}
+              disabled={saving}
+              className="rounded-full border border-amber-800/30 px-4 py-2 text-sm font-medium disabled:opacity-60"
+            >
+              Ouvrir la fiche existante
+            </button>
+            <button
+              type="button"
+              onClick={() => void submit(undefined, candidatDoublon.client_id)}
+              disabled={saving}
+              className="rounded-full bg-[#0A192F] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            >
+              {saving ? "Création…" : "Créer une nouvelle fiche quand même"}
+            </button>
+          </div>
+        </section>
+      ) : (
+        <div className="sm:col-span-3">
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-full bg-[#0A192F] px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          >
+            {saving ? "Création…" : "Créer la fiche"}
+          </button>
+        </div>
+      )}
     </form>
   );
 }

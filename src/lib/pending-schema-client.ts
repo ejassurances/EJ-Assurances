@@ -50,6 +50,14 @@ type PendingDatabase = Omit<Database, "public"> & {
       crm_email_labels: PendingTable<CrmEmailLabel, "message_id" | "label">;
     };
     Functions: Database["public"]["Functions"] & {
+      creer_client_manuel_securise: {
+        Args: {
+          p_client: Json;
+          p_user_id: string;
+          p_confirmed_duplicate_id?: string | null;
+        };
+        Returns: Json;
+      };
       creer_client_dossier_rapide: {
         Args: {
           p_client: Json;

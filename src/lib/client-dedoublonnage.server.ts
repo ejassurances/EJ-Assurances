@@ -8,7 +8,8 @@ import type { Database } from "@/integrations/supabase/types";
  * du client sans utiliser son adresse email. Chercher uniquement par email
  * créait alors une seconde fiche pour un client déjà connu. On cherche donc :
  *   1. par email exact (preuve la plus forte) ;
- *   2. par nom + prénom normalisés (sans accents, sans casse, sans tirets).
+ *   2. par nom + prénom normalisés (sans accents, sans casse, sans tirets),
+ *      y compris si les deux champs ont été inversés à la saisie.
  */
 
 export function normaliserIdentite(valeur: string | null | undefined): string {
@@ -50,7 +51,7 @@ export async function trouverClientExistant(
 ): Promise<ClientExistant | null> {
   const email = params.email?.toLowerCase().trim() || null;
   if (email) {
-    const { data } = await admin.from("clients").select("id").eq("email", email).limit(1).maybeSingle();
+    const { data } = await admin.from("clients").select("id").ilike("email", email).limit(1).maybeSingle();
     if (data?.id) return { client_id: data.id, via: "email" };
   }
 
@@ -83,25 +84,43 @@ export async function trouverClientExistant(
   const prenom = normaliserIdentite(params.prenom);
   if (params.exigerDateNaissancePourNom && (!prenom || !params.date_naissance)) return null;
 
-  const { data: candidats } = await admin
-    .from("clients")
-    .select("id, nom, prenom, date_naissance, created_at")
-    .ilike("nom", `%${(params.nom ?? "").trim()}%`)
-    .order("created_at", { ascending: false })
-    .limit(20);
-
-  const lignes = (candidats ?? []).filter((c) => normaliserIdentite(c.nom) === nom);
+  const valeursNom = [...new Set([params.nom, params.prenom].map((v) => v?.trim()).filter(Boolean))] as string[];
+  const recherches = await Promise.all(
+    valeursNom.map((valeur) =>
+      admin
+        .from("clients")
+        .select("id, nom, prenom, date_naissance, created_at")
+        .ilike("nom", `%${valeur}%`)
+        .order("created_at", { ascending: false })
+        .limit(100),
+    ),
+  );
+  const candidats = recherches.flatMap(({ data }) => data ?? []);
+  const lignes = [...new Map(candidats.map((c) => [c.id, c])).values()].filter((c) => {
+    const nomExistant = normaliserIdentite(c.nom);
+    const prenomExistant = normaliserIdentite(c.prenom);
+    return nomExistant === nom || (Boolean(prenom) && nomExistant === prenom && prenomExistant === nom);
+  });
   if (lignes.length === 0) return null;
 
   if (prenom) {
     if (params.date_naissance) {
-      const exact = lignes.find(
-        (c) => normaliserIdentite(c.prenom) === prenom && c.date_naissance === params.date_naissance,
-      );
+      const exact = lignes.find((c) => {
+        const prenomExistant = normaliserIdentite(c.prenom);
+        const ordreNormal = normaliserIdentite(c.nom) === nom && prenomExistant === prenom;
+        const ordreInverse = normaliserIdentite(c.nom) === prenom && prenomExistant === nom;
+        return (ordreNormal || ordreInverse) && c.date_naissance === params.date_naissance;
+      });
       return exact ? { client_id: exact.id, via: "nom_prenom_date_naissance" } : null;
     }
 
-    const exact = lignes.find((c) => normaliserIdentite(c.prenom) === prenom);
+    const exact = lignes.find((c) => {
+      const prenomExistant = normaliserIdentite(c.prenom);
+      return (
+        (normaliserIdentite(c.nom) === nom && prenomExistant === prenom) ||
+        (normaliserIdentite(c.nom) === prenom && prenomExistant === nom)
+      );
+    });
     if (exact) return { client_id: exact.id, via: "nom_prenom" };
     // Le nom correspond mais le prénom diffère : homonymie possible, on ne
     // rapproche pas automatiquement (une fiche distincte est légitime).
