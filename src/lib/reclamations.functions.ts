@@ -70,6 +70,7 @@ export const envoyerSolutionReclamation = createServerFn({ method: "POST" })
           .map((p) => p.trim())
           .filter(Boolean),
       },
+      liens: { client_id: r.client_id ?? null, contrat_id: r.contrat_id ?? null },
     });
 
     const maintenant = new Date().toISOString();

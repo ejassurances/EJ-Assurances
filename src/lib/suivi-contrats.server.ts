@@ -99,6 +99,7 @@ export async function envoyerSuivisContratsDus(
         const res = await sendTemplateEmail("suivi-contrats", client.email, {
           templateData: { prenom: client.prenom ?? nomComplet(client), listeContrats: liste },
           idempotencyKey: `suivi-contrats-${client.id}-${aujourdhui}`,
+          liens: { client_id: client.id },
         });
         envoye = res.sent;
       } catch (e) {

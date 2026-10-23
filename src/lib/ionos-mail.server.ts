@@ -947,7 +947,14 @@ export async function deposerCopieEnvoyee(params: {
       const sent = await assurerBoite(client, "sent");
       await client.append(sent.path, message.raw, ["\\Seen"], params.date);
     });
-    await ajouterEtiquettes(id, [LABEL_COPIE_BREVO]);
+    // L'archivage dans « Envoyés » suffit pour la fiche client. Une panne de
+    // l'étiquette ne doit pas faire perdre le lien vers une copie déjà déposée.
+    await ajouterEtiquettes(id, [LABEL_COPIE_BREVO]).catch((error) => {
+      console.error(
+        "[ionos] Copie Brevo déposée, mais étiquette non appliquée:",
+        error instanceof Error ? error.message : error,
+      );
+    });
     return { id };
   } catch (error) {
     console.error(

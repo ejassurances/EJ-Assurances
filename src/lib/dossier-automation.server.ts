@@ -362,6 +362,7 @@ export async function creerEspaceClient(
         link: appUrl("/auth"),
       },
       idempotencyKey: `compte-client-${created.user.id}`,
+      liens: { client_id: params.client_id },
     });
     emailSent = res.sent;
     if (!res.sent) {
@@ -427,6 +428,7 @@ export async function reinitialiserAccesEspaceClient(
         link: appUrl("/auth"),
       },
       idempotencyKey: `acces-client-${params.user_id}-${Date.now()}`,
+      liens: { client_id: params.client_id },
     });
     if (!res.sent) {
       await signalerEchecEmailAcces(admin, params.client_id, params.email, "Adresse en liste de suppression Brevo");

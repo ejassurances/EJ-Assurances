@@ -27,7 +27,7 @@ export interface SendTemplateEmailOptions {
   /** Pièces jointes (contenu encodé en base64). */
   attachments?: { name: string; base64: string }[]
   /**
-   * Rattachement de la copie Gmail à la fiche client / au dossier, afin que le
+   * Rattachement de la copie IONOS à la fiche client / au dossier, afin que le
    * message apparaisse dans « Historique des échanges ».
    */
   liens?: {
@@ -145,12 +145,49 @@ export async function sendTemplateEmail(
     copieErreur = e instanceof Error ? e.message : 'erreur inconnue'
   }
 
+  const liensTrace = { ...(options.liens ?? {}) }
   try {
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server')
+
+    // Certains envois sont déclenchés depuis un dossier ou un contrat, et
+    // d'autres ne fournissent pas explicitement de lien CRM. Résoudre d'abord
+    // le client depuis les relations connues, puis depuis son adresse email.
+    const liens = liensTrace
+    if (!liens.client_id && liens.dossier_id) {
+      const { data } = await supabaseAdmin
+        .from('dossiers')
+        .select('client_id')
+        .eq('id', liens.dossier_id)
+        .maybeSingle()
+      liens.client_id = data?.client_id ?? null
+    }
+    if (!liens.client_id && liens.contrat_id) {
+      const { data } = await supabaseAdmin
+        .from('contrats')
+        .select('client_id')
+        .eq('id', liens.contrat_id)
+        .maybeSingle()
+      liens.client_id = data?.client_id ?? null
+    }
+    if (!liens.client_id) {
+      const adresseExacte = recipient.trim().replace(/[\\%_]/g, '\\$&')
+      const recherches = await Promise.all([
+        supabaseAdmin.from('clients').select('id').ilike('email', adresseExacte).limit(2),
+        supabaseAdmin.from('clients').select('id').ilike('email2', adresseExacte).limit(2),
+      ])
+      const clientsTrouves = new Set(
+        recherches.flatMap(({ data }) => (data ?? []).map((client) => client.id)),
+      )
+      if (clientsTrouves.size === 1) {
+        liens.client_id = [...clientsTrouves][0]
+      } else if (clientsTrouves.size > 1) {
+        console.warn(`[email] rattachement Brevo ambigu pour ${recipient}; aucun client choisi`)
+      }
+    }
+
     if (copieId) {
-      const liens = options.liens
       if (liens && (liens.client_id || liens.dossier_id || liens.contrat_id || liens.compagnie_id)) {
-        await supabaseAdmin.from('crm_emails').upsert(
+        const { error } = await supabaseAdmin.from('crm_emails').upsert(
           {
             gmail_message_id: copieId,
             direction: 'sortant',
@@ -159,10 +196,15 @@ export async function sendTemplateEmail(
             dossier_id: liens.dossier_id ?? null,
             contrat_id: liens.contrat_id ?? null,
             compagnie_id: liens.compagnie_id ?? null,
-            notes: `Envoi automatique (Brevo) — modèle ${templateName}`,
+            sujet,
+            expediteur_nom: SITE_NAME,
+            expediteur_email: FROM_EMAIL,
+            notes: `Envoi automatique via Brevo — modèle ${templateName}${messageId ? ` — messageId Brevo ${messageId}` : ''}`,
+            updated_at: new Date().toISOString(),
           },
           { onConflict: 'gmail_message_id' }
         )
+        if (error) throw error
       }
     } else {
       console.error(`[email] copie IONOS de l’envoi Brevo impossible: ${copieErreur}`)
@@ -173,12 +215,28 @@ export async function sendTemplateEmail(
           `L'e-mail « ${subject} » a bien été envoyé à ${recipient} via Brevo, mais la copie dans la boîte IONOS ` +
           `du cabinet n'a pas pu être déposée (${copieErreur ?? 'raison inconnue'}). ` +
           `Vérifier la connexion IONOS et déposer la trace manuellement si nécessaire (exigence ACPR).`,
-        client_id: options.liens?.client_id ?? null,
+        client_id: liens.client_id ?? null,
         priorite: 'haute',
       })
     }
   } catch (e) {
     console.error('[email] suivi de la copie IONOS impossible:', e)
+    if (copieId) {
+      try {
+        const { supabaseAdmin } = await import('@/integrations/supabase/client.server')
+        const { creerTacheAdmin } = await import('@/lib/agent-taches.server')
+        await creerTacheAdmin(supabaseAdmin, {
+          titre: `Rattacher un email Brevo à la fiche client (${templateName})`,
+          description:
+            `La copie IONOS existe (${copieId}), mais son rattachement automatique au CRM a échoué. ` +
+            `Destinataire : ${recipient}. Objet : ${subject}. Vérifier la fiche client et rattacher l'email.`,
+          client_id: liensTrace.client_id ?? null,
+          priorite: 'haute',
+        })
+      } catch (tacheErreur) {
+        console.error('[email] tâche de rattachement de la copie Brevo impossible:', tacheErreur)
+      }
+    }
   }
 
 

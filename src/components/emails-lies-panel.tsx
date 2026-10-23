@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { messageComplet } from "@/lib/emails.functions";
+import { messageComplet, rattacherCopiesBrevoClient } from "@/lib/emails.functions";
 import { lireTriageAffichage, type TriageAffichage } from "@/lib/email-triage-affichage";
 
 export interface EmailLiens {
@@ -82,10 +83,18 @@ export function EmailsLiesPanel({
 }) {
   const [emails, setEmails] = useState<EmailAffiche[]>([]);
   const [loading, setLoading] = useState(true);
+  const syncBrevo = useServerFn(rattacherCopiesBrevoClient);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
+      if (liens.client_id) {
+        try {
+          await syncBrevo({ data: { client_id: liens.client_id } });
+        } catch (error) {
+          console.error("[email] récupération des anciens envois Brevo impossible:", error);
+        }
+      }
       let query = supabase
         .from("crm_emails")
         .select("id, gmail_message_id, direction, recu_le, notes, created_at, triage_ia")
@@ -126,7 +135,7 @@ export function EmailsLiesPanel({
       setLoading(false);
     };
     load();
-  }, [liens.client_id, liens.dossier_id, liens.contrat_id, liens.compagnie_id]);
+  }, [liens.client_id, liens.dossier_id, liens.contrat_id, liens.compagnie_id, syncBrevo]);
 
   return (
     <div className="space-y-4">
@@ -157,6 +166,11 @@ export function EmailsLiesPanel({
                 >
                   {m.direction === "sortant" ? "Envoyé" : "Reçu"}
                 </span>
+                {m.notes?.includes("Brevo") && (
+                  <span className="rounded-full border border-line px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
+                    Brevo
+                  </span>
+                )}
                 <p className="text-sm font-medium text-ink">{m.sujet ?? "(sans objet)"}</p>
                 <span className="ml-auto text-xs text-ink-muted">
                   {m.recu_le ? new Date(m.recu_le).toLocaleString("fr-FR") : ""}

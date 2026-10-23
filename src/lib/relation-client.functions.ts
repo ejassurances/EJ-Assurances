@@ -88,6 +88,7 @@ export const envoyerReponseValidee = createServerFn({ method: "POST" })
         titre: r.objet ?? "Votre demande",
         paragraphes,
       },
+      liens: { client_id: r.client_id ?? null, contrat_id: r.contrat_id ?? null },
     });
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

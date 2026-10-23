@@ -109,6 +109,7 @@ export const renvoyerLienConnexion = createServerFn({ method: "POST" })
           cabinetName: "EJ Partners Assurances",
           link: appUrl("/auth"),
         },
+        liens: { client_id: client.id },
       });
       if (!res.sent) return { ok: false as const, error: "Adresse en liste de suppression : envoi refusé." };
       return { ok: true as const };

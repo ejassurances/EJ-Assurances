@@ -102,6 +102,7 @@ export async function reprendreDocumentsAttendus(
           ],
         },
         attachments: [{ name: doc.file_name, base64 }],
+        liens: { client_id: reponse.client_id },
       });
 
       await admin

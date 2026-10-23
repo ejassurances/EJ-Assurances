@@ -21,6 +21,86 @@ async function exigerStaff(supabase: unknown, userId: string) {
   return roles.includes("admin") ? "admin" : "mandataire";
 }
 
+/** Rattrape les copies Brevo déjà déposées dans IONOS mais non liées au client. */
+export const rattacherCopiesBrevoClient = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ client_id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await exigerStaff(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: client, error: clientError } = await supabaseAdmin
+      .from("clients")
+      .select("id, email, email2")
+      .eq("id", data.client_id)
+      .maybeSingle();
+    if (clientError || !client) throw new Error(clientError?.message ?? "Client introuvable.");
+
+    const emailsClient = [...new Set([client.email, client.email2]
+      .map((email) => email?.trim().toLowerCase())
+      .filter((email): email is string => !!email))];
+    if (!emailsClient.length) return { rattaches: 0 };
+
+    // Si une adresse figure sur plusieurs fiches, ne pas choisir arbitrairement
+    // une fiche : les envois futurs, eux, utilisent leur lien métier explicite.
+    const filtres = emailsClient.map((email) => email.replace(/[\\%_]/g, "\\$&"));
+    const correspondances = await Promise.all(
+      filtres.flatMap((email) => [
+        supabaseAdmin.from("clients").select("id").ilike("email", email).limit(2),
+        supabaseAdmin.from("clients").select("id").ilike("email2", email).limit(2),
+      ]),
+    );
+    const idsCorrespondants = new Set(
+      correspondances.flatMap(({ data: rows }) => (rows ?? []).map((row) => row.id)),
+    );
+    if (idsCorrespondants.size !== 1 || !idsCorrespondants.has(client.id)) return { rattaches: 0 };
+
+    const { listerParLabel, LABEL_COPIE_BREVO } = await import("@/lib/gmail.server");
+    const messages = await listerParLabel(LABEL_COPIE_BREVO, 200);
+    const adressesDestinataires = (value: string) =>
+      new Set(
+        (value.match(/[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) ?? []).map((email) =>
+          email.toLowerCase(),
+        ),
+      );
+    const correspondantsClient = messages.filter((message) => {
+      const destinataires = adressesDestinataires(message.destinataires);
+      return emailsClient.some((email) => destinataires.has(email));
+    });
+    if (!correspondantsClient.length) return { rattaches: 0 };
+
+    const ids = correspondantsClient.map((message) => message.id);
+    const { data: rows, error: liensError } = await supabaseAdmin
+      .from("crm_emails")
+      .select("gmail_message_id, client_id")
+      .in("gmail_message_id", ids);
+    if (liensError) throw new Error(liensError.message);
+    const lienParMessage = new Map((rows ?? []).map((row) => [row.gmail_message_id, row.client_id]));
+    const aRattacher = correspondantsClient.filter((message) => {
+      const clientLie = lienParMessage.get(message.id);
+      return clientLie === undefined || clientLie === null;
+    });
+    if (!aRattacher.length) return { rattaches: 0 };
+
+    const { error: upsertError } = await supabaseAdmin.from("crm_emails").upsert(
+      aRattacher.map((message) => ({
+        gmail_message_id: message.id,
+        gmail_thread_id: message.thread_id,
+        direction: "sortant",
+        recu_le: message.date,
+        client_id: client.id,
+        sujet: message.sujet,
+        expediteur_nom: message.expediteur_nom,
+        expediteur_email: message.expediteur_email,
+        notes: "Copie historique d'un envoi Brevo déposée dans IONOS",
+        created_by: context.userId,
+        updated_at: new Date().toISOString(),
+      })),
+      { onConflict: "gmail_message_id" },
+    );
+    if (upsertError) throw new Error(upsertError.message);
+    return { rattaches: aRattacher.length };
+  });
+
 
 const liensSchema = z.object({
   client_id: z.string().uuid().optional().nullable(),
