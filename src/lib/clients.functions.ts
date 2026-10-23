@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { ORIGINE_KEYS } from "@/lib/crm-origines";
-import { SITE } from "@/lib/site";
 import { z } from "zod";
 
 const creerClientSchema = z.object({
@@ -42,7 +41,7 @@ export const creerClientManuel = createServerFn({ method: "POST" })
             : null,
         marque: data.marque,
         created_by: context.userId,
-        commercial_id: SITE.defaultConseiller.id,
+        commercial_id: context.userId,
       })
 
       .select("id")
