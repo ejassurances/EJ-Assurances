@@ -29,6 +29,7 @@ type DevisColonne = {
   cotisation_mensuelle: number | null;
   montant_total_saisi: number | null;
   type_cotisation: "CI" | "CRD" | null;
+  franchise_itt_jours: 30 | 60 | 90 | null;
   garanties_resume: string | null;
 };
 
@@ -153,6 +154,14 @@ export function DevisComparatifTable({
             </tr>
             {estEmprunteur ? (
               <>
+                <tr>
+                  <td className={lbl}>Franchise ITT</td>
+                  {devis.map((d) => (
+                    <td key={d.id} className={td + " text-ink"}>
+                      {d.franchise_itt_jours != null ? `${d.franchise_itt_jours} jours` : ND}
+                    </td>
+                  ))}
+                </tr>
                 <tr>
                   <td className={lbl}>Quotité assurée</td>
                   {devis.map((d) => (

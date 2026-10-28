@@ -43,6 +43,7 @@ export type DossierDevis = {
   cotisation_mensuelle: number | null;
   /** Mode de calcul de la cotisation : CI (capital initial, constante) ou CRD (capital restant dû, dégressive). */
   type_cotisation: "CI" | "CRD" | null;
+  franchise_itt_jours: 30 | 60 | 90 | null;
   cotisation_min: number | null;
   cotisation_max: number | null;
   /** Montant total de l'assurance sur la durée du prêt (point d'entrée de la saisie manuelle). */
@@ -81,6 +82,7 @@ type ProduitRef = {
   compagnie_id: string;
   famille_id: string;
   assureur_porteur: string | null;
+  caracteristiques?: Record<string, unknown> | null;
 };
 
 type FormuleRef = { id: string; nom: string; produit_id: string; actif: boolean };
@@ -245,6 +247,7 @@ export function DossierDevisPanel({
     formule_id: "",
     montant_total_saisi: "",
     type_cotisation: "" as "" | "CI" | "CRD",
+    franchise_itt_jours: "" as "" | "30" | "60" | "90",
     cotisation_mensuelle: "",
     cotisation_min: "",
     cotisation_max: "",
@@ -385,12 +388,12 @@ export function DossierDevisPanel({
     const [d, c, p, cl, dos] = await Promise.all([
       supabase
         .from("dossier_devis")
-        .select("id,dossier_id,compagnie_id,produit_id,formule_id,cotisation_mensuelle,type_cotisation,cotisation_min,cotisation_max,montant_total_saisi,source,garanties_resume,quotite_pct,taux_commission,commission_base,commission_source,assure_rang,assureur_porteur,created_at")
+        .select("id,dossier_id,compagnie_id,produit_id,formule_id,cotisation_mensuelle,type_cotisation,franchise_itt_jours,cotisation_min,cotisation_max,montant_total_saisi,source,garanties_resume,quotite_pct,taux_commission,commission_base,commission_source,assure_rang,assureur_porteur,created_at")
         .eq("dossier_id", dossierId)
         .is("archive_le", null)
         .order("created_at", { ascending: true }),
       supabase.from("compagnies").select("id,nom").order("nom"),
-      supabase.from("produits").select("id,nom,compagnie_id,famille_id,assureur_porteur").order("nom"),
+      supabase.from("produits").select("id,nom,compagnie_id,famille_id,assureur_porteur,caracteristiques").order("nom"),
       supabase
         .from("dossier_devis_classements")
         .select("id,genere_le,modele_ia,classement,statut,route,profils_specifiques")
@@ -652,6 +655,7 @@ export function DossierDevisPanel({
         formule_id: form.formule_id || null,
         montant_total_saisi: form.montant_total_saisi ? Number(form.montant_total_saisi) : null,
         type_cotisation: form.type_cotisation || null,
+        franchise_itt_jours: estEmprunteur && form.franchise_itt_jours ? Number(form.franchise_itt_jours) : null,
         cotisation_mensuelle: mensuel,
         cotisation_min: form.type_cotisation === "CRD" && form.cotisation_min ? Number(form.cotisation_min) : null,
         cotisation_max: form.type_cotisation === "CRD" && form.cotisation_max ? Number(form.cotisation_max) : null,
@@ -704,6 +708,7 @@ export function DossierDevisPanel({
       formule_id: "",
       montant_total_saisi: "",
       type_cotisation: "",
+      franchise_itt_jours: "",
       cotisation_mensuelle: "",
       cotisation_min: "",
       cotisation_max: "",
@@ -1378,6 +1383,11 @@ export function DossierDevisPanel({
                           <span className="text-ink-soft"> · porté par {produit.assureur_porteur}</span>
                         )}
                       </p>
+                      {typeof produit.caracteristiques?.tarif_moyen_mensuel === "number" && (
+                        <p className="mt-1 text-xs text-ink-soft">
+                          Tarif moyen indicatif : {Number(produit.caracteristiques.tarif_moyen_mensuel).toLocaleString("fr-FR", { maximumFractionDigits: 2 })} € / mois
+                        </p>
+                      )}
                       {note?.score != null ? (
                         <p className="mt-1 text-xs text-ink-soft">
                           {note.points_forts.length > 0 && <>Points forts : {note.points_forts.join(", ")}. </>}
@@ -2495,6 +2505,18 @@ export function DossierDevisPanel({
               : "Cotisation prélevée chaque mois, si le devis la mentionne."}
           </span>
         </label>
+        {estEmprunteur && (
+          <label className="block">
+            <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">Franchise ITT</span>
+            <select value={form.franchise_itt_jours} onChange={(e) => setForm({ ...form, franchise_itt_jours: e.target.value as "" | "30" | "60" | "90" })} className={inp}>
+              <option value="">— À préciser —</option>
+              <option value="30">30 jours</option>
+              <option value="60">60 jours</option>
+              <option value="90">90 jours</option>
+            </select>
+            <span className="mt-1 block text-xs text-ink-muted">Franchise de l’offre tarifée, distincte de la franchise du produit de référence.</span>
+          </label>
+        )}
         {estEmprunteur && form.type_cotisation === "CRD" && (
 
           <>

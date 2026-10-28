@@ -1337,6 +1337,19 @@ function ProduitEditor({
           </select>
         </div>
         <div>
+          <label className="mb-1 block text-xs font-medium text-ink-muted">Tarif moyen indicatif (€/mois)</label>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={typeof p.caracteristiques?.tarif_moyen_mensuel === "number" ? p.caracteristiques.tarif_moyen_mensuel : ""}
+            onChange={(e) => setCarac("tarif_moyen_mensuel", e.target.value === "" ? null : Number(e.target.value))}
+            readOnly={readOnly}
+            className="w-full rounded-md border border-line bg-background px-3 py-2 text-sm"
+          />
+          <p className="mt-1 text-[11px] text-ink-muted">Repère indicatif uniquement, pas un tarif garanti pour le client. Renseigner seulement si vous disposez d’une référence fiable.</p>
+        </div>
+        <div>
           <label className="mb-1 block text-xs font-medium text-ink-muted">
             Mode de tarification
           </label>
