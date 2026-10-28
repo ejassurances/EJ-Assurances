@@ -109,15 +109,22 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
           base64: await lireBase64(file),
         },
       });
-      setDonnees((current) => {
-        const next = { ...current };
-        for (const [key, value] of Object.entries(resultat)) {
-          if (key in next && typeof value === "string" && value)
-            (next as Record<string, string>)[key] = value;
-        }
-        return next;
-      });
-      setMessage("Lecture terminée. Vérifiez et corrigez les informations avant la création.");
+      const donneesExtraites = { ...donnees };
+      for (const [key, value] of Object.entries(resultat)) {
+        if (key in donneesExtraites && typeof value === "string" && value)
+          (donneesExtraites as Record<string, string>)[key] = value;
+      }
+      setDonnees(donneesExtraites);
+      const brancheExtraite = resultat.type_assurance ?? "";
+      setTypeAssurance(brancheExtraite);
+      if (donneesExtraites.nom.trim() && brancheExtraite) {
+        setMessage("Attestation lue. Création automatique du client et du dossier…");
+        await lancerCreation(null, donneesExtraites, brancheExtraite, file);
+      } else {
+        setMessage(
+          "Lecture terminée. Le logiciel n’a pas pu identifier avec certitude le nom ou le type d’assurance. Complétez uniquement les informations manquantes puis lancez la création.",
+        );
+      }
     } catch (e) {
       setErreur(
         e instanceof Error
@@ -130,15 +137,19 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
   };
 
   /** Archive chaque pièce séparément ; retourne la liste des pièces en échec. */
-  const archiverDocuments = async (clientId: string, dossierId: string) => {
+  const archiverDocuments = async (
+    clientId: string,
+    dossierId: string,
+    attestationSource: File | null = attestation,
+  ) => {
     const fichiers: Array<{
       file: File;
       code: "attestation_assurance" | "cni" | "justificatif_domicile" | "rib";
       libelle: string;
     }> = [];
-    if (attestation) {
+    if (attestationSource) {
       fichiers.push({
-        file: attestation,
+        file: attestationSource,
         code: "attestation_assurance",
         libelle: "Attestation",
       });
@@ -182,14 +193,19 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
     return null;
   };
 
-  const lancerCreation = async (confirmerClientId: string | null = null) => {
+  const lancerCreation = async (
+    confirmerClientId: string | null = null,
+    donneesSource: Donnees = donnees,
+    typeSource: string = typeSource,
+    attestationSource: File | null = attestation,
+  ) => {
     if (envoi) return;
-    if (!attestation || !donnees.nom.trim() || !typeAssurance) {
+    if (!attestationSource || !donneesSource.nom.trim() || !typeSource) {
       setErreur("L'attestation, le nom et le type d'assurance sont obligatoires.");
       return;
     }
     const invalide = [
-      fichierValide(attestation, "Attestation"),
+      fichierValide(attestationSource, "Attestation"),
       ...(kyc.cni ? [fichierValide(kyc.cni, "Pièce d'identité")] : []),
       ...(kyc.justificatif_domicile
         ? [fichierValide(kyc.justificatif_domicile, "Justificatif de domicile")]
@@ -207,7 +223,7 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
       const resultat = await creerDossier({
         data: {
           client: {
-            civilite: donnees.civilite || null,
+            civilite: donneesSource.civilite || null,
             prenom: donnees.prenom || null,
             nom: donnees.nom,
             date_naissance: donnees.date_naissance || null,
@@ -248,7 +264,7 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
         setErreur("La fiche existante a changé. Vérifiez les informations et recommencez.");
         return;
       }
-      const echecs = await archiverDocuments(resultat.client_id, resultat.dossier_id);
+      const echecs = await archiverDocuments(resultat.client_id, resultat.dossier_id, attestationSource);
       if (echecs.length) {
         setDoublon(null);
         setErreur(
@@ -296,7 +312,7 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
             Importer un client déjà en portefeuille
           </h2>
           <p className="mt-1 text-sm text-ink-muted">
-            L'IA préremplit les champs visibles. Rien n'est enregistré avant votre validation.
+            Déposez l’attestation : le logiciel extrait les informations et crée automatiquement la fiche client et le dossier. Si une information essentielle est illisible, il vous demandera de la compléter.
           </p>
         </div>
         <button type="button" onClick={onCancel} className="text-sm text-ink-muted underline">
@@ -328,7 +344,9 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
           </span>
         )}
       </label>
-      <div className="grid gap-3 rounded-xl border border-line p-4 sm:grid-cols-2">
+      <details className="rounded-xl border border-line p-4">
+        <summary className="cursor-pointer text-sm font-semibold text-ink">Informations extraites (à consulter ou corriger si nécessaire)</summary>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <label className="block text-sm text-ink-soft sm:col-span-2">
           <span className="mb-1 block">Type d'assurance *</span>
           <select
@@ -360,8 +378,11 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
         {champ("date_effet", "Date d'effet", "date")}
         {champ("date_echeance", "Date d'échéance", "date")}
         {champ("type_couverture", "Type de couverture")}
-      </div>
-      <div className="rounded-xl border border-line p-4">
+        </div>
+      </details>
+      <details className="rounded-xl border border-line p-4">
+        <summary className="cursor-pointer font-semibold text-ink">Documents complémentaires (facultatif)</summary>
+        <div className="mt-3">
         <h3 className="font-semibold text-ink">Documents KYC (ajout possible plus tard)</h3>
         <p className="mt-1 text-sm text-ink-muted">
           Vous pouvez ajouter les documents disponibles maintenant ou les déposer plus tard depuis la fiche client. Les pièces absentes resteront à fournir dans la checklist du dossier.
@@ -390,7 +411,8 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
             </label>
           ))}
         </div>
-      </div>
+        </div>
+      </details>
       {typeAssurance && (
         <div className="rounded-xl bg-background p-4">
           <h3 className="text-sm font-semibold text-ink">Checklist documentaire du dossier</h3>
