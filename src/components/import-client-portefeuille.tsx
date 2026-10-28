@@ -67,7 +67,19 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
   const [erreur, setErreur] = useState("");
   const [message, setMessage] = useState("");
   const [dossierCree, setDossierCree] = useState<string | null>(null);
-  const [contratsExistants, setContratsExistants] = useState<any[] | null>(null);
+  const [contratsExistants, setContratsExistants] = useState<
+    Array<{
+      contrat_id: string;
+      client_id: string;
+      client_nom: string;
+      numero: string | null;
+      assureur: string;
+      produit: string;
+      date_effet: string | null;
+      date_echeance: string | null;
+      differences: Array<{ key: string; label: string; imported: string; existing: string }>;
+    }> | null
+  >(null);
   const [doublon, setDoublon] = useState<{
     client_id: string;
     nom: string;
@@ -200,8 +212,9 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
     donneesSource: Donnees = donnees,
     typeSource: string = typeAssurance,
     attestationSource: File | null = attestation,
+    apresVerification = false,
   ) => {
-    if (envoi || lecture) return;
+    if (envoi && !apresVerification) return;
     if (!attestationSource || !donneesSource.nom.trim() || !typeSource) {
       setErreur("L'attestation, le nom et le type d'assurance sont obligatoires.");
       return;
@@ -225,7 +238,7 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
         return;
       }
       setMessage("Aucun contrat correspondant trouvé. Création du client et du dossier…");
-      await lancerCreation(null, donneesSource, typeSource, attestationSource);
+      await lancerCreation(null, donneesSource, typeSource, attestationSource, true);
     } catch (e) {
       setErreur(e instanceof Error ? e.message : "Vérification du contrat impossible.");
     } finally {
@@ -501,13 +514,13 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
           <h3 className="font-semibold">Contrat déjà présent ou correspondance probable</h3>
           <p className="mt-1 text-sm">Le CRM a trouvé un ou plusieurs contrats correspondants. Aucun champ existant n’a été modifié. Comparez les valeurs avant de décider.</p>
           <div className="mt-3 space-y-3">
-            {contratsExistants.map((contrat: any) => (
+            {contratsExistants.map((contrat) => (
               <div key={contrat.contrat_id} className="rounded-lg border border-amber-800/20 bg-white/70 p-3">
                 <p className="font-medium">{contrat.client_nom || "Client sans nom"} · {contrat.numero || "Sans numéro"}</p>
                 <p className="mt-1 text-sm">{contrat.assureur} · {contrat.produit}{contrat.date_effet ? " · Effet : " + contrat.date_effet : ""}{contrat.date_echeance ? " · Échéance : " + contrat.date_echeance : ""}</p>
                 {contrat.differences.length ? (
                   <div className="mt-2"><p className="text-sm font-semibold">Différences détectées</p><ul className="mt-1 space-y-1 text-sm">
-                    {contrat.differences.map((difference: any) => <li key={difference.key}><span className="font-medium">{difference.label} :</span> CRM = {difference.existing} · Attestation = {difference.imported}</li>)}
+                    {contrat.differences.map((difference) => <li key={difference.key}><span className="font-medium">{difference.label} :</span> CRM = {difference.existing} · Attestation = {difference.imported}</li>)}
                   </ul></div>
                 ) : <p className="mt-2 text-sm">Aucune différence sur les champs comparables renseignés.</p>}
                 <button type="button" onClick={() => onCreated(contrat.client_id)} className="mt-3 rounded-full border border-amber-800/30 px-3 py-1.5 text-sm font-medium">Ouvrir la fiche client</button>
