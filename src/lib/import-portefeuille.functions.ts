@@ -138,7 +138,7 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
     if (!json) {
       console.error(
         "[import portefeuille] réponse Claude sans JSON exploitable",
-        payload.status ?? "statut inconnu",
+        payload.stop_reason ?? "statut inconnu",
       );
       throw new Error(
         "L'attestation n'a pas pu être lue automatiquement. Vous pouvez saisir les informations manuellement.",
