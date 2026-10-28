@@ -300,7 +300,10 @@ async function fetchIds(client: ImapFlow, ids: string[]): Promise<MailboxMessage
     ) {
       try {
         await client.mailboxOpen(item.decoded.path, { readOnly: true });
-        if (String(client.mailbox ? client.mailbox.uidValidity : undefined) === item.decoded.uidValidity) {
+        if (
+          String(client.mailbox ? client.mailbox.uidValidity : undefined) ===
+          item.decoded.uidValidity
+        ) {
           const found = await client.fetchOne(
             item.decoded.uid,
             { ...queryMetadata },
