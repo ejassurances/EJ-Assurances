@@ -468,9 +468,9 @@ function DossierDetail() {
             <p className="text-sm font-semibold text-ink">Recueil santé</p>
             <p className="text-xs text-ink-muted">
               {(() => {
-                const rs = (dossier.recueil_besoins as Record<string, any> | null)?.[
-                  "recueil_sante"
-                ];
+                const rs = (
+                  dossier.recueil_besoins as Record<string, { statut: string } | undefined> | null
+                )?.["recueil_sante"];
                 return rs
                   ? `Statut : ${({ commence: "commencé", en_cours: "en cours", termine: "terminé", a_revoir: "à revoir" } as Record<string, string>)[rs.statut] ?? rs.statut}`
                   : "Pas encore commencé";

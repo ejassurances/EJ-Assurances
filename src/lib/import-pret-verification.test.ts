@@ -52,3 +52,13 @@ describe("documents de prêt facultatifs", () => {
   it("une valeur humaine n'est jamais écrasée", () =>
     expect(appliquerValeursPret({ capital: 170000 }, offre.valeurs).capital).toBe(170000));
 });
+
+it("normalise les corrections numériques et rejette les dates impossibles", () => {
+  expect(
+    filtrerValeursPret({
+      montant_capital: "200 000,50",
+      date_premiere_echeance: "2026-02-31",
+      duree_mois: "240",
+    }),
+  ).toEqual({ montant_capital: 200000.5, duree_mois: 240 });
+});

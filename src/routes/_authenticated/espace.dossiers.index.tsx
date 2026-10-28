@@ -385,22 +385,6 @@ export function NewDossierForm({
           if (cleanup.error) toast.error("Archivage échoué ; nettoyage du fichier à vérifier.");
           throw new Error(docError?.message ?? "Document non enregistré");
         }
-        const lecture = lecturesPret.find((l) => l.nature === offreNatures[index]);
-        if (lecture) {
-          const audit = await supabase.from("doc_extractions").insert({
-            document_id: doc.id,
-            type_document: lecture.nature,
-            statut: "valide_humain",
-            confidence_score: lecture.confiance,
-            extracted_data: {
-              valeurs_lues: lecture.valeurs,
-              valeurs_confirmees: valeursPret,
-              source: lecture.source,
-            } as never,
-          });
-          if (audit.error)
-            toast.error("Document archivé, provenance non enregistrée : à vérifier.");
-        }
         if (doc?.id) {
           const checklist = await supabase
             .from("dossier_pieces_requises")

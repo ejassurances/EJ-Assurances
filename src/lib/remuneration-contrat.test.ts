@@ -229,3 +229,26 @@ describe("rémunération : protections supplémentaires", () => {
       })?.id,
     ).toBe("produit"));
 });
+
+it("une durée réaugmentée réactive les clés prévisionnelles sans doublon", () => {
+  const court = calculerCommissionPrevisionnelle({
+    contratId: "k",
+    bareme: base,
+    primeAnnuelle: 1200,
+    dureeMois: 12,
+  });
+  const long = calculerCommissionPrevisionnelle({
+    contratId: "k",
+    bareme: base,
+    primeAnnuelle: 1200,
+    dureeMois: 36,
+  });
+  const frais = calculerFraisDistribution({ branche: "sante" });
+  const etat = new Map(lignesAPersister("k", frais, long, base).map((r) => [r.cle, r]));
+  for (const row of lignesAPersister("k", frais, court, base)) etat.set(row.cle, row);
+  for (const row of etat.values())
+    if (row.type === "commission" && row.annee > 1) row.statut = "non_calculable";
+  for (const row of lignesAPersister("k", frais, long, base)) etat.set(row.cle, row);
+  expect(etat.size).toBe(4);
+  expect(etat.get("k:commission:3")?.statut).toBe("calcule");
+});
