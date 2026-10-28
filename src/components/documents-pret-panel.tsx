@@ -152,7 +152,8 @@ export function DocumentsPretPanel({
     setError(null);
     try {
       const safeName = file.name.replace(/[^\w.\-]+/g, "_").slice(0, 120);
-      const path = `${clientId ?? dossierId}/${Date.now()}-${safeName}`;
+      // Ce document appartient au dossier : la RLS Storage attend dossierId en premier segment.
+      const path = `${dossierId}/${Date.now()}-${safeName}`;
       const { error: upErr } = await supabase.storage
         .from("dossier-documents")
         .upload(path, file, { upsert: true });
