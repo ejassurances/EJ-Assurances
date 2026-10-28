@@ -24,3 +24,15 @@ export const analyserCatalogueProduitsCompagnie = createServerFn({ method: "POST
     const { analyserCatalogueProduits } = await import("./produit-catalogue-import.server");
     return analyserCatalogueProduits(context.supabase, data.compagnie_id, data.storage_path);
   });
+
+export const completerInfosProduitDepuisDocument = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ document_id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: roles } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
+    if (!((roles ?? []) as { role: string }[]).some((item) => item.role === "admin")) {
+      throw new Error("Cette action est réservée aux administrateurs.");
+    }
+    const { completerProduitDepuisDocument } = await import("./produit-catalogue-import.server");
+    return completerProduitDepuisDocument(context.supabase, data.document_id);
+  });
