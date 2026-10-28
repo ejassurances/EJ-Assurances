@@ -493,8 +493,11 @@ export function RecueilDossierPanel({
         if (sequence === saveSequence.current) setSaving(false);
         return;
       }
-      if (sequence === saveSequence.current &&
-        JSON.stringify(aEnregistrer) === JSON.stringify(valuesRef.current)) dirtyRef.current = false;
+      if (
+        sequence === saveSequence.current &&
+        JSON.stringify(aEnregistrer) === JSON.stringify(valuesRef.current)
+      )
+        dirtyRef.current = false;
       let complement = "";
       if (synchroniser) {
         try {
