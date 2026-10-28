@@ -735,7 +735,7 @@ export function DossierDevisPanel({
     setErr(null);
     setImportMsg("Dépôt du devis…");
     try {
-      const safeName = file.name.replace(/[^\w.\-]+/g, "_").slice(0, 120);
+      const safeName = file.name.replace(/[^\w.-]+/g, "_").slice(0, 120);
       const path = `${dossierId}/${Date.now()}-${safeName}`;
       const { error: upErr } = await supabase.storage.from("dossier-documents").upload(path, file, { upsert: true });
       if (upErr) throw upErr;
