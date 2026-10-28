@@ -5,6 +5,7 @@ import { lirePiecesPret } from "@/lib/import-pret-verification.functions";
 import {
   appliquerValeursPret,
   CHAMPS_IMPORT_PRET,
+  CORRESPONDANCES_PRET,
   croiserLecturesPret,
   type ChampImportPret,
   type LecturePret,
@@ -146,6 +147,9 @@ export function ImportPretVerifie({
                     setValeurs((v) => ({ ...v, [cle]: e.target.value }));
                   }}
                 />
+                {!CORRESPONDANCES_PRET[cle] && (
+                  <span className="block">Conservé dans la lecture vérifiée ; aucun champ de dossier dédié.</span>
+                )}
                 {(croisement.provenance[cle] ?? []).map((s) => (
                   <span key={s.source} className="block">
                     {s.source} : {s.valeur} ({Math.round(s.confiance * 100)} %)

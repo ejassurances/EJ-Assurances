@@ -20,6 +20,7 @@ import { DossierDevisPanel } from "@/components/dossier-devis-panel";
 import { synchroniserAssuresClients } from "@/lib/recueil-clients.functions";
 import { situationPret, incoherencesPret } from "@/lib/pret-amortissement";
 import { assuranceInitialeDepuisRecueil } from "@/lib/assurance-initiale";
+import { fusionnerRecueilPret } from "@/lib/import-pret-verification";
 
 /** Étape de tarification : c'est là que les devis sont produits. */
 function estEtapeTarification(titre: string): boolean {
@@ -323,6 +324,14 @@ export function RecueilDossierPanel({
   const saveSequence = useRef(0);
   const dirtyRef = useRef(false);
 
+  // Le panneau reste monté entre deux vues : ne pas garder le recueil initial
+  // après une confirmation d'import et le rechargement du dossier parent.
+  useEffect(() => {
+    setValues((actuel) => dirtyRef.current
+      ? fusionnerRecueilPret(actuel, recueil ?? {})
+      : { ...(recueil ?? {}) });
+  }, [dossierId, recueil]);
+
   useEffect(() => {
     void (async () => {
       const { data } = await supabase.from("dossiers").select("created_at").eq("id", dossierId).maybeSingle();
@@ -448,6 +457,7 @@ export function RecueilDossierPanel({
       if (sequence === saveSequence.current) setSaving(false);
       return;
     }
+    if (sequence === saveSequence.current) dirtyRef.current = false;
     let complement = "";
     if (synchroniser) {
       try {
@@ -479,7 +489,6 @@ export function RecueilDossierPanel({
     dirtyRef.current = true;
     setMessage("Enregistrement automatique…");
     const timer = window.setTimeout(() => {
-      dirtyRef.current = false;
       void enregistrerValeurs(values);
     }, 650);
     return () => window.clearTimeout(timer);
