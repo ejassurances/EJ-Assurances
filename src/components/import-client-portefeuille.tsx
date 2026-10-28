@@ -264,7 +264,11 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
         setErreur("La fiche existante a changé. Vérifiez les informations et recommencez.");
         return;
       }
-      const echecs = await archiverDocuments(resultat.client_id, resultat.dossier_id, attestationSource);
+      const echecs = await archiverDocuments(
+        resultat.client_id,
+        resultat.dossier_id,
+        attestationSource,
+      );
       if (echecs.length) {
         setDoublon(null);
         setErreur(
@@ -312,7 +316,9 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
             Importer un client déjà en portefeuille
           </h2>
           <p className="mt-1 text-sm text-ink-muted">
-            Déposez l’attestation : le logiciel extrait les informations et crée automatiquement la fiche client et le dossier. Si une information essentielle est illisible, il vous demandera de la compléter.
+            Déposez l’attestation : le logiciel extrait les informations et crée automatiquement la
+            fiche client et le dossier. Si une information essentielle est illisible, il vous
+            demandera de la compléter.
           </p>
         </div>
         <button type="button" onClick={onCancel} className="text-sm text-ink-muted underline">
@@ -345,72 +351,80 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
         )}
       </label>
       <details className="rounded-xl border border-line p-4">
-        <summary className="cursor-pointer text-sm font-semibold text-ink">Informations extraites (à consulter ou corriger si nécessaire)</summary>
+        <summary className="cursor-pointer text-sm font-semibold text-ink">
+          Informations extraites (à consulter ou corriger si nécessaire)
+        </summary>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <label className="block text-sm text-ink-soft sm:col-span-2">
-          <span className="mb-1 block">Type d'assurance *</span>
-          <select
-            required
-            value={typeAssurance}
-            onChange={(e) => setTypeAssurance(e.target.value)}
-            className="w-full rounded-md border border-line bg-background px-3 py-2 text-sm text-ink"
-          >
-            <option value="">Choisir une branche</option>
-            {BRANCHES_CREATION.map((b) => (
-              <option key={b.value} value={b.value}>
-                {b.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        {champ("civilite", "Civilité")}
-        {champ("prenom", "Prénom")}
-        {champ("nom", "Nom", "text", true)}
-        {champ("date_naissance", "Date de naissance", "date")}
-        {champ("email", "E-mail", "email")}
-        {champ("mobile", "Mobile")}
-        {champ("telephone", "Téléphone fixe")}
-        {champ("adresse", "Adresse")}
-        {champ("code_postal", "Code postal")}
-        {champ("ville", "Ville")}
-        {champ("assureur", "Assureur")}
-        {champ("numero_contrat", "Numéro de contrat")}
-        {champ("date_effet", "Date d'effet", "date")}
-        {champ("date_echeance", "Date d'échéance", "date")}
-        {champ("type_couverture", "Type de couverture")}
+          <label className="block text-sm text-ink-soft sm:col-span-2">
+            <span className="mb-1 block">Type d'assurance *</span>
+            <select
+              required
+              value={typeAssurance}
+              onChange={(e) => setTypeAssurance(e.target.value)}
+              className="w-full rounded-md border border-line bg-background px-3 py-2 text-sm text-ink"
+            >
+              <option value="">Choisir une branche</option>
+              {BRANCHES_CREATION.map((b) => (
+                <option key={b.value} value={b.value}>
+                  {b.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {champ("civilite", "Civilité")}
+          {champ("prenom", "Prénom")}
+          {champ("nom", "Nom", "text", true)}
+          {champ("date_naissance", "Date de naissance", "date")}
+          {champ("email", "E-mail", "email")}
+          {champ("mobile", "Mobile")}
+          {champ("telephone", "Téléphone fixe")}
+          {champ("adresse", "Adresse")}
+          {champ("code_postal", "Code postal")}
+          {champ("ville", "Ville")}
+          {champ("assureur", "Assureur")}
+          {champ("numero_contrat", "Numéro de contrat")}
+          {champ("date_effet", "Date d'effet", "date")}
+          {champ("date_echeance", "Date d'échéance", "date")}
+          {champ("type_couverture", "Type de couverture")}
         </div>
       </details>
       <details className="rounded-xl border border-line p-4">
-        <summary className="cursor-pointer font-semibold text-ink">Documents complémentaires (facultatif)</summary>
+        <summary className="cursor-pointer font-semibold text-ink">
+          Documents complémentaires (facultatif)
+        </summary>
         <div className="mt-3">
-        <h3 className="font-semibold text-ink">Documents KYC (ajout possible plus tard)</h3>
-        <p className="mt-1 text-sm text-ink-muted">
-          Vous pouvez ajouter les documents disponibles maintenant ou les déposer plus tard depuis la fiche client. Les pièces absentes resteront à fournir dans la checklist du dossier.
-        </p>
-        <div className="mt-3 grid gap-3 sm:grid-cols-3">
-          {(
-            [
-              ["cni", "Pièce d'identité (CNI ou passeport)"],
-              ["justificatif_domicile", "Justificatif de domicile de moins de 3 mois"],
-              ["rib", "RIB"],
-            ] as const
-          ).map(([key, label]) => (
-            <label key={key} className="block text-sm text-ink-soft">
-              <span className="mb-1 block">{label}</span>
-              <input
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png,.webp"
-                onChange={(e) =>
-                  setKyc((current) => ({ ...current, [key]: e.target.files?.[0] ?? null }))
-                }
-                className="block w-full text-xs"
-              />
-              {kyc[key] && (
-                <span className="mt-1 block truncate text-xs text-ink-muted">{kyc[key]?.name}</span>
-              )}
-            </label>
-          ))}
-        </div>
+          <h3 className="font-semibold text-ink">Documents KYC (ajout possible plus tard)</h3>
+          <p className="mt-1 text-sm text-ink-muted">
+            Vous pouvez ajouter les documents disponibles maintenant ou les déposer plus tard
+            depuis la fiche client. Les pièces absentes resteront à fournir dans la checklist du
+            dossier.
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            {(
+              [
+                ["cni", "Pièce d'identité (CNI ou passeport)"],
+                ["justificatif_domicile", "Justificatif de domicile de moins de 3 mois"],
+                ["rib", "RIB"],
+              ] as const
+            ).map(([key, label]) => (
+              <label key={key} className="block text-sm text-ink-soft">
+                <span className="mb-1 block">{label}</span>
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp"
+                  onChange={(e) =>
+                    setKyc((current) => ({ ...current, [key]: e.target.files?.[0] ?? null }))
+                  }
+                  className="block w-full text-xs"
+                />
+                {kyc[key] && (
+                  <span className="mt-1 block truncate text-xs text-ink-muted">
+                    {kyc[key]?.name}
+                  </span>
+                )}
+              </label>
+            ))}
+          </div>
         </div>
       </details>
       {typeAssurance && (
