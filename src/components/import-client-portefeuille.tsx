@@ -48,6 +48,17 @@ const VIDE: Donnees = {
 const FORMATS = ["application/pdf", "image/jpeg", "image/png", "image/webp"] as const;
 const TAILLE_MAX = 8 * 1024 * 1024;
 type FichiersKyc = { cni: File | null; justificatif_domicile: File | null; rib: File | null };
+type ContratExistantImport = {
+  contrat_id: string;
+  client_id: string;
+  client_nom: string;
+  numero: string | null;
+  assureur: string;
+  produit: string;
+  date_effet: string | null;
+  date_echeance: string | null;
+  differences: Array<{ key: string; label: string; imported: string; existing: string }>;
+};
 
 export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
   const creerDossier = useServerFn(creerClientDossierRapide);
@@ -67,19 +78,7 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
   const [erreur, setErreur] = useState("");
   const [message, setMessage] = useState("");
   const [dossierCree, setDossierCree] = useState<string | null>(null);
-  const [contratsExistants, setContratsExistants] = useState<
-    Array<{
-      contrat_id: string;
-      client_id: string;
-      client_nom: string;
-      numero: string | null;
-      assureur: string;
-      produit: string;
-      date_effet: string | null;
-      date_echeance: string | null;
-      differences: Array<{ key: string; label: string; imported: string; existing: string }>;
-    }> | null
-  >(null);
+  const [contratsExistants, setContratsExistants] = useState<ContratExistantImport[] | null>(null);
   const [doublon, setDoublon] = useState<{
     client_id: string;
     nom: string;
@@ -222,18 +221,27 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
     setErreur("");
     setContratsExistants(null);
     try {
-      const verification = await verifierContrat({ data: {
-        nom: donneesSource.nom, prenom: donneesSource.prenom || null,
-        date_naissance: donneesSource.date_naissance || null, email: donneesSource.email || null,
-        mobile: donneesSource.mobile || null, telephone: donneesSource.telephone || null,
-        assureur: donneesSource.assureur || null, numero_contrat: donneesSource.numero_contrat || null,
-        date_effet: donneesSource.date_effet || null, date_echeance: donneesSource.date_echeance || null,
-        type_couverture: donneesSource.type_couverture || null,
-      }});
+      const verification = await verifierContrat({
+        data: {
+          nom: donneesSource.nom,
+          prenom: donneesSource.prenom || null,
+          date_naissance: donneesSource.date_naissance || null,
+          email: donneesSource.email || null,
+          mobile: donneesSource.mobile || null,
+          telephone: donneesSource.telephone || null,
+          assureur: donneesSource.assureur || null,
+          numero_contrat: donneesSource.numero_contrat || null,
+          date_effet: donneesSource.date_effet || null,
+          date_echeance: donneesSource.date_echeance || null,
+          type_couverture: donneesSource.type_couverture || null,
+        },
+      });
       if (verification.found) {
         setContratsExistants(verification.matches);
         setDoublon(null);
-        setMessage("Un contrat correspondant a été trouvé dans le CRM. Vérifiez les différences avant de continuer.");
+        setMessage(
+          "Un contrat correspondant a été trouvé dans le CRM. Vérifiez les différences avant de continuer.",
+        );
         return;
       }
       setMessage("Aucun contrat correspondant trouvé. Création du client et du dossier…");
@@ -512,24 +520,71 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
       {contratsExistants && (
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
           <h3 className="font-semibold">Contrat déjà présent ou correspondance probable</h3>
-          <p className="mt-1 text-sm">Le CRM a trouvé un ou plusieurs contrats correspondants. Aucun champ existant n’a été modifié. Comparez les valeurs avant de décider.</p>
+          <p className="mt-1 text-sm">
+            Le CRM a trouvé un ou plusieurs contrats correspondants. Aucun champ existant n’a été
+            modifié. Comparez les valeurs avant de décider.
+          </p>
           <div className="mt-3 space-y-3">
             {contratsExistants.map((contrat) => (
-              <div key={contrat.contrat_id} className="rounded-lg border border-amber-800/20 bg-white/70 p-3">
-                <p className="font-medium">{contrat.client_nom || "Client sans nom"} · {contrat.numero || "Sans numéro"}</p>
-                <p className="mt-1 text-sm">{contrat.assureur} · {contrat.produit}{contrat.date_effet ? " · Effet : " + contrat.date_effet : ""}{contrat.date_echeance ? " · Échéance : " + contrat.date_echeance : ""}</p>
+              <div
+                key={contrat.contrat_id}
+                className="rounded-lg border border-amber-800/20 bg-white/70 p-3"
+              >
+                <p className="font-medium">
+                  {contrat.client_nom || "Client sans nom"} · {contrat.numero || "Sans numéro"}
+                </p>
+                <p className="mt-1 text-sm">
+                  {contrat.assureur} · {contrat.produit}
+                  {contrat.date_effet ? " · Effet : " + contrat.date_effet : ""}
+                  {contrat.date_echeance ? " · Échéance : " + contrat.date_echeance : ""}
+                </p>
                 {contrat.differences.length ? (
-                  <div className="mt-2"><p className="text-sm font-semibold">Différences détectées</p><ul className="mt-1 space-y-1 text-sm">
-                    {contrat.differences.map((difference) => <li key={difference.key}><span className="font-medium">{difference.label} :</span> CRM = {difference.existing} · Attestation = {difference.imported}</li>)}
-                  </ul></div>
-                ) : <p className="mt-2 text-sm">Aucune différence sur les champs comparables renseignés.</p>}
-                <button type="button" onClick={() => onCreated(contrat.client_id)} className="mt-3 rounded-full border border-amber-800/30 px-3 py-1.5 text-sm font-medium">Ouvrir la fiche client</button>
+                  <div className="mt-2">
+                    <p className="text-sm font-semibold">Différences détectées</p>
+                    <ul className="mt-1 space-y-1 text-sm">
+                      {contrat.differences.map((difference) => (
+                        <li key={difference.key}>
+                          <span className="font-medium">{difference.label} :</span> CRM ={" "}
+                          {difference.existing} · Attestation = {difference.imported}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <p className="mt-2 text-sm">
+                    Aucune différence sur les champs comparables renseignés.
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => onCreated(contrat.client_id)}
+                  className="mt-3 rounded-full border border-amber-800/30 px-3 py-1.5 text-sm font-medium"
+                >
+                  Ouvrir la fiche client
+                </button>
               </div>
             ))}
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            <button type="button" disabled={envoi} onClick={() => { setContratsExistants(null); void lancerCreation(null); }} className="rounded-full bg-[#0A192F] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Continuer malgré le contrat existant</button>
-            <button type="button" disabled={envoi} onClick={() => setContratsExistants(null)} className="rounded-full border border-amber-800/30 px-4 py-2 text-sm font-medium">Annuler la création</button>
+            <button
+              type="button"
+              disabled={envoi}
+              onClick={() => {
+                setContratsExistants(null);
+                void lancerCreation(null);
+              }}
+              className="rounded-full bg-[#0A192F] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            >
+              Continuer malgré le contrat existant
+            </button>
+            <button
+              type="button"
+              disabled={envoi}
+              onClick={() => setContratsExistants(null)}
+              className="rounded-full border border-amber-800/30 px-4 py-2 text-sm font-medium"
+            >
+              Annuler la création
+            </button>
           </div>
         </div>
       )}
