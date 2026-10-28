@@ -196,7 +196,7 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
   const lancerCreation = async (
     confirmerClientId: string | null = null,
     donneesSource: Donnees = donnees,
-    typeSource: string = typeSource,
+    typeSource: string = typeAssurance,
     attestationSource: File | null = attestation,
   ) => {
     if (envoi) return;
@@ -224,19 +224,19 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
         data: {
           client: {
             civilite: donneesSource.civilite || null,
-            prenom: donnees.prenom || null,
-            nom: donnees.nom,
-            date_naissance: donnees.date_naissance || null,
-            email: donnees.email || null,
-            mobile: donnees.mobile || null,
-            telephone: donnees.telephone || null,
-            adresse: donnees.adresse || null,
-            code_postal: donnees.code_postal || null,
-            ville: donnees.ville || null,
+            prenom: donneesSource.prenom || null,
+            nom: donneesSource.nom,
+            date_naissance: donneesSource.date_naissance || null,
+            email: donneesSource.email || null,
+            mobile: donneesSource.mobile || null,
+            telephone: donneesSource.telephone || null,
+            adresse: donneesSource.adresse || null,
+            code_postal: donneesSource.code_postal || null,
+            ville: donneesSource.ville || null,
           },
           dossier: {
-            type_assurance: typeAssurance,
-            intitule: [donnees.type_couverture || "Contrat existant", donnees.assureur]
+            type_assurance: typeSource,
+            intitule: [donneesSource.type_couverture || "Contrat existant", donneesSource.assureur]
               .filter(Boolean)
               .join(" — ")
               .slice(0, 160),
@@ -244,10 +244,10 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
               "Reprise d'un contrat déjà en portefeuille. Vérifier les garanties et les échéances.",
             commentaire_initial: [
               "Import depuis le portefeuille existant.",
-              donnees.assureur ? "Assureur : " + donnees.assureur : null,
-              donnees.numero_contrat ? "N° contrat : " + donnees.numero_contrat : null,
-              donnees.date_effet ? "Date d'effet : " + donnees.date_effet : null,
-              donnees.date_echeance ? "Échéance : " + donnees.date_echeance : null,
+              donneesSource.assureur ? "Assureur : " + donneesSource.assureur : null,
+              donneesSource.numero_contrat ? "N° contrat : " + donneesSource.numero_contrat : null,
+              donneesSource.date_effet ? "Date d'effet : " + donneesSource.date_effet : null,
+              donneesSource.date_echeance ? "Échéance : " + donneesSource.date_echeance : null,
             ]
               .filter(Boolean)
               .join("\n"),
