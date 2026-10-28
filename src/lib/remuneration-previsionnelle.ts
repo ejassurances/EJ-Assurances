@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
-import { withPendingSchema, type BaremeVersionneRow } from "@/lib/pending-schema-client";
+import { withPendingSchema, type BaremeVersionneRow } from "./pending-schema-client";
 import {
   calculerCommissionPrevisionnelle,
   calculerFraisDistribution,
@@ -8,7 +8,7 @@ import {
   type BaremeCompagnie,
   type ResultatCommission,
   type ResultatFrais,
-} from "@/lib/remuneration-contrat";
+} from "./remuneration-contrat";
 
 export type ContratRemuneration = {
   id: string;
@@ -70,7 +70,12 @@ export function lignesAPersister(
         base: l.base,
         taux: l.taux,
         montant: l.montant,
-        motif: commission.mode === "precompte" ? (l.annee === 1 ? "Précompte année 1" : "Renouvellement") : "Linéaire",
+        motif:
+          commission.mode === "precompte"
+            ? l.annee === 1
+              ? "Précompte année 1"
+              : "Renouvellement"
+            : "Linéaire",
         bareme_id: commission.baremeId,
         bareme_snapshot: bareme,
       });
@@ -126,7 +131,9 @@ export async function calculerRemuneration(
   if (contrat.compagnie_id) {
     const { data, error } = await db
       .from("commission_bareme")
-      .select("id,compagnie_id,branche,produit_id,mode,taux_annee_1,taux_renouvellement,date_effet,date_fin,notes")
+      .select(
+        "id,compagnie_id,branche,produit_id,mode,taux_annee_1,taux_renouvellement,date_effet,date_fin,notes",
+      )
       .eq("compagnie_id", contrat.compagnie_id);
     if (error) schemaDisponible = false;
     else baremes = (data ?? []).map((r) => versBareme(r as BaremeVersionneRow));
@@ -144,7 +151,11 @@ export async function calculerRemuneration(
         primeAnnuelle: contrat.prime_annuelle,
         dureeMois: contrat.duree_mois,
       })
-    : ({ statut: "non_calculable", motif: "Barèmes datés pas encore activés en base", lignes: [] } satisfies ResultatCommission as ResultatCommission);
+    : ({
+        statut: "non_calculable",
+        motif: "Barèmes datés pas encore activés en base",
+        lignes: [],
+      } satisfies ResultatCommission as ResultatCommission);
   return { frais, commission, bareme, schemaDisponible };
 }
 
@@ -158,13 +169,16 @@ export async function enregistrerRemuneration(
   contratId: string,
   r: Awaited<ReturnType<typeof calculerRemuneration>>,
 ): Promise<{ ok: boolean; erreur?: string }> {
-  if (!r.schemaDisponible) return { ok: false, erreur: "Table de prévisions pas encore créée en base" };
+  if (!r.schemaDisponible)
+    return { ok: false, erreur: "Table de prévisions pas encore créée en base" };
   const db = withPendingSchema(client);
   const rows = lignesAPersister(contratId, r.frais, r.commission, r.bareme).map((x) => ({
     ...x,
     calcule_le: new Date().toISOString(),
   }));
-  const up = await db.from("contrat_remuneration_previsionnelle").upsert(rows as never, { onConflict: "cle" });
+  const up = await db
+    .from("contrat_remuneration_previsionnelle")
+    .upsert(rows as never, { onConflict: "cle" });
   if (up.error) return { ok: false, erreur: up.error.message };
   const maxAnnee = rows.filter((x) => x.type === "commission").length;
   const old = await db

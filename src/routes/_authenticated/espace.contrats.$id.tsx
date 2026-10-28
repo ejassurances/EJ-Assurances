@@ -119,8 +119,16 @@ function ContratDetail() {
       roleMap.set(r.user_id, arr);
     }
     const profs = (users.data as Partenaire[]) ?? [];
-    setMandataires(profs.filter((p) => roleMap.get(p.id)?.includes("mandataire")).map((p) => ({ ...p, role: "mandataire" })));
-    setPrescripteurs(profs.filter((p) => roleMap.get(p.id)?.includes("prescripteur")).map((p) => ({ ...p, role: "prescripteur" })));
+    setMandataires(
+      profs
+        .filter((p) => roleMap.get(p.id)?.includes("mandataire"))
+        .map((p) => ({ ...p, role: "mandataire" })),
+    );
+    setPrescripteurs(
+      profs
+        .filter((p) => roleMap.get(p.id)?.includes("prescripteur"))
+        .map((p) => ({ ...p, role: "prescripteur" })),
+    );
 
     if (ct) {
       const cl = await supabase
@@ -245,7 +253,9 @@ function ContratDetail() {
   }
 
   async function recalc() {
-    const { error } = await supabase.rpc("recalculer_echeances_contrat", { _contrat_id: id } as never);
+    const { error } = await supabase.rpc("recalculer_echeances_contrat", {
+      _contrat_id: id,
+    } as never);
     if (error) return setErr(error.message);
     await load();
   }
@@ -303,12 +313,18 @@ function ContratDetail() {
           />
         )}
         {canEdit && (
-          <button onClick={recalc} className="rounded-full border border-white/30 px-3 py-1.5 text-xs text-white hover:bg-white/10">
+          <button
+            onClick={recalc}
+            className="rounded-full border border-white/30 px-3 py-1.5 text-xs text-white hover:bg-white/10"
+          >
             Recalculer
           </button>
         )}
         {canEdit && role === "admin" && (
-          <button onClick={del} className="text-xs text-red-300 underline underline-offset-4 hover:text-red-200">
+          <button
+            onClick={del}
+            className="text-xs text-red-300 underline underline-offset-4 hover:text-red-200"
+          >
             Supprimer
           </button>
         )}
@@ -371,14 +387,21 @@ function ContratDetail() {
       {mode === "a_venir" && (
         <div className="crm-card p-6 text-sm text-ink-muted">
           <p className="font-serif text-lg text-ink">{ongletAVenir}</p>
-          <p className="mt-2">Onglet pas encore construit — pas de donnée propre à afficher pour l'instant.</p>
+          <p className="mt-2">
+            Onglet pas encore construit — pas de donnée propre à afficher pour l'instant.
+          </p>
         </div>
       )}
 
       {mode === "synthese" && (
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-4">
-            <StatCard label="Prime TTC actuelle" value={formatEuro(c.prime_annuelle)} icon={IconFileText} accent />
+            <StatCard
+              label="Prime TTC actuelle"
+              value={formatEuro(c.prime_annuelle)}
+              icon={IconFileText}
+              accent
+            />
             <StatCard label="Fractionnement" value={c.fractionnement} />
             <StatCard
               label="Date d'effet"
@@ -393,8 +416,9 @@ function ContratDetail() {
                 <div>
                   <h3 className="font-serif text-lg">Contrat validé par la compagnie</h3>
                   <p className="text-xs text-ink-muted">
-                    Les données contractuelles sont verrouillées. Toute correction passe par une action explicite et
-                    tracée (motif obligatoire, avant/après journalisé), réservée à un administrateur.
+                    Les données contractuelles sont verrouillées. Toute correction passe par une
+                    action explicite et tracée (motif obligatoire, avant/après journalisé), réservée
+                    à un administrateur.
                   </p>
                 </div>
                 {role === "admin" && !enCorrection && (
@@ -509,7 +533,6 @@ function ContratDetail() {
               economie_cout_delegue: c.economie_cout_delegue,
             }}
           />
-
         </div>
       )}
 
@@ -532,7 +555,9 @@ function ContratDetail() {
               <div>
                 <p className="text-xs text-ink-muted">Date de naissance</p>
                 <p className="font-medium text-ink">
-                  {client.date_naissance ? new Date(client.date_naissance).toLocaleDateString("fr-FR") : "—"}
+                  {client.date_naissance
+                    ? new Date(client.date_naissance).toLocaleDateString("fr-FR")
+                    : "—"}
                 </p>
               </div>
               <div>
@@ -546,410 +571,489 @@ function ContratDetail() {
             <p className="text-sm text-ink-muted">Aucun client rattaché.</p>
           )}
           <p className="text-xs text-ink-muted">
-            Cet onglet reste à construire pour les contrats à plusieurs assurés — un seul assuré (le client
-            titulaire) est affiché pour l'instant.
+            Cet onglet reste à construire pour les contrats à plusieurs assurés — un seul assuré (le
+            client titulaire) est affiché pour l'instant.
           </p>
         </section>
       )}
 
       {mode === "modifier" && (
         <div className="space-y-6">
-      <section className="crm-card grid gap-4 p-5 md:grid-cols-3">
-        <F label="Type de contrat" wide>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={c.is_emprunteur}
-              disabled={!editable}
-              onChange={(e) => setC({ ...c, is_emprunteur: e.target.checked })}
-            />
-            Assurance emprunteur
-          </label>
-        </F>
+          <section className="crm-card grid gap-4 p-5 md:grid-cols-3">
+            <F label="Type de contrat" wide>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={c.is_emprunteur}
+                  disabled={!editable}
+                  onChange={(e) => setC({ ...c, is_emprunteur: e.target.checked })}
+                />
+                Assurance emprunteur
+              </label>
+            </F>
 
-        <div className="md:col-span-2 grid gap-4 md:grid-cols-2">
-          <CompagnieProduitPicker
-            branche={c.is_emprunteur ? "emprunteur" : null}
-            compagnieId={c.compagnie_id}
-            produitId={c.produit_id}
-            disabled={!editable}
-            onChange={(sel) =>
-              setC({
-                ...c,
-                compagnie_id: sel.compagnie_id,
-                produit_id: sel.produit_id,
-                assureur: sel.compagnie_nom ?? c.assureur,
-                produit: sel.produit_nom ?? c.produit,
-              })
-            }
-          />
-        </div>
-        <F label="Assureur (libellé enregistré)">
-          <input value={c.assureur} readOnly className={`${inp} bg-background/60`} />
-        </F>
-        <F label="Nom du produit (libellé enregistré)">
-          <input value={c.produit} readOnly className={`${inp} bg-background/60`} />
-        </F>
-        {!c.produit_id && (
-          <p className="md:col-span-3 rounded-md bg-amber-50 p-2 text-xs text-amber-800">
-            Produit non rattaché au référentiel — à compléter.
-          </p>
-        )}
+            <div className="md:col-span-2 grid gap-4 md:grid-cols-2">
+              <CompagnieProduitPicker
+                branche={c.is_emprunteur ? "emprunteur" : null}
+                compagnieId={c.compagnie_id}
+                produitId={c.produit_id}
+                disabled={!editable}
+                onChange={(sel) =>
+                  setC({
+                    ...c,
+                    compagnie_id: sel.compagnie_id,
+                    produit_id: sel.produit_id,
+                    assureur: sel.compagnie_nom ?? c.assureur,
+                    produit: sel.produit_nom ?? c.produit,
+                  })
+                }
+              />
+            </div>
+            <F label="Assureur (libellé enregistré)">
+              <input value={c.assureur} readOnly className={`${inp} bg-background/60`} />
+            </F>
+            <F label="Nom du produit (libellé enregistré)">
+              <input value={c.produit} readOnly className={`${inp} bg-background/60`} />
+            </F>
+            {!c.produit_id && (
+              <p className="md:col-span-3 rounded-md bg-amber-50 p-2 text-xs text-amber-800">
+                Produit non rattaché au référentiel — à compléter.
+              </p>
+            )}
 
-        <F label="Numéro contrat">
-          <input value={c.numero ?? ""} onChange={(e) => setC({ ...c, numero: e.target.value })} readOnly={!editable} className={inp} />
-        </F>
-        <F label="Date d'effet">
-          <input type="date" value={c.date_effet ?? ""} onChange={(e) => setC({ ...c, date_effet: e.target.value || null })} readOnly={!editable} className={inp} />
-        </F>
-        <F label="Durée (mois)">
-          <input
-            type="number"
-            value={c.duree_mois ?? ""}
-            onChange={(e) => setC({ ...c, duree_mois: e.target.value ? Number(e.target.value) : null })}
-            readOnly={!editable}
-            className={inp}
-          />
-        </F>
-        <F label="Statut">
-          <select value={c.statut} onChange={(e) => setC({ ...c, statut: e.target.value })} disabled={!editable} className={inp}>
-            <option value="en_cours">En cours</option>
-            <option value="propose">Proposé</option>
-            <option value="signe">Signé</option>
-            <option value="contrat_valide">Validé par la compagnie</option>
-            <option value="actif">Actif au portefeuille</option>
-            <option value="resilie">Résilié</option>
-            <option value="annule">Annulé</option>
-          </select>
-        </F>
-      </section>
+            <F label="Numéro contrat">
+              <input
+                value={c.numero ?? ""}
+                onChange={(e) => setC({ ...c, numero: e.target.value })}
+                readOnly={!editable}
+                className={inp}
+              />
+            </F>
+            <F label="Date d'effet">
+              <input
+                type="date"
+                value={c.date_effet ?? ""}
+                onChange={(e) => setC({ ...c, date_effet: e.target.value || null })}
+                readOnly={!editable}
+                className={inp}
+              />
+            </F>
+            <F label="Durée (mois)">
+              <input
+                type="number"
+                value={c.duree_mois ?? ""}
+                onChange={(e) =>
+                  setC({ ...c, duree_mois: e.target.value ? Number(e.target.value) : null })
+                }
+                readOnly={!editable}
+                className={inp}
+              />
+            </F>
+            <F label="Statut">
+              <select
+                value={c.statut}
+                onChange={(e) => setC({ ...c, statut: e.target.value })}
+                disabled={!editable}
+                className={inp}
+              >
+                <option value="en_cours">En cours</option>
+                <option value="propose">Proposé</option>
+                <option value="signe">Signé</option>
+                <option value="contrat_valide">Validé par la compagnie</option>
+                <option value="actif">Actif au portefeuille</option>
+                <option value="resilie">Résilié</option>
+                <option value="annule">Annulé</option>
+              </select>
+            </F>
+          </section>
 
-      <section className="crm-card grid gap-4 p-5 md:grid-cols-3">
-        <div className="md:col-span-3">
-          <h3 className="font-serif text-lg">Conseil dans la durée</h3>
-          <p className="text-xs text-ink-muted">
-            Le point de suivi périodique est envoyé automatiquement au client dès que la date est dépassée
-            (regroupé avec ses autres contrats actifs).
-          </p>
-        </div>
-        <F label="Prochain point de suivi">
-          <input value={c.prochain_suivi_le ?? "—"} readOnly className={inp} />
-        </F>
-        <F label="Dernier point de suivi">
-          <input value={c.dernier_suivi_le ?? "—"} readOnly className={inp} />
-        </F>
-        <F label="Recommandation personnalisée fournie">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={Boolean(c.recommandation_personnalisee)}
-              onChange={(e) => setC({ ...c, recommandation_personnalisee: e.target.checked })}
-              disabled={!editable}
-            />
-            <span className="text-ink-muted">Ramène le suivi épargne/retraite à 2 ans</span>
-          </label>
-        </F>
-      </section>
+          <section className="crm-card grid gap-4 p-5 md:grid-cols-3">
+            <div className="md:col-span-3">
+              <h3 className="font-serif text-lg">Conseil dans la durée</h3>
+              <p className="text-xs text-ink-muted">
+                Le point de suivi périodique est envoyé automatiquement au client dès que la date
+                est dépassée (regroupé avec ses autres contrats actifs).
+              </p>
+            </div>
+            <F label="Prochain point de suivi">
+              <input value={c.prochain_suivi_le ?? "—"} readOnly className={inp} />
+            </F>
+            <F label="Dernier point de suivi">
+              <input value={c.dernier_suivi_le ?? "—"} readOnly className={inp} />
+            </F>
+            <F label="Recommandation personnalisée fournie">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={Boolean(c.recommandation_personnalisee)}
+                  onChange={(e) => setC({ ...c, recommandation_personnalisee: e.target.checked })}
+                  disabled={!editable}
+                />
+                <span className="text-ink-muted">Ramène le suivi épargne/retraite à 2 ans</span>
+              </label>
+            </F>
+          </section>
 
-      {editable && !verrouille && (
-        <div className="flex justify-end">
-          <button
-            onClick={() => save()}
-            disabled={saving}
-            className="rounded-full bg-[#0A192F] px-5 py-2 text-sm font-medium text-white disabled:opacity-60"
-          >
-            {saving ? "Enregistrement…" : "Enregistrer et recalculer"}
-          </button>
-        </div>
-      )}
+          {editable && !verrouille && (
+            <div className="flex justify-end">
+              <button
+                onClick={() => save()}
+                disabled={saving}
+                className="rounded-full bg-[#0A192F] px-5 py-2 text-sm font-medium text-white disabled:opacity-60"
+              >
+                {saving ? "Enregistrement…" : "Enregistrer et recalculer"}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
       {mode === "frais" && (
         <div className="space-y-6">
-      {c.is_emprunteur && (
-        <section className="crm-card grid gap-4 p-5 md:grid-cols-3">
-          <div className="md:col-span-3">
-            <h3 className="font-serif text-lg">Paramètres du prêt et de l'assurance</h3>
-            <p className="text-xs text-ink-muted">
-              Ces valeurs alimentent le calcul de la prime et de la commission pour chaque année.
-            </p>
-          </div>
-          <F label="Capital initial (€)">
-            <input
-              type="number"
-              value={c.capital_initial ?? ""}
-              onChange={(e) => setC({ ...c, capital_initial: e.target.value ? Number(e.target.value) : null })}
-              readOnly={!editable}
-              className={inp}
-            />
-          </F>
-          <F label="Taux du prêt (déc. ex : 0.032)">
-            <input
-              type="number"
-              step="0.0001"
-              value={c.taux_pret ?? ""}
-              onChange={(e) => setC({ ...c, taux_pret: e.target.value ? Number(e.target.value) : null })}
-              readOnly={!editable}
-              className={inp}
-            />
-          </F>
-          <F label="Taux assurance annuel (déc. ex : 0.0032)">
-            <input
-              type="number"
-              step="0.0001"
-              value={c.taux_assurance_annuel ?? ""}
-              onChange={(e) => setC({ ...c, taux_assurance_annuel: e.target.value ? Number(e.target.value) : null })}
-              readOnly={!editable}
-              className={inp}
-            />
-          </F>
-          <F label="Quotité assurée (%)">
-            <input
-              type="number"
-              step="1"
-              value={c.quotite ?? 100}
-              onChange={(e) => setC({ ...c, quotite: e.target.value ? Number(e.target.value) : null })}
-              readOnly={!editable}
-              className={inp}
-            />
-          </F>
-          <F label="Assiette de calcul">
-            <select
-              value={c.assiette}
-              onChange={(e) => setC({ ...c, assiette: e.target.value as Contrat["assiette"] })}
-              disabled={!editable}
-              className={inp}
-            >
-              <option value="capital_initial">Capital initial (bancaire)</option>
-              <option value="capital_restant_du">Capital restant dû (délégation)</option>
-            </select>
-          </F>
-
-          <div className="md:col-span-3 rounded-lg border border-line bg-surface-elevated p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h4 className="text-sm font-semibold text-ink">Économie réalisée pour le client</h4>
+          {c.is_emprunteur && (
+            <section className="crm-card grid gap-4 p-5 md:grid-cols-3">
+              <div className="md:col-span-3">
+                <h3 className="font-serif text-lg">Paramètres du prêt et de l'assurance</h3>
                 <p className="text-xs text-ink-muted">
-                  Figée automatiquement au passage du contrat au statut « Signé » (contrat groupe bancaire vs
-                  délégation).
+                  Ces valeurs alimentent le calcul de la prime et de la commission pour chaque
+                  année.
                 </p>
               </div>
-              {editable && c.statut === "signe" && (
-                <button
-                  onClick={() => save(true)}
-                  disabled={saving}
-                  className="rounded-md border border-line px-3 py-1.5 text-xs disabled:opacity-60"
+              <F label="Capital initial (€)">
+                <input
+                  type="number"
+                  value={c.capital_initial ?? ""}
+                  onChange={(e) =>
+                    setC({ ...c, capital_initial: e.target.value ? Number(e.target.value) : null })
+                  }
+                  readOnly={!editable}
+                  className={inp}
+                />
+              </F>
+              <F label="Taux du prêt (déc. ex : 0.032)">
+                <input
+                  type="number"
+                  step="0.0001"
+                  value={c.taux_pret ?? ""}
+                  onChange={(e) =>
+                    setC({ ...c, taux_pret: e.target.value ? Number(e.target.value) : null })
+                  }
+                  readOnly={!editable}
+                  className={inp}
+                />
+              </F>
+              <F label="Taux assurance annuel (déc. ex : 0.0032)">
+                <input
+                  type="number"
+                  step="0.0001"
+                  value={c.taux_assurance_annuel ?? ""}
+                  onChange={(e) =>
+                    setC({
+                      ...c,
+                      taux_assurance_annuel: e.target.value ? Number(e.target.value) : null,
+                    })
+                  }
+                  readOnly={!editable}
+                  className={inp}
+                />
+              </F>
+              <F label="Quotité assurée (%)">
+                <input
+                  type="number"
+                  step="1"
+                  value={c.quotite ?? 100}
+                  onChange={(e) =>
+                    setC({ ...c, quotite: e.target.value ? Number(e.target.value) : null })
+                  }
+                  readOnly={!editable}
+                  className={inp}
+                />
+              </F>
+              <F label="Assiette de calcul">
+                <select
+                  value={c.assiette}
+                  onChange={(e) => setC({ ...c, assiette: e.target.value as Contrat["assiette"] })}
+                  disabled={!editable}
+                  className={inp}
                 >
-                  Recalculer l'économie
-                </button>
-              )}
-            </div>
-            {c.economie_realisee === null ? (
-              <p className="mt-3 text-xs text-ink-muted">
-                {c.statut === "signe"
-                  ? "Calcul impossible : renseignez le capital initial, la durée et la date de naissance du client."
-                  : "Aucune économie figée — le contrat n'est pas encore signé."}
-              </p>
-            ) : (
-              <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                <Stat label="Coût contrat bancaire" value={formatEuro(c.economie_cout_groupe)} />
-                <Stat label="Coût contrat délégué" value={formatEuro(c.economie_cout_delegue)} />
-                <Stat label="Économie réalisée" value={formatEuro(c.economie_realisee)} accent />
-                {c.economie_calculee_le && (
-                  <p className="sm:col-span-3 text-xs text-ink-muted">
-                    Calculée le {new Date(c.economie_calculee_le).toLocaleDateString("fr-FR")}
+                  <option value="capital_initial">Capital initial (bancaire)</option>
+                  <option value="capital_restant_du">Capital restant dû (délégation)</option>
+                </select>
+              </F>
+
+              <div className="md:col-span-3 rounded-lg border border-line bg-surface-elevated p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-sm font-semibold text-ink">
+                      Économie réalisée pour le client
+                    </h4>
+                    <p className="text-xs text-ink-muted">
+                      Figée automatiquement au passage du contrat au statut « Signé » (contrat
+                      groupe bancaire vs délégation).
+                    </p>
+                  </div>
+                  {editable && c.statut === "signe" && (
+                    <button
+                      onClick={() => save(true)}
+                      disabled={saving}
+                      className="rounded-md border border-line px-3 py-1.5 text-xs disabled:opacity-60"
+                    >
+                      Recalculer l'économie
+                    </button>
+                  )}
+                </div>
+                {c.economie_realisee === null ? (
+                  <p className="mt-3 text-xs text-ink-muted">
+                    {c.statut === "signe"
+                      ? "Calcul impossible : renseignez le capital initial, la durée et la date de naissance du client."
+                      : "Aucune économie figée — le contrat n'est pas encore signé."}
                   </p>
+                ) : (
+                  <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                    <Stat
+                      label="Coût contrat bancaire"
+                      value={formatEuro(c.economie_cout_groupe)}
+                    />
+                    <Stat
+                      label="Coût contrat délégué"
+                      value={formatEuro(c.economie_cout_delegue)}
+                    />
+                    <Stat
+                      label="Économie réalisée"
+                      value={formatEuro(c.economie_realisee)}
+                      accent
+                    />
+                    {c.economie_calculee_le && (
+                      <p className="sm:col-span-3 text-xs text-ink-muted">
+                        Calculée le {new Date(c.economie_calculee_le).toLocaleDateString("fr-FR")}
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
-            )}
-          </div>
-        </section>
-      )}
+            </section>
+          )}
 
-      {canEdit && (
-      <section className="crm-card grid gap-4 p-5 md:grid-cols-3">
-        <div className="md:col-span-3">
-          <h3 className="font-serif text-lg">Commissionnement</h3>
-          <p className="text-xs text-ink-muted">
-            La part cabinet calculée sur la prime utilise désormais la prime nette. La prime totale reste conservée
-            séparément pour le suivi du contrat. Les rétrocessions mandataire/prescripteur suivent les règles configurées.
-          </p>
-        </div>
-        <F label="Commission cabinet (part de la prime, ex : 0.15 pour 15 %)">
-          <input
-            type="number"
-            step="0.0001"
-            value={c.commission_cabinet_taux ?? ""}
-            onChange={(e) => setC({ ...c, commission_cabinet_taux: e.target.value ? Number(e.target.value) : null })}
-            readOnly={!editable}
-            className={inp}
-          />
-        </F>
-        <F label="Mode de commissionnement">
-          <select
-            value={c.mode_commissionnement}
-            onChange={(e) => setC({ ...c, mode_commissionnement: e.target.value as Contrat["mode_commissionnement"] })}
-            disabled={!editable}
-            className={inp}
-          >
-            <option value="lineaire">Linéaire (chaque année)</option>
-            <option value="degressif">Dégressif (emprunteur)</option>
-            <option value="precompte">Précompte (une fois)</option>
-          </select>
-        </F>
-        <F
-          label={
-            c.is_emprunteur
-              ? "Prime totale annuelle assureur (référence emprunteur)"
-              : "Prime totale annuelle"
-          }
-        >
-          <input
-            type="number"
-            step="0.01"
-            value={c.prime_annuelle ?? ""}
-            onChange={(e) => setC({ ...c, prime_annuelle: e.target.value ? Number(e.target.value) : null })}
-            readOnly={!editable}
-            className={inp}
-          />
-        </F>
-        <F label="Prime nette annuelle (assiette des commissions)">
-          <input
-            type="number"
-            step="0.01"
-            value={c.prime_nette_annuelle ?? ""}
-            onChange={(e) => setC({ ...c, prime_nette_annuelle: e.target.value ? Number(e.target.value) : null })}
-            readOnly={!editable}
-            className={inp}
-          />
-        </F>
-        <F label="Mandataire">
-          <select
-            value={c.mandataire_id ?? ""}
-            onChange={(e) => setC({ ...c, mandataire_id: e.target.value || null })}
-            disabled={role !== "admin" || !editable}
-            className={inp}
-          >
-            <option value="">— Aucun —</option>
-            {mandataires.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.full_name ?? m.email}
-              </option>
-            ))}
-          </select>
-        </F>
-        <F label="Prescripteur">
-          <select
-            value={c.prescripteur_id ?? ""}
-            onChange={(e) => setC({ ...c, prescripteur_id: e.target.value || null })}
-            disabled={role !== "admin" || !editable}
-            className={inp}
-          >
-            <option value="">— Aucun —</option>
-            {prescripteurs.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.full_name ?? m.email}
-              </option>
-            ))}
-          </select>
-        </F>
-        <F label="Notes">
-          <textarea
-            value={c.notes ?? ""}
-            onChange={(e) => setC({ ...c, notes: e.target.value })}
-            readOnly={!editable}
-            rows={2}
-            className={inp}
-          />
-        </F>
-      </section>
-      )}
+          {canEdit && (
+            <section className="crm-card grid gap-4 p-5 md:grid-cols-3">
+              <div className="md:col-span-3">
+                <h3 className="font-serif text-lg">Commissionnement</h3>
+                <p className="text-xs text-ink-muted">
+                  La part cabinet calculée sur la prime utilise désormais la prime nette. La prime
+                  totale reste conservée séparément pour le suivi du contrat. Les rétrocessions
+                  mandataire/prescripteur suivent les règles configurées.
+                </p>
+              </div>
+              <F label="Commission cabinet (part de la prime, ex : 0.15 pour 15 %)">
+                <input
+                  type="number"
+                  step="0.0001"
+                  value={c.commission_cabinet_taux ?? ""}
+                  onChange={(e) =>
+                    setC({
+                      ...c,
+                      commission_cabinet_taux: e.target.value ? Number(e.target.value) : null,
+                    })
+                  }
+                  readOnly={!editable}
+                  className={inp}
+                />
+              </F>
+              <F label="Mode de commissionnement">
+                <select
+                  value={c.mode_commissionnement}
+                  onChange={(e) =>
+                    setC({
+                      ...c,
+                      mode_commissionnement: e.target.value as Contrat["mode_commissionnement"],
+                    })
+                  }
+                  disabled={!editable}
+                  className={inp}
+                >
+                  <option value="lineaire">Linéaire (chaque année)</option>
+                  <option value="degressif">Dégressif (emprunteur)</option>
+                  <option value="precompte">Précompte (une fois)</option>
+                </select>
+              </F>
+              <F
+                label={
+                  c.is_emprunteur
+                    ? "Prime totale annuelle assureur (référence emprunteur)"
+                    : "Prime totale annuelle"
+                }
+              >
+                <input
+                  type="number"
+                  step="0.01"
+                  value={c.prime_annuelle ?? ""}
+                  onChange={(e) =>
+                    setC({ ...c, prime_annuelle: e.target.value ? Number(e.target.value) : null })
+                  }
+                  readOnly={!editable}
+                  className={inp}
+                />
+              </F>
+              <F label="Prime nette annuelle (assiette des commissions)">
+                <input
+                  type="number"
+                  step="0.01"
+                  value={c.prime_nette_annuelle ?? ""}
+                  onChange={(e) =>
+                    setC({
+                      ...c,
+                      prime_nette_annuelle: e.target.value ? Number(e.target.value) : null,
+                    })
+                  }
+                  readOnly={!editable}
+                  className={inp}
+                />
+              </F>
+              <F label="Mandataire">
+                <select
+                  value={c.mandataire_id ?? ""}
+                  onChange={(e) => setC({ ...c, mandataire_id: e.target.value || null })}
+                  disabled={role !== "admin" || !editable}
+                  className={inp}
+                >
+                  <option value="">— Aucun —</option>
+                  {mandataires.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.full_name ?? m.email}
+                    </option>
+                  ))}
+                </select>
+              </F>
+              <F label="Prescripteur">
+                <select
+                  value={c.prescripteur_id ?? ""}
+                  onChange={(e) => setC({ ...c, prescripteur_id: e.target.value || null })}
+                  disabled={role !== "admin" || !editable}
+                  className={inp}
+                >
+                  <option value="">— Aucun —</option>
+                  {prescripteurs.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.full_name ?? m.email}
+                    </option>
+                  ))}
+                </select>
+              </F>
+              <F label="Notes">
+                <textarea
+                  value={c.notes ?? ""}
+                  onChange={(e) => setC({ ...c, notes: e.target.value })}
+                  readOnly={!editable}
+                  rows={2}
+                  className={inp}
+                />
+              </F>
+            </section>
+          )}
 
-      {editable && !verrouille && (
-        <div className="flex justify-end">
-          <button
-            onClick={() => save()}
-            disabled={saving}
-            className="rounded-full bg-[#0A192F] px-5 py-2 text-sm font-medium text-white disabled:opacity-60"
-          >
-            {saving ? "Enregistrement…" : "Enregistrer et recalculer"}
-          </button>
-        </div>
-      )}
+          {editable && !verrouille && (
+            <div className="flex justify-end">
+              <button
+                onClick={() => save()}
+                disabled={saving}
+                className="rounded-full bg-[#0A192F] px-5 py-2 text-sm font-medium text-white disabled:opacity-60"
+              >
+                {saving ? "Enregistrement…" : "Enregistrer et recalculer"}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
       {mode === "echeances" && (
-      <section className="space-y-3 rounded-lg border border-line bg-surface p-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-serif text-lg">
-              {sorti ? "Historique des appels de cotisation" : "Échéances calculées"}
-            </h3>
-            <p className="text-xs text-ink-muted">
-              {sorti
-                ? "Contrat sorti du portefeuille : les appels de cotisation et commissions déjà émis avant la résiliation sont conservés en l'état, sans recalcul."
-                : "Prime totale et commissions année par année. Les commissions sont calculées sur la prime nette lorsque la règle est assise sur la prime."}
-            </p>
+        <section className="space-y-3 rounded-lg border border-line bg-surface p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-serif text-lg">
+                {sorti ? "Historique des appels de cotisation" : "Échéances calculées"}
+              </h3>
+              <p className="text-xs text-ink-muted">
+                {sorti
+                  ? "Contrat sorti du portefeuille : les appels de cotisation et commissions déjà émis avant la résiliation sont conservés en l'état, sans recalcul."
+                  : "Prime totale et commissions année par année. Les commissions sont calculées sur la prime nette lorsque la règle est assise sur la prime."}
+              </p>
+            </div>
+            <div className="text-right text-xs text-ink-muted">
+              {ech.length} année{ech.length > 1 ? "s" : ""} · Cabinet total :{" "}
+              {formatEuro(totaux.cabinet)}
+            </div>
           </div>
-          <div className="text-right text-xs text-ink-muted">
-            {ech.length} année{ech.length > 1 ? "s" : ""} · Cabinet total : {formatEuro(totaux.cabinet)}
-          </div>
-        </div>
 
-        {ech.length === 0 ? (
-          <p className="text-sm text-ink-muted">
-            Renseignez la date d'effet et la durée pour générer les échéances.
-          </p>
-        ) : (
-          <div className="overflow-x-auto rounded-md border border-line bg-background">
-            <table className="w-full text-sm">
-              <thead className="bg-surface text-xs uppercase tracking-wide text-ink-muted">
-                <tr>
-                  <th className="px-3 py-2 text-left">Année</th>
-                  <th className="px-3 py-2 text-left">Période</th>
-                  <th className="px-3 py-2 text-right">CRD début</th>
-                  <th className="px-3 py-2 text-right">Prime totale</th>
-                  <th className="px-3 py-2 text-right">Cabinet</th>
-                  {role === "admin" && <th className="px-3 py-2 text-right">Mandataire</th>}
-                  {role === "admin" && <th className="px-3 py-2 text-right">Prescripteur</th>}
-                  <th className="px-3 py-2 text-left">Statut</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line">
-                {ech.map((e) => (
-                  <tr key={e.id}>
-                    <td className="px-3 py-2">{e.annee}</td>
-                    <td className="px-3 py-2 text-xs text-ink-muted">
-                      {new Date(e.date_debut_periode).toLocaleDateString("fr-FR")} → {" "}
-                      {new Date(e.date_fin_periode).toLocaleDateString("fr-FR")}
-                    </td>
-                    <td className="px-3 py-2 text-right">{formatEuro(e.capital_restant_du_debut)}</td>
-                    <td className="px-3 py-2 text-right font-medium">{formatEuro(e.prime_periode)}</td>
-                    <td className="px-3 py-2 text-right">{formatEuro(e.commission_cabinet_periode)}</td>
-                    {role === "admin" && <td className="px-3 py-2 text-right">{formatEuro(e.commission_mandataire_periode)}</td>}
-                    {role === "admin" && <td className="px-3 py-2 text-right">{formatEuro(e.commission_prescripteur_periode)}</td>}
-                    <td className="px-3 py-2 text-xs">
-                      <span className="rounded-full bg-surface px-2 py-0.5">{e.statut}</span>
-                    </td>
+          {ech.length === 0 ? (
+            <p className="text-sm text-ink-muted">
+              Renseignez la date d'effet et la durée pour générer les échéances.
+            </p>
+          ) : (
+            <div className="overflow-x-auto rounded-md border border-line bg-background">
+              <table className="w-full text-sm">
+                <thead className="bg-surface text-xs uppercase tracking-wide text-ink-muted">
+                  <tr>
+                    <th className="px-3 py-2 text-left">Année</th>
+                    <th className="px-3 py-2 text-left">Période</th>
+                    <th className="px-3 py-2 text-right">CRD début</th>
+                    <th className="px-3 py-2 text-right">Prime totale</th>
+                    <th className="px-3 py-2 text-right">Cabinet</th>
+                    {role === "admin" && <th className="px-3 py-2 text-right">Mandataire</th>}
+                    {role === "admin" && <th className="px-3 py-2 text-right">Prescripteur</th>}
+                    <th className="px-3 py-2 text-left">Statut</th>
                   </tr>
-                ))}
-                <tr className="bg-surface font-medium">
-                  <td className="px-3 py-2" colSpan={3}>
-                    Total
-                  </td>
-                  <td className="px-3 py-2 text-right">{formatEuro(totaux.prime)}</td>
-                  <td className="px-3 py-2 text-right">{formatEuro(totaux.cabinet)}</td>
-                  {role === "admin" && <td className="px-3 py-2 text-right">{formatEuro(totaux.mand)}</td>}
-                  {role === "admin" && <td className="px-3 py-2 text-right">{formatEuro(totaux.presc)}</td>}
-                  <td />
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+                </thead>
+                <tbody className="divide-y divide-line">
+                  {ech.map((e) => (
+                    <tr key={e.id}>
+                      <td className="px-3 py-2">{e.annee}</td>
+                      <td className="px-3 py-2 text-xs text-ink-muted">
+                        {new Date(e.date_debut_periode).toLocaleDateString("fr-FR")} →{" "}
+                        {new Date(e.date_fin_periode).toLocaleDateString("fr-FR")}
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        {formatEuro(e.capital_restant_du_debut)}
+                      </td>
+                      <td className="px-3 py-2 text-right font-medium">
+                        {formatEuro(e.prime_periode)}
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        {formatEuro(e.commission_cabinet_periode)}
+                      </td>
+                      {role === "admin" && (
+                        <td className="px-3 py-2 text-right">
+                          {formatEuro(e.commission_mandataire_periode)}
+                        </td>
+                      )}
+                      {role === "admin" && (
+                        <td className="px-3 py-2 text-right">
+                          {formatEuro(e.commission_prescripteur_periode)}
+                        </td>
+                      )}
+                      <td className="px-3 py-2 text-xs">
+                        <span className="rounded-full bg-surface px-2 py-0.5">{e.statut}</span>
+                      </td>
+                    </tr>
+                  ))}
+                  <tr className="bg-surface font-medium">
+                    <td className="px-3 py-2" colSpan={3}>
+                      Total
+                    </td>
+                    <td className="px-3 py-2 text-right">{formatEuro(totaux.prime)}</td>
+                    <td className="px-3 py-2 text-right">{formatEuro(totaux.cabinet)}</td>
+                    {role === "admin" && (
+                      <td className="px-3 py-2 text-right">{formatEuro(totaux.mand)}</td>
+                    )}
+                    {role === "admin" && (
+                      <td className="px-3 py-2 text-right">{formatEuro(totaux.presc)}</td>
+                    )}
+                    <td />
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       )}
 
       {mode === "fichiers" && user && (
@@ -968,7 +1072,15 @@ function ContratDetail() {
 
 const inp = "w-full rounded-md border border-line bg-background px-3 py-2 text-sm";
 
-function F({ label, wide, children }: { label: string; wide?: boolean; children: React.ReactNode }) {
+function F({
+  label,
+  wide,
+  children,
+}: {
+  label: string;
+  wide?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <div className={wide ? "md:col-span-3" : ""}>
       <label className="mb-1 block text-xs font-medium text-ink-muted">{label}</label>
@@ -1002,16 +1114,24 @@ function ancienneteLabel(dateEffet: string | null): string {
 
 function formatEuro(n: number | null | undefined) {
   if (n === null || n === undefined) return "—";
-  return new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 2 }).format(
-    Number(n),
-  );
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 2,
+  }).format(Number(n));
 }
 
 function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
     <div className={"crm-card p-3 " + (accent ? "crm-card-accent" : "")}>
       <p className="crm-eyebrow">{label}</p>
-      <p className={"crm-figure mt-1 text-lg " + (accent ? "text-[color:var(--crm-gold-muted)]" : "text-ink")}>{value}</p>
+      <p
+        className={
+          "crm-figure mt-1 text-lg " + (accent ? "text-[color:var(--crm-gold-muted)]" : "text-ink")
+        }
+      >
+        {value}
+      </p>
     </div>
   );
 }

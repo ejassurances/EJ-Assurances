@@ -29,10 +29,17 @@ export function RemunerationContratCard({
     (async () => {
       let type: string | null = null;
       if (dossierId) {
-        const { data } = await supabase.from("dossiers").select("type_assurance").eq("id", dossierId).maybeSingle();
+        const { data } = await supabase
+          .from("dossiers")
+          .select("type_assurance")
+          .eq("id", dossierId)
+          .maybeSingle();
         type = (data?.type_assurance as string | null) ?? null;
       }
-      const branche = brancheContrat({ is_emprunteur: contrat.is_emprunteur, type_assurance: type });
+      const branche = brancheContrat({
+        is_emprunteur: contrat.is_emprunteur,
+        type_assurance: type,
+      });
       const r = await calculerRemuneration(supabase, contrat, branche);
       if (annule) return;
       setEtat(r);
@@ -68,7 +75,8 @@ export function RemunerationContratCard({
             <p className="text-lg font-medium text-ink">
               {fmtEuros(commission.total)}{" "}
               <span className="text-sm text-muted-foreground">
-                ({commission.mode === "precompte" ? "précompte" : "linéaire"}, {commission.lignes.length} an(s))
+                ({commission.mode === "precompte" ? "précompte" : "linéaire"},{" "}
+                {commission.lignes.length} an(s))
               </span>
             </p>
             <ul className="max-h-40 overflow-auto text-xs text-muted-foreground">
@@ -80,7 +88,9 @@ export function RemunerationContratCard({
             </ul>
           </>
         ) : (
-          <p className="text-sm font-medium text-destructive">Non calculable : {commission.motif}</p>
+          <p className="text-sm font-medium text-destructive">
+            Non calculable : {commission.motif}
+          </p>
         )}
         <p className="text-xs text-muted-foreground">
           Prévisionnel uniquement — la commission versée est suivie à part. {sauvegarde ?? ""}

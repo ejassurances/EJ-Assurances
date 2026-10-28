@@ -34,7 +34,9 @@ export function validerBaremeForm(f: Form): string | null {
   if (f.date_fin && f.date_fin < f.date_effet) return "La date de fin précède la date d'effet.";
   const t1 = Number(f.taux_annee_1);
   if (f.taux_annee_1 === "" || !Number.isFinite(t1) || t1 < 0 || t1 > 100)
-    return f.mode === "lineaire" ? "Taux annuel obligatoire (0 à 100 %)." : "Taux année 1 obligatoire (0 à 100 %).";
+    return f.mode === "lineaire"
+      ? "Taux annuel obligatoire (0 à 100 %)."
+      : "Taux année 1 obligatoire (0 à 100 %).";
   if (f.mode === "precompte") {
     const tn = Number(f.taux_renouvellement);
     if (f.taux_renouvellement === "" || !Number.isFinite(tn) || tn < 0 || tn > 100)
@@ -44,7 +46,13 @@ export function validerBaremeForm(f: Form): string | null {
 }
 
 /** Barèmes de commission compagnie datés (linéaire / précompte), depuis la fiche compagnie. */
-export function CompagnieBaremeDate({ compagnieId, canEdit }: { compagnieId: string; canEdit: boolean }) {
+export function CompagnieBaremeDate({
+  compagnieId,
+  canEdit,
+}: {
+  compagnieId: string;
+  canEdit: boolean;
+}) {
   const db = withPendingSchema(supabase);
   const [rows, setRows] = useState<BaremeVersionneRow[]>([]);
   const [indispo, setIndispo] = useState(false);
@@ -56,7 +64,9 @@ export function CompagnieBaremeDate({ compagnieId, canEdit }: { compagnieId: str
   const load = useCallback(async () => {
     const { data, error } = await db
       .from("commission_bareme")
-      .select("id,compagnie_id,branche,produit_id,mode,taux_annee_1,taux_renouvellement,date_effet,date_fin,notes")
+      .select(
+        "id,compagnie_id,branche,produit_id,mode,taux_annee_1,taux_renouvellement,date_effet,date_fin,notes",
+      )
       .eq("compagnie_id", compagnieId)
       .not("mode", "is", null)
       .order("date_effet", { ascending: false });
@@ -83,7 +93,10 @@ export function CompagnieBaremeDate({ compagnieId, canEdit }: { compagnieId: str
     let n = 0;
     for (const c of contrats ?? []) {
       const d = (c as unknown as { dossier: { type_assurance: string | null } | null }).dossier;
-      const branche = brancheContrat({ is_emprunteur: c.is_emprunteur, type_assurance: d?.type_assurance });
+      const branche = brancheContrat({
+        is_emprunteur: c.is_emprunteur,
+        type_assurance: d?.type_assurance,
+      });
       const r = await calculerRemuneration(supabase, c, branche);
       const res = await enregistrerRemuneration(supabase, c.id, r);
       if (res.ok) n++;
@@ -115,7 +128,10 @@ export function CompagnieBaremeDate({ compagnieId, canEdit }: { compagnieId: str
       notes: form.notes.trim() || null,
     };
     const q = form.id
-      ? await db.from("commission_bareme").update(payload as never).eq("id", form.id)
+      ? await db
+          .from("commission_bareme")
+          .update(payload as never)
+          .eq("id", form.id)
       : await db.from("commission_bareme").insert(payload as never);
     if (q.error) {
       setBusy(false);
@@ -152,8 +168,9 @@ export function CompagnieBaremeDate({ compagnieId, canEdit }: { compagnieId: str
         <div>
           <h3 className="font-serif text-lg">Barèmes de commission datés</h3>
           <p className="text-xs text-ink-muted">
-            Base : prime annuelle du contrat, par année de prime. Linéaire = même taux chaque année ; précompte = taux
-            année 1 distinct des renouvellements. Les frais de distribution ne sont pas une commission.
+            Base : prime annuelle du contrat, par année de prime. Linéaire = même taux chaque année
+            ; précompte = taux année 1 distinct des renouvellements. Les frais de distribution ne
+            sont pas une commission.
           </p>
         </div>
         {canEdit && !indispo && (
@@ -168,20 +185,26 @@ export function CompagnieBaremeDate({ compagnieId, canEdit }: { compagnieId: str
 
       {indispo && (
         <p className="rounded-md border border-dashed border-line p-3 text-sm text-ink-muted">
-          En attente d'activation : les barèmes datés seront disponibles dès que la base sera relancée et la mise à jour
-          appliquée. Les commissions prévisionnelles restent « à configurer ».
+          En attente d'activation : les barèmes datés seront disponibles dès que la base sera
+          relancée et la mise à jour appliquée. Les commissions prévisionnelles restent « à
+          configurer ».
         </p>
       )}
       {err && <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{err}</p>}
       {info && <p className="rounded-md bg-muted p-3 text-sm">{info}</p>}
 
       {!indispo && rows.length === 0 && (
-        <p className="text-sm text-ink-muted">Aucun barème daté : commission prévisionnelle à configurer.</p>
+        <p className="text-sm text-ink-muted">
+          Aucun barème daté : commission prévisionnelle à configurer.
+        </p>
       )}
       {rows.length > 0 && (
         <ul className="divide-y divide-line rounded-md border border-line">
           {rows.map((r) => (
-            <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
+            <li
+              key={r.id}
+              className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm"
+            >
               <span>
                 <strong>{labelBranche(r.branche)}</strong> —{" "}
                 {r.mode === "precompte"
@@ -204,7 +227,11 @@ export function CompagnieBaremeDate({ compagnieId, canEdit }: { compagnieId: str
         <div className="grid gap-3 rounded-md border border-accent bg-background p-4 md:grid-cols-3">
           <label className="text-xs text-ink-muted">
             Branche
-            <select value={form.branche} onChange={(e) => setForm({ ...form, branche: e.target.value })} className={inp}>
+            <select
+              value={form.branche}
+              onChange={(e) => setForm({ ...form, branche: e.target.value })}
+              className={inp}
+            >
               {BRANCHES_COMMISSION.map((b) => (
                 <option key={b.value} value={b.value}>
                   {b.label}
@@ -224,7 +251,9 @@ export function CompagnieBaremeDate({ compagnieId, canEdit }: { compagnieId: str
             </select>
           </label>
           <label className="text-xs text-ink-muted">
-            {form.mode === "lineaire" ? "Taux annuel (% de la prime)" : "Taux année 1 (% de la prime)"}
+            {form.mode === "lineaire"
+              ? "Taux annuel (% de la prime)"
+              : "Taux année 1 (% de la prime)"}
             <input
               type="number"
               step="0.01"
@@ -264,12 +293,16 @@ export function CompagnieBaremeDate({ compagnieId, canEdit }: { compagnieId: str
             />
           </label>
           <p className="text-xs text-ink-muted md:col-span-3">
-            Périodicité : calcul par année de prime (prorata sur la dernière année incomplète). Barème retenu selon la
-            date d'effet du contrat.
+            Périodicité : calcul par année de prime (prorata sur la dernière année incomplète).
+            Barème retenu selon la date d'effet du contrat.
           </p>
           <label className="text-xs text-ink-muted md:col-span-3">
             Note interne
-            <input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className={inp} />
+            <input
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              className={inp}
+            />
           </label>
           <div className="flex gap-3 md:col-span-3">
             <button
@@ -279,7 +312,10 @@ export function CompagnieBaremeDate({ compagnieId, canEdit }: { compagnieId: str
             >
               {busy ? "Enregistrement…" : "Enregistrer"}
             </button>
-            <button onClick={() => setForm(null)} className="text-sm text-ink-muted underline underline-offset-4">
+            <button
+              onClick={() => setForm(null)}
+              className="text-sm text-ink-muted underline underline-offset-4"
+            >
               Annuler
             </button>
           </div>

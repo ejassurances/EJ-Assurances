@@ -113,6 +113,8 @@ type PendingDatabase = Omit<Database, "public"> & {
   };
 };
 
-export function withPendingSchema(client: SupabaseClient<Database>): SupabaseClient<PendingDatabase> {
+export function withPendingSchema(
+  client: SupabaseClient<Database>,
+): SupabaseClient<PendingDatabase> {
   return client as unknown as SupabaseClient<PendingDatabase>;
 }
