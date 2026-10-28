@@ -38,7 +38,7 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "gemini-2.5-flash",
+          model: "gemini-3.8-flash",
           temperature: 0,
           max_tokens: 1200,
           messages: [
