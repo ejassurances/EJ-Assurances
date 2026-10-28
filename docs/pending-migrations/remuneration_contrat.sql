@@ -83,7 +83,7 @@ CREATE FUNCTION public.recalculer_remuneration_contrat(p_contrat_id uuid) RETURN
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE
  c public.contrats%ROWTYPE; b public.commission_bareme%ROWTYPE;
- branche text; frais numeric; eco numeric; ecart numeric; motif text;
+ v_branche text; frais numeric; eco numeric; ecart numeric; motif text;
  statut_frais text := 'calcule'; prime numeric; taux numeric; montant numeric;
  annee integer; nb integer := 1; com_motif text; produit_prioritaire boolean;
 BEGIN
@@ -92,8 +92,8 @@ BEGIN
  IF pg_trigger_depth() = 0 AND auth.uid() IS NOT NULL AND NOT (
    (public.has_role(auth.uid(), 'admin') OR public.has_role(auth.uid(), 'mandataire'))
    AND public.can_access_client(c.client_id)) THEN RAISE EXCEPTION 'Accès refusé'; END IF;
- branche := public.branche_contrat(c.id);
- IF c.is_emprunteur OR branche = 'emprunteur' THEN
+ v_branche := public.branche_contrat(c.id);
+ IF c.is_emprunteur OR v_branche = 'emprunteur' THEN
   eco := c.economie_realisee;
   ecart := c.economie_cout_groupe - c.economie_cout_delegue;
   IF c.duree_mois IS NULL OR c.duree_mois <= 0 OR
@@ -102,20 +102,20 @@ BEGIN
      (eco IS NULL AND (ecart IS NULL OR ecart < 0)) THEN
    statut_frais := 'a_verifier'; motif := 'Économie totale absente ou incohérente';
   ELSE eco := coalesce(eco, ecart); frais := round(eco * 0.05, 2); motif := '5 % des économies totales sur la durée du prêt'; END IF;
- ELSIF branche IN ('assurance_vie','vie','epargne') THEN frais := 0; motif := 'Assurance vie : 0 €';
+ ELSIF v_branche IN ('assurance_vie','vie','epargne') THEN frais := 0; motif := 'Assurance vie : 0 €';
  ELSE frais := 20; motif := '20 € par contrat'; END IF;
  INSERT INTO public.contrat_remuneration_previsionnelle(cle,contrat_id,type,annee,statut,base,montant,motif)
  VALUES(c.id || ':frais_distribution:1',c.id,'frais_distribution',1,statut_frais,eco,frais,motif)
  ON CONFLICT(cle) DO UPDATE SET statut=excluded.statut,base=excluded.base,montant=excluded.montant,motif=excluded.motif,calcule_le=now();
 
  SELECT EXISTS(SELECT 1 FROM public.commission_bareme r WHERE r.compagnie_id=c.compagnie_id
-   AND r.branche=branche AND r.produit_id=c.produit_id AND r.mode IS NOT NULL
+   AND r.branche=v_branche AND r.produit_id=c.produit_id AND r.mode IS NOT NULL
    AND r.date_effet <= c.date_effet AND (r.date_fin IS NULL OR r.date_fin >= c.date_effet)) INTO produit_prioritaire;
- SELECT count(*) INTO nb FROM public.commission_bareme r WHERE r.compagnie_id=c.compagnie_id AND r.branche=branche
+ SELECT count(*) INTO nb FROM public.commission_bareme r WHERE r.compagnie_id=c.compagnie_id AND r.branche=v_branche
    AND r.mode IS NOT NULL AND r.date_effet <= c.date_effet AND (r.date_fin IS NULL OR r.date_fin >= c.date_effet)
    AND (CASE WHEN produit_prioritaire THEN r.produit_id=c.produit_id ELSE r.produit_id IS NULL END);
  IF nb = 1 THEN
-  SELECT * INTO b FROM public.commission_bareme r WHERE r.compagnie_id=c.compagnie_id AND r.branche=branche
+  SELECT * INTO b FROM public.commission_bareme r WHERE r.compagnie_id=c.compagnie_id AND r.branche=v_branche
    AND r.mode IS NOT NULL AND r.date_effet <= c.date_effet AND (r.date_fin IS NULL OR r.date_fin >= c.date_effet)
    AND (CASE WHEN produit_prioritaire THEN r.produit_id=c.produit_id ELSE r.produit_id IS NULL END);
  END IF;
@@ -151,10 +151,11 @@ CREATE TRIGGER remuneration_contrat AFTER INSERT OR UPDATE OF compagnie_id,produ
 
 CREATE FUNCTION public.trg_remuneration_bareme() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE ct record;
+DECLARE ct record; ancienne_compagnie uuid;
 BEGIN
+ IF TG_OP='UPDATE' THEN ancienne_compagnie := OLD.compagnie_id; END IF;
  FOR ct IN SELECT id FROM public.contrats WHERE compagnie_id=NEW.compagnie_id OR
-  (TG_OP='UPDATE' AND compagnie_id=OLD.compagnie_id) ORDER BY id LOOP
+  compagnie_id=ancienne_compagnie ORDER BY id LOOP
   PERFORM public.recalculer_remuneration_contrat(ct.id);
  END LOOP;
  RETURN NEW;
