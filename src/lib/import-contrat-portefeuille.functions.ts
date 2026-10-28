@@ -73,7 +73,6 @@ export const enregistrerContratImportPortefeuille = createServerFn({ method: "PO
           code_postal: data.client.code_postal || null,
           ville: data.client.ville || null,
           created_by: context.userId,
-          origine: "import_portefeuille",
         })
         .select("id")
         .single();
