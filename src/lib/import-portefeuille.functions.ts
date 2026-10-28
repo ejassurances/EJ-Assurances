@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { geminiFetch } from "@/lib/gemini-gateway.server";
 import { z } from "zod";
 
 const schema = z.object({
@@ -31,6 +30,7 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
     }
     if (!autorise) throw new Error("Import de client non autorisé.");
 
+    const { geminiFetch } = await import("@/lib/gemini-gateway.server");
     const response = await geminiFetch(
       "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
       {
