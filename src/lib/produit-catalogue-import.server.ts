@@ -245,7 +245,7 @@ Produit : ${produit.nom}`;
   }
 
   if (Object.keys(patch).length > 0) {
-    const { error: updateError } = await supabase.from("produits").update(patch).eq("id", produit.id);
+    const { error: updateError } = await supabase.from("produits").update(patch as never).eq("id", produit.id);
     if (updateError) throw new Error(updateError.message);
   }
   return { produit_id: produit.id, champs_completes: Object.keys(patch), aucun_champ_a_completer: Object.keys(patch).length === 0 };
