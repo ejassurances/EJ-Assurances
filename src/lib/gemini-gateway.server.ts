@@ -115,6 +115,7 @@ export async function geminiFetch(
   }
 
   const cle = process.env["ANTHROPIC_API_KEY"];
+  const workspaceId = process.env["ANTHROPIC_WORKSPACE_ID"];
   if (!cle) {
     return Response.json(
       { error: { message: "ANTHROPIC_API_KEY est absente." } },
@@ -184,6 +185,7 @@ export async function geminiFetch(
         "Content-Type": "application/json",
         "x-api-key": cle,
         "anthropic-version": "2023-06-01",
+        ...(workspaceId ? { "anthropic-workspace-id": workspaceId } : {}),
       },
       body: JSON.stringify(body),
       signal: init?.signal,
