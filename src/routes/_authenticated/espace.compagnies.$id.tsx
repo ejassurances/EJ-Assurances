@@ -160,6 +160,8 @@ type ProduitCatalogueBrouillon = {
   code_produit: string | null;
   famille_code: string | null;
   description: string | null;
+  /** Contrat ou document de référence facultatif fourni lors de l’import. */
+  documentReference: File | null;
   existeDeja: boolean;
   inclure: boolean;
 };
@@ -583,6 +585,7 @@ function ProduitsTab({
   onChange: () => void;
 }) {
   const analyserCatalogue = useServerFn(analyserCatalogueProduitsCompagnie);
+  const analyserGaranties = useServerFn(analyserGarantiesAutomatiquement);
   const [nom, setNom] = useState("");
   const [familleId, setFamilleId] = useState(familles[0]?.id ?? "");
   const [creating, setCreating] = useState(false);
@@ -693,6 +696,7 @@ function ProduitsTab({
           code_produit: produit.code_produit,
           famille_code: produit.famille_code,
           description: produit.description,
+          documentReference: null,
           existeDeja,
           inclure: !existeDeja,
         };
@@ -764,15 +768,84 @@ function ProduitsTab({
 
     setImportCatalogueEnCours(true);
     try {
-      const { data, error } = await supabase.from("produits").insert(produitsAInserer).select("id");
-      if (error) throw new Error(error.message);
+      const produitsCrees: { id: string; nom: string }[] = [];
+      for (const [index, produit] of selection.entries()) {
+        const { data, error } = await supabase
+          .from("produits")
+          .insert(produitsAInserer[index])
+          .select("id,nom")
+          .single();
+        if (error || !data) {
+          throw new Error(error?.message ?? `Impossible de créer le produit « ${produit.nom} ».`);
+        }
+        produitsCrees.push(data as { id: string; nom: string });
+      }
+
+      let documentsAjoutes = 0;
+      let analysesLancees = 0;
+      const erreursDocuments: string[] = [];
+      for (const [index, produit] of selection.entries()) {
+        const fichier = produit.documentReference;
+        if (!fichier) continue;
+        const produitCree = produitsCrees[index];
+        let storagePath: string | null = null;
+        try {
+          if (!fichier.name.toLowerCase().endsWith(".pdf") || fichier.size > 25 * 1024 * 1024) {
+            throw new Error("PDF uniquement, 25 Mo maximum.");
+          }
+          if ((await fichier.slice(0, 5).text()) !== "%PDF-") {
+            throw new Error("Le fichier sélectionné n’est pas un PDF valide.");
+          }
+          const nomStockage = fichier.name.replace(/[^a-zA-Z0-9._-]+/g, "-");
+          const { data: depot, error: depotError } = await supabase.storage
+            .from("produits-documents")
+            .upload(`${produitCree.id}/${crypto.randomUUID()}-${nomStockage}`, fichier, {
+              contentType: "application/pdf",
+              upsert: false,
+            });
+          if (depotError || !depot) throw new Error(depotError?.message ?? "Dépôt du PDF impossible.");
+          storagePath = depot.path;
+          const { error: docError } = await supabase.from("produit_documents").insert({
+            produit_id: produitCree.id,
+            type: "conditions_generales",
+            nom: fichier.name,
+            mime_type: "application/pdf",
+            taille_bytes: fichier.size,
+            interne: false,
+            storage_path: storagePath,
+            uploaded_by: user?.id ?? null,
+          });
+          if (docError) {
+            await supabase.storage.from("produits-documents").remove([storagePath]);
+            throw new Error(docError.message);
+          }
+          documentsAjoutes++;
+          try {
+            await analyserGaranties({ data: { produit_id: produitCree.id } });
+            analysesLancees++;
+          } catch (analyseError) {
+            erreursDocuments.push(
+              `${produit.nom}: document conservé, analyse à relancer dans l’onglet Garanties (${analyseError instanceof Error ? analyseError.message : "erreur inconnue"}).`,
+            );
+          }
+        } catch (documentError) {
+          erreursDocuments.push(
+            `${produit.nom}: ${documentError instanceof Error ? documentError.message : "document non ajouté"}`,
+          );
+        }
+      }
+
       toast.success(
-        `${produitsAInserer.length} produit(s) ajouté(s) au catalogue de ${compagnieNom}.`,
+        `${produitsCrees.length} produit(s) ajouté(s) au catalogue de ${compagnieNom}.` +
+          (documentsAjoutes ? ` ${documentsAjoutes} document(s) de référence enregistré(s), ${analysesLancees} analyse(s) lancée(s).` : ""),
       );
+      if (erreursDocuments.length > 0) {
+        toast.error(`Import produits terminé avec des documents à vérifier : ${erreursDocuments.join(" · ")}`);
+      }
       setProduitsCatalogue([]);
       setFichierCatalogue(null);
       onChange();
-      if (data?.[0]) onSelect(data[0].id);
+      if (produitsCrees[0]) onSelect(produitsCrees[0].id);
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Impossible d’importer les produits.");
     } finally {
@@ -1042,6 +1115,26 @@ function ProduitsTab({
                         aria-label="Description du produit"
                         className="w-full rounded-md border border-line bg-background px-2 py-1.5 text-xs"
                       />
+                      <label className="block text-xs text-ink-muted">
+                        Contrat / conditions générales (facultatif)
+                        <input
+                          type="file"
+                          accept=".pdf,application/pdf"
+                          disabled={produit.existeDeja}
+                          onChange={(event) => {
+                            const documentReference = event.target.files?.[0] ?? null;
+                            setProduitsCatalogue((actuels) =>
+                              actuels.map((item) =>
+                                item.id === produit.id ? { ...item, documentReference } : item,
+                              ),
+                            );
+                          }}
+                          className="mt-1 block w-full text-xs"
+                        />
+                      </label>
+                      {produit.documentReference && (
+                        <p className="text-xs text-ink-muted">Sera conservé dans la fiche produit et proposé à l’analyse des garanties après création.</p>
+                      )}
                       {produit.existeDeja && (
                         <p className="text-xs text-amber-700">
                           Produit déjà présent, ignoré pour éviter un doublon.
@@ -1089,7 +1182,9 @@ function ProduitsTab({
               </div>
               <p className="text-xs text-ink-muted">
                 Vérifiez chaque produit détecté par l’IA avant l’import. Les produits créés auront
-                le statut Actif ; aucun produit n’est ajouté tant que vous ne confirmez pas.
+                le statut Actif ; aucun produit n’est ajouté tant que vous ne confirmez pas. Vous pouvez
+                aussi joindre les conditions générales ou le contrat de chaque produit : le PDF sera
+                conservé sur sa fiche et l’analyse des garanties sera lancée après la création.
               </p>
             </div>
           )}
