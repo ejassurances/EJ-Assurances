@@ -20,6 +20,7 @@ import { useScoresValeur } from "@/hooks/use-scores-valeur";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { IconUsers, IconUserCheck, IconShieldCheck, IconUserPlus } from "@tabler/icons-react";
+import { ImportPortefeuilleForm } from "@/components/import-portefeuille-form";
 
 
 
@@ -74,6 +75,7 @@ function ClientsList() {
   const [statutFilter, setStatutFilter] = useState<string>("");
   const [marqueFilter, setMarqueFilter] = useState<string>("");
   const [showForm, setShowForm] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const canCreate = role === "admin" || role === "mandataire" || role === "prescripteur";
   const canDelete = role === "admin";
 
@@ -123,7 +125,21 @@ function ClientsList() {
         {canCreate && <LcbRattrapageButton onDone={load} />}
         {canCreate && (
           <button
-            onClick={() => setShowForm((v) => !v)}
+            onClick={() => {
+              setShowImport((v) => !v);
+              setShowForm(false);
+            }}
+            className="rounded-full border border-[#D4AF37] px-4 py-2 text-sm font-semibold transition hover:brightness-95"
+          >
+            {showImport ? "Annuler" : "Client déjà en portefeuille"}
+          </button>
+        )}
+        {canCreate && (
+          <button
+            onClick={() => {
+              setShowForm((v) => !v);
+              setShowImport(false);
+            }}
             className="rounded-full bg-[#D4AF37] px-4 py-2 text-sm font-semibold text-[#0A192F] transition hover:brightness-95"
           >
             {showForm ? "Annuler" : "Nouveau client"}
@@ -137,6 +153,15 @@ function ClientsList() {
         <StatCard label="Prospects" value={prospects} icon={IconUserPlus} />
         <StatCard label="LCB-FT évalués" value={evalues} icon={IconShieldCheck} />
       </div>
+
+      {showImport && canCreate && (
+        <ImportPortefeuilleForm
+          onDone={(id) => {
+            setShowImport(false);
+            navigate({ to: "/espace/clients/$id", params: { id } });
+          }}
+        />
+      )}
 
       {showForm && canCreate && (
         <NewClientForm
