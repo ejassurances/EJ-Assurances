@@ -1,5 +1,8 @@
 # Roadmap
 
+- [ ] Corriger préremplissage emprunteur : tracer upload/extraction/mapping/formulaire/sauvegarde/réouverture, tests et rapport ; contrainte main à vérifier (branche gérée actuellement différente, aucun changement Git manuel autorisé).
+- [ ] Devis client EJ : audit effectué et plan préparé ; implémentation en attente, après correctif emprunteur et validation du plan.
+
 - [x] Corriger les erreurs de compilation existantes sans changer les données — compilation OK et connexion affichée sans erreur.
 - [ ] Ajouter les certificats UGIP BELAYGUES / HAMMI — validation de création des fiches clients en attente.
 
