@@ -45,14 +45,21 @@ export function RemunerationContratCard({
       setEtat(r);
       const s = await enregistrerRemuneration(supabase, contrat.id, r);
       if (!annule) setSauvegarde(s.ok ? "Prévisionnel enregistré" : `Non enregistré : ${s.erreur}`);
-    })();
+    })().catch(() => {
+      if (!annule) setSauvegarde("Calcul indisponible — à vérifier.");
+    });
     return () => {
       annule = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deps, dossierId]);
 
-  if (!etat) return null;
+  if (!etat)
+    return sauvegarde ? (
+      <p role="status" className="text-sm text-destructive">
+        {sauvegarde}
+      </p>
+    ) : null;
   const { frais, commission } = etat;
 
   return (

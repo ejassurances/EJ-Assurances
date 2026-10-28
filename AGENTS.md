@@ -10,3 +10,6 @@
 <!-- LOVABLE:END -->
 
 - Keep type declarations for committed but unapplied migrations in `pending-schema-client.ts`, scoped to their callers; never edit generated database types or apply schema changes merely to repair compilation.
+
+- Remuneration forecasts use the pure remuneration calculator and an atomic SQL recalculation RPC with database triggers; only forecast rows and their history may change, never recorded payments.
+- Optional loan imports use separate document readings, an allowlisted financial DTO and explicit human confirmation; preserve document provenance outside the strict borrower recueil schema.

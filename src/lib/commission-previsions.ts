@@ -4,14 +4,18 @@
  * Estimation à la validation du devoir de conseil, puis actualisation à
  * réception d'un bordereau (trigger SQL sur la table commissions).
  */
-import { calculerCommission, type RegleCommission } from "@/lib/commissions-bareme";
+import { calculerCommission, type RegleCommission } from "./commissions-bareme";
 
 /** Cycle de cotisation / de commissionnement. */
 export type Periodicite = "mensuelle" | "annuelle";
 
 /** Normalise une valeur de fractionnement contrat ou de règle en périodicité. */
 export function periodiciteDe(valeur: string | null | undefined): Periodicite {
-  return String(valeur ?? "").toLowerCase().startsWith("annuel") ? "annuelle" : "mensuelle";
+  return String(valeur ?? "")
+    .toLowerCase()
+    .startsWith("annuel")
+    ? "annuelle"
+    : "mensuelle";
 }
 
 /** Nombre de mois entre deux versements de commission. */
@@ -71,7 +75,6 @@ export function mensuelEffectif(p: CommissionPrevision): number | null {
   return Math.round(net * 100) / 100;
 }
 
-
 /**
  * Montant d'une échéance de commission : règle du barème appliquée à la
  * cotisation d'une échéance. Pour une périodicité annuelle, on passe la
@@ -82,7 +85,8 @@ export function montantMensuelEstime(
   regle: RegleCommission,
   cotisationEcheance: number | null,
 ): number | null {
-  if (regle.type === "fixe") return Number(regle.montant_fixe ?? 0);
+  if (regle.base_calcul === "economie_realisee") return null;
+  if (regle.type === "fixe") return regle.montant_fixe;
   if (cotisationEcheance == null) return null;
   // Assiette = prime d'assurance pure de l'échéance, hors frais et taxes.
   return calculerCommission(
@@ -168,11 +172,18 @@ export function previsionsSynthetiques(
     previsionsExistantes.map((p) => p.contrat_id).filter((id): id is string => Boolean(id)),
   );
 
-  const parContrat = new Map<string, { total: number; mois: Set<string>; dernierMois: string | null }>();
+  const parContrat = new Map<
+    string,
+    { total: number; mois: Set<string>; dernierMois: string | null }
+  >();
   for (const c of commissions) {
     if (!c.contrat_id || c.statut !== "versee") continue;
     const cle = (c.date_versement ?? "").slice(0, 7);
-    const agg = parContrat.get(c.contrat_id) ?? { total: 0, mois: new Set<string>(), dernierMois: null };
+    const agg = parContrat.get(c.contrat_id) ?? {
+      total: 0,
+      mois: new Set<string>(),
+      dernierMois: null,
+    };
     agg.total += Number(c.montant ?? 0);
     if (cle) {
       agg.mois.add(cle);
@@ -188,21 +199,12 @@ export function previsionsSynthetiques(
 
     const hist = parContrat.get(ct.id);
     const periodicite = periodiciteDe(ct.fractionnement);
-    // Cotisation d'une échéance : annuelle si le contrat est réglé une fois l'an.
-    const cotisationEcheance =
-      ct.prime_annuelle != null
-        ? periodicite === "annuelle"
-          ? Number(ct.prime_annuelle)
-          : Number(ct.prime_annuelle) / 12
-        : null;
     const mensuel =
       hist && hist.mois.size > 0
         ? periodicite === "annuelle"
           ? hist.total / Math.max(1, new Set([...hist.mois].map((m) => m.slice(0, 4))).size)
           : hist.total / hist.mois.size
-        : cotisationEcheance != null
-          ? cotisationEcheance * 0.05
-          : null;
+        : null;
     if (mensuel == null || mensuel <= 0) continue;
 
     const duree = ct.duree_mois != null ? Number(ct.duree_mois) : null;
@@ -246,7 +248,6 @@ export function previsionsSynthetiques(
   return out;
 }
 
-
 /**
  * Répartition du prévisionnel sur les années à venir : chaque dossier verse son
  * montant mensuel (réel si connu, sinon estimé) jusqu'à épuisement de ses mois
@@ -277,7 +278,6 @@ export function repartirTresorerie(
     .sort((a, b) => a[0] - b[0])
     .map(([annee, montant]) => ({ annee, montant: Math.round(montant * 100) / 100 }));
 }
-
 
 /** Synthèse comptable d'une année civile : encaissé, restant à encaisser, total attendu. */
 export type SyntheseAnnee = {

@@ -16,6 +16,7 @@ export type ContratRemuneration = {
   produit_id: string | null;
   date_effet: string | null;
   prime_annuelle: number | null;
+  prime_nette_annuelle?: number | null;
   duree_mois: number | null;
   is_emprunteur: boolean | null;
   economie_realisee: number | null;
@@ -104,6 +105,11 @@ function versBareme(r: BaremeVersionneRow): BaremeCompagnie {
     branche: r.branche,
     produit_id: r.produit_id,
     mode: r.mode,
+    base_calcul:
+      r.base_calcul === "economie_realisee"
+        ? r.base_calcul
+        : (r.base_previsionnelle ?? r.base_calcul),
+    periodicite: r.periodicite,
     taux_annee_1: r.taux_annee_1 != null ? Number(r.taux_annee_1) : null,
     taux_renouvellement: r.taux_renouvellement != null ? Number(r.taux_renouvellement) : null,
     date_effet: r.date_effet,
@@ -132,7 +138,7 @@ export async function calculerRemuneration(
     const { data, error } = await db
       .from("commission_bareme")
       .select(
-        "id,compagnie_id,branche,produit_id,mode,taux_annee_1,taux_renouvellement,date_effet,date_fin,notes",
+        "id,compagnie_id,branche,produit_id,mode,taux_annee_1,taux_renouvellement,date_effet,date_fin,notes,base_calcul,base_previsionnelle,periodicite",
       )
       .eq("compagnie_id", contrat.compagnie_id);
     if (error) schemaDisponible = false;
@@ -149,6 +155,7 @@ export async function calculerRemuneration(
         contratId: contrat.id,
         bareme,
         primeAnnuelle: contrat.prime_annuelle,
+        primeNetteAnnuelle: contrat.prime_nette_annuelle,
         dureeMois: contrat.duree_mois,
       })
     : ({
@@ -172,21 +179,6 @@ export async function enregistrerRemuneration(
   if (!r.schemaDisponible)
     return { ok: false, erreur: "Table de prévisions pas encore créée en base" };
   const db = withPendingSchema(client);
-  const rows = lignesAPersister(contratId, r.frais, r.commission, r.bareme).map((x) => ({
-    ...x,
-    calcule_le: new Date().toISOString(),
-  }));
-  const up = await db
-    .from("contrat_remuneration_previsionnelle")
-    .upsert(rows as never, { onConflict: "cle" });
-  if (up.error) return { ok: false, erreur: up.error.message };
-  const maxAnnee = rows.filter((x) => x.type === "commission").length;
-  const old = await db
-    .from("contrat_remuneration_previsionnelle")
-    .update({ statut: "remplace" })
-    .eq("contrat_id", contratId)
-    .eq("type", "commission")
-    .gt("annee", maxAnnee);
-  if (old.error) return { ok: false, erreur: old.error.message };
-  return { ok: true };
+  const result = await db.rpc("recalculer_remuneration_contrat", { p_contrat_id: contratId });
+  return result.error ? { ok: false, erreur: result.error.message } : { ok: true };
 }

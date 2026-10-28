@@ -21,23 +21,28 @@ type Doc = {
 };
 
 /** Motifs reconnus : offre de prêt, tableau d'amortissement, échéancier. */
-const MOTIF = /(offre[-_ ]?de[-_ ]?pret|offre[-_ ]?pret|amortissement|amort|echeancier|échéancier|pret[-_ ]?immo)/i;
+const MOTIF =
+  /(offre[-_ ]?de[-_ ]?pret|offre[-_ ]?pret|amortissement|amort|echeancier|échéancier|pret[-_ ]?immo)/i;
 
 /** Motifs de l'étape « Devoir de conseil » : devis et devoir de conseil. */
-const MOTIF_DEVIS = /(devis|proposition|tarification|devoir[-_ ]?de[-_ ]?conseil|devoir_conseil|recommandation)/i;
+const MOTIF_DEVIS =
+  /(devis|proposition|tarification|devoir[-_ ]?de[-_ ]?conseil|devoir_conseil|recommandation)/i;
 
 /** Motifs de l'étape « Analyse et décision » : documents reçus de l'assureur. */
 const MOTIF_ASSUREUR =
   /(document_assureur|assureur|certificat|attestation|adhesion|adhésion|lettre[-_ ]?de[-_ ]?mission|lettre_mission|devis|devoir[-_ ]?de[-_ ]?conseil|devoir_conseil)/i;
 
 function correspond(d: Doc, motif: RegExp): boolean {
-  return motif.test(d.type_document ?? "") || motif.test(d.categorie ?? "") || motif.test(d.file_name ?? "");
+  return (
+    motif.test(d.type_document ?? "") ||
+    motif.test(d.categorie ?? "") ||
+    motif.test(d.file_name ?? "")
+  );
 }
 
 function estDocumentPret(d: Doc): boolean {
   return correspond(d, MOTIF);
 }
-
 
 /** Natures de document proposées par étape du parcours emprunteur. */
 export const TYPES_DOCUMENT: Record<string, { value: string; label: string }[]> = {
@@ -70,8 +75,10 @@ export function DocumentsPretPanel({
   filtre = "pret",
   typeDocument = "offre_pret",
   onAnalyse,
+  analyseAutorisee = false,
 }: {
   dossierId: string;
+  analyseAutorisee?: boolean;
   /** Intitulé du bloc. */
   titre?: string;
   /**
@@ -104,7 +111,6 @@ export function DocumentsPretPanel({
   const natures = TYPES_DOCUMENT[filtre] ?? [];
   const [nature, setNature] = useState<string>(natures[0]?.value ?? typeDocument);
 
-
   const load = useCallback(async () => {
     const [{ data: rows }, { data: dossier }] = await Promise.all([
       supabase
@@ -129,9 +135,8 @@ export function DocumentsPretPanel({
             ? tous.filter((d) => retenu(d, MOTIF_ASSUREUR))
             : tous.filter((d) => retenu(d, MOTIF)),
     );
-    setClientId(((dossier as { client_id: string | null } | null)?.client_id) ?? null);
+    setClientId((dossier as { client_id: string | null } | null)?.client_id ?? null);
   }, [dossierId, filtre]);
-
 
   useEffect(() => {
     void load();
@@ -151,12 +156,12 @@ export function DocumentsPretPanel({
     setBusy(true);
     setError(null);
     try {
-      const safeName = file.name.replace(/[^\w.\-]+/g, "_").slice(0, 120);
+      const safeName = file.name.replace(/[^\w.-]+/g, "_").slice(0, 120);
       // Ce document appartient au dossier : la RLS Storage attend dossierId en premier segment.
       const path = `${dossierId}/${Date.now()}-${safeName}`;
       const { error: upErr } = await supabase.storage
         .from("dossier-documents")
-        .upload(path, file, { upsert: true });
+        .upload(path, file, { upsert: false });
       if (upErr) throw upErr;
 
       const { data: auth } = await supabase.auth.getUser();
@@ -178,7 +183,11 @@ export function DocumentsPretPanel({
         })
         .select("id")
         .maybeSingle();
-      if (insErr) throw insErr;
+      if (insErr) {
+        const cleanup = await supabase.storage.from("dossier-documents").remove([path]);
+        if (cleanup.error) throw new Error("Insertion échouée ; nettoyage du fichier à vérifier.");
+        throw insErr;
+      }
 
       // Marque la pièce requise « Offre de prêt / tableau d'amortissement ».
       const docId = (inserted as { id: string } | null)?.id ?? null;
@@ -187,12 +196,12 @@ export function DocumentsPretPanel({
           .from("dossier_pieces_requises")
           .update({ statut: "recue", recue_le: new Date().toISOString(), document_id: docId })
           .eq("dossier_id", dossierId)
-          .in("code", ["offre_pret", "tableau_amortissement"]);
+          .eq("code", nature);
       }
 
       // Analyse IA du document : les données du prêt sont reportées dans le
       // recueil pour renseigner les étapes suivantes.
-      if (docId) {
+      if (docId && analyseAutorisee) {
         try {
           setAnalyse("Analyse du document par l'IA…");
           const res = await analyser({ data: { dossier_id: dossierId, document_id: docId } });
@@ -275,7 +284,7 @@ export function DocumentsPretPanel({
               </select>
             </label>
           )}
-          {docs.length > 0 && (
+          {docs.length > 0 && analyseAutorisee && (
             <button
               type="button"
               onClick={() => void analyserExistants()}
@@ -310,7 +319,6 @@ export function DocumentsPretPanel({
         />
       </div>
 
-
       {docs.length === 0 ? (
         <p className="mt-2 text-xs text-ink-muted">
           {filtre === "pret"
@@ -319,7 +327,6 @@ export function DocumentsPretPanel({
               ? "Aucun devis ni devoir de conseil rattaché à ce dossier."
               : "Aucun document rattaché à ce dossier."}
         </p>
-
       ) : (
         <ul className="mt-2 space-y-1 text-sm">
           {docs.map((d) => (

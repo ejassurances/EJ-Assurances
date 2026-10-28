@@ -49,6 +49,9 @@ export type BaremeVersionneRow = {
   branche: string;
   produit_id: string | null;
   mode: "lineaire" | "precompte" | null;
+  base_calcul: string;
+  base_previsionnelle: "prime" | "prime_nette" | null;
+  periodicite: "mensuelle" | "annuelle" | null;
   taux_annee_1: number | null;
   taux_renouvellement: number | null;
   date_effet: string | null;
@@ -91,6 +94,7 @@ type PendingDatabase = Omit<Database, "public"> & {
       >;
     };
     Functions: Database["public"]["Functions"] & {
+      recalculer_remuneration_contrat: { Args: { p_contrat_id: string }; Returns: undefined };
       creer_client_manuel_securise: {
         Args: {
           p_client: Json;

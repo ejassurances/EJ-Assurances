@@ -185,3 +185,70 @@ describe("lignesAPersister (prévisionnel enregistré)", () => {
     expect(rows[1]).toMatchObject({ statut: "non_calculable", montant: null });
   });
 });
+
+describe("rémunération : protections supplémentaires", () => {
+  it("refuse les nombres non finis", () =>
+    expect(
+      calculerFraisDistribution({ isEmprunteur: true, dureeMois: 120, economieRealisee: NaN })
+        .montant,
+    ).toBeNull());
+  it("refuse une assiette économies pour commission", () =>
+    expect(
+      calculerCommissionPrevisionnelle({
+        contratId: "k",
+        bareme: { ...base, base_calcul: "economie_realisee" },
+        primeAnnuelle: 1000,
+        dureeMois: 24,
+      }).statut,
+    ).toBe("non_calculable"));
+  it("utilise la prime nette configurée", () =>
+    expect(
+      calculerCommissionPrevisionnelle({
+        contratId: "k",
+        bareme: { ...base, base_calcul: "prime_nette" },
+        primeAnnuelle: 1200,
+        primeNetteAnnuelle: 1000,
+        dureeMois: 12,
+      }).lignes[0]?.montant,
+    ).toBe(100));
+  it("refuse les périodes ambiguës", () =>
+    expect(
+      choisirBareme([base, { ...base, id: "b2" }], {
+        compagnieId: "c1",
+        branche: "sante",
+        date: "2026-01-01",
+      }),
+    ).toBeNull());
+  it("privilégie le produit précis", () =>
+    expect(
+      choisirBareme([base, { ...base, id: "produit", produit_id: "p1" }], {
+        compagnieId: "c1",
+        branche: "sante",
+        produitId: "p1",
+        date: "2026-01-01",
+      })?.id,
+    ).toBe("produit"));
+});
+
+it("une durée réaugmentée réactive les clés prévisionnelles sans doublon", () => {
+  const court = calculerCommissionPrevisionnelle({
+    contratId: "k",
+    bareme: base,
+    primeAnnuelle: 1200,
+    dureeMois: 12,
+  });
+  const long = calculerCommissionPrevisionnelle({
+    contratId: "k",
+    bareme: base,
+    primeAnnuelle: 1200,
+    dureeMois: 36,
+  });
+  const frais = calculerFraisDistribution({ branche: "sante" });
+  const etat = new Map(lignesAPersister("k", frais, long, base).map((r) => [r.cle, r]));
+  for (const row of lignesAPersister("k", frais, court, base)) etat.set(row.cle, row);
+  for (const row of etat.values())
+    if (row.type === "commission" && row.annee > 1) row.statut = "non_calculable";
+  for (const row of lignesAPersister("k", frais, long, base)) etat.set(row.cle, row);
+  expect(etat.size).toBe(4);
+  expect(etat.get("k:commission:3")?.statut).toBe("calcule");
+});

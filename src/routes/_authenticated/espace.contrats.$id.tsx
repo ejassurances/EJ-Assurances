@@ -15,6 +15,22 @@ import { StatCard } from "@/components/stat-card";
 import { IconFileText } from "@tabler/icons-react";
 
 export const Route = createFileRoute("/_authenticated/espace/contrats/$id")({
+  head: () => ({
+    meta: [
+      { title: "Contrat et rémunération — EJ Assurances" },
+      {
+        name: "description",
+        content: "Contrat, frais de distribution et commission compagnie prévisionnelle séparés.",
+      },
+      { property: "og:title", content: "Contrat et rémunération — EJ Assurances" },
+      {
+        property: "og:description",
+        content: "Contrat, frais de distribution et commission compagnie prévisionnelle séparés.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: ContratDetail,
 });
 

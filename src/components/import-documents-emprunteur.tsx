@@ -6,15 +6,13 @@
  * étapes « Prêts » et « Informations personnelles » : elles ne sont pas
  * réaffichées ici. Charte marine / doré conservée.
  */
-import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { ImportPretVerifie } from "@/components/import-pret-verifie";
+import { confirmerPretDossier } from "@/lib/archiver-pret-verifie.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { normaliserNomFichierPourStockage } from "@/lib/storage-key";
 import { Link } from "@tanstack/react-router";
 import { DocumentsPretPanel } from "@/components/documents-pret-panel";
-
-type Resultat = {
-  recueil: Record<string, unknown> | null;
-  ajouts: string[];
-  manquants: string[];
-};
 
 function Bloc({
   numero,
@@ -61,30 +59,7 @@ export function ImportDocumentsEmprunteur({
   };
   onChanged: () => void;
 }) {
-  const [resultat, setResultat] = useState<Resultat | null>(null);
-
-  /** Statut d'extraction : réussie, à vérifier, ou aucune analyse lancée. */
-  const statut = !resultat
-    ? "attente"
-    : resultat.ajouts.length > 0 && resultat.manquants.length === 0
-      ? "reussie"
-      : resultat.ajouts.length > 0
-        ? "a_verifier"
-        : "echouee";
-
-  const libelle = {
-    attente: "Aucune analyse lancée",
-    reussie: "Extraction réussie",
-    a_verifier: "Extraction à vérifier",
-    echouee: "Extraction sans résultat exploitable",
-  }[statut];
-
-  const couleur = {
-    attente: "border-line bg-background text-ink-muted",
-    reussie: "border-accent bg-accent/10 text-ink",
-    a_verifier: "border-accent/60 bg-accent/5 text-ink",
-    echouee: "border-destructive/50 bg-destructive/10 text-ink",
-  }[statut];
+  const confirmer = useServerFn(confirmerPretDossier);
 
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -94,31 +69,59 @@ export function ImportDocumentsEmprunteur({
           titre="Dépôt des pièces du prêt"
           sousTitre="Offre de prêt et / ou tableau d'amortissement — PDF, image ou tableur"
         >
-          <DocumentsPretPanel
-            dossierId={dossierId}
-            filtre="pret"
-            onAnalyse={(r) => {
-              setResultat(r);
+          <ImportPretVerifie
+            onConfirm={async (_appliquer, pieces, lectures, valeurs) => {
+              // Human confirmation is the only business-data write boundary.
+              await confirmer({ data: { dossierId, valeurs, lectures } });
+              const { data: auth } = await supabase.auth.getUser();
+              if (!auth.user) throw new Error("Session expirée.");
+              const erreurs: string[] = [];
+              for (const p of pieces) {
+                const path = `${dossierId}/pret/${crypto.randomUUID()}-${normaliserNomFichierPourStockage(p.file.name)}`;
+                const upload = await supabase.storage
+                  .from("dossier-documents")
+                  .upload(path, p.file, { upsert: false });
+                if (upload.error) {
+                  erreurs.push(p.file.name);
+                  continue;
+                }
+                const { data: doc, error } = await supabase
+                  .from("documents")
+                  .insert({
+                    dossier_id: dossierId,
+                    client_id: client.id,
+                    uploader_id: auth.user.id,
+                    storage_path: path,
+                    file_name: p.file.name,
+                    file_size: p.file.size,
+                    mime_type: p.file.type,
+                    categorie: "dossier",
+                    type_document: p.nature,
+                  })
+                  .select("id")
+                  .single();
+                if (error || !doc) {
+                  const cleanup = await supabase.storage.from("dossier-documents").remove([path]);
+                  erreurs.push(`${p.file.name}${cleanup.error ? " (nettoyage à vérifier)" : ""}`);
+                  continue;
+                }
+                const piece = await supabase
+                  .from("dossier_pieces_requises")
+                  .update({
+                    statut: "recue",
+                    document_id: doc.id,
+                    recue_le: new Date().toISOString(),
+                  })
+                  .eq("dossier_id", dossierId)
+                  .eq("code", p.nature);
+                if (piece.error) erreurs.push(`${p.file.name} (checklist à vérifier)`);
+              }
               onChanged();
+              if (erreurs.length)
+                throw new Error(`Données confirmées, archivage partiel : ${erreurs.join(", ")}`);
             }}
           />
-        </Bloc>
-
-        <Bloc numero="2" titre="Statut de l'extraction" sousTitre="Le document importé fait foi">
-          <div
-            className={"inline-flex items-center rounded-full border px-3 py-1 text-xs " + couleur}
-          >
-            {libelle}
-          </div>
-          <p className="mt-3 text-xs text-ink-soft">
-            {statut === "attente"
-              ? "Déposez l'offre de prêt ou le tableau d'amortissement, puis lancez « Analyser et pré-remplir »."
-              : statut === "echouee"
-                ? "Aucune donnée exploitable n'a été lue : les champs seront saisis manuellement aux étapes « Prêts » et « Informations personnelles »."
-                : statut === "a_verifier"
-                  ? `${resultat?.ajouts.length} champ(s) lus, ${resultat?.manquants.length} à compléter aux étapes « Prêts » et « Informations personnelles ».`
-                  : `${resultat?.ajouts.length} champ(s) lus et reportés aux étapes « Prêts » et « Informations personnelles ».`}
-          </p>
+          <DocumentsPretPanel dossierId={dossierId} filtre="pret" analyseAutorisee={false} />
         </Bloc>
       </div>
 
@@ -154,8 +157,8 @@ export function ImportDocumentsEmprunteur({
 
         <Bloc titre="Rappel de méthode">
           <ul className="space-y-2 text-xs text-ink-soft">
-            <li>• Le document importé fait foi sur toute saisie antérieure.</li>
-            <li>• Les valeurs lues se retrouvent aux étapes suivantes, pas ici.</li>
+            <li>• Les valeurs déjà saisies sont conservées.</li>
+            <li>• Les valeurs sont vérifiées avant confirmation.</li>
             <li>• Aucune étape réglementaire n'est franchie automatiquement.</li>
           </ul>
         </Bloc>

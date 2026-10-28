@@ -24,7 +24,9 @@ export function CommissionBaremeConfig() {
     const [r, c] = await Promise.all([
       supabase
         .from("commission_bareme")
-        .select("id,niveau,branche,compagnie_id,type,montant_fixe,taux_pourcentage,base_calcul,notes,periodicite"),
+        .select(
+          "id,niveau,branche,compagnie_id,type,montant_fixe,taux_pourcentage,base_calcul,notes,periodicite",
+        ),
       supabase.from("compagnies").select("id,nom").order("nom"),
     ]);
     setRegles((r.data ?? []) as unknown as RegleCommission[]);
@@ -42,9 +44,16 @@ export function CommissionBaremeConfig() {
 
   async function enregistrer(r: Partial<RegleCommission>) {
     setErr(null);
+    if (!r.branche || r.base_calcul === "economie_realisee")
+      return setErr(
+        "Les économies relèvent des frais de distribution, pas des commissions compagnie.",
+      );
+    const valeur = r.type === "fixe" ? r.montant_fixe : r.taux_pourcentage;
+    if (valeur == null || !Number.isFinite(Number(valeur)) || Number(valeur) < 0)
+      return setErr("Montant ou taux explicite obligatoire.");
     const payload = {
       niveau: r.niveau ?? "branche",
-      branche: r.branche!,
+      branche: r.branche,
       compagnie_id: r.niveau === "compagnie" ? (r.compagnie_id ?? null) : null,
       type: (r.type ?? "fixe") as TypeCommission,
       montant_fixe: r.type === "fixe" ? Number(r.montant_fixe ?? 0) : null,
@@ -61,12 +70,6 @@ export function CommissionBaremeConfig() {
     await load();
   }
 
-  async function supprimer(id: string) {
-    const { error } = await supabase.from("commission_bareme").delete().eq("id", id);
-    if (error) return setErr(error.message);
-    await load();
-  }
-
   if (loading) return <p className="mt-8 text-sm text-ink-muted">Chargement du barème…</p>;
 
   return (
@@ -75,13 +78,19 @@ export function CommissionBaremeConfig() {
         <div>
           <h2 className="font-serif text-xl font-medium text-ink">Barème de commissions</h2>
           <p className="mt-1 text-xs text-ink-muted">
-            Une règle « compagnie » remplace la règle de sa branche. Sans règle en base, le défaut cabinet
-            s'applique (20 € fixes sur la prime ; 5 % de l'économie réalisée en emprunteur).
+            Règles historiques : sans barème explicite, commission non calculable. Les frais de
+            distribution sont suivis séparément. Configurez les modes et dates depuis la fiche
+            compagnie.
           </p>
         </div>
         <button
           onClick={() =>
-            setEdition({ niveau: "compagnie", branche: "emprunteur", type: "fixe", base_calcul: "prime" })
+            setEdition({
+              niveau: "compagnie",
+              branche: "emprunteur",
+              type: "fixe",
+              base_calcul: "prime",
+            })
           }
           className="rounded-md bg-[color:var(--crm-navy,#0A192F)] px-3 py-1.5 text-xs font-medium text-white"
         >
@@ -105,46 +114,41 @@ export function CommissionBaremeConfig() {
                     {decrireRegle(effective)}
                     {!regleBranche && (
                       <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-900">
-                        Défaut cabinet
+                        À configurer
                       </span>
                     )}
                   </p>
                 </div>
                 <div className="flex gap-3 text-xs">
                   <button
-                    onClick={() => setEdition({ ...effective, niveau: "branche", compagnie_id: null })}
+                    onClick={() =>
+                      setEdition({ ...effective, niveau: "branche", compagnie_id: null })
+                    }
                     className="underline underline-offset-4"
                   >
                     {regleBranche ? "Modifier" : "Définir la règle"}
                   </button>
-                  {regleBranche?.id && (
-                    <button
-                      onClick={() => supprimer(regleBranche.id!)}
-                      className="text-red-700 underline underline-offset-4"
-                    >
-                      Revenir au défaut
-                    </button>
-                  )}
                 </div>
               </div>
 
               {spec.length > 0 && (
                 <ul className="mt-3 space-y-2 border-t border-line pt-3">
                   {spec.map((r) => (
-                    <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <li
+                      key={r.id}
+                      className="flex flex-wrap items-center justify-between gap-2 text-xs"
+                    >
                       <span className="text-ink">
-                        <strong>{nomCie.get(r.compagnie_id ?? "") ?? "Compagnie"}</strong> — {decrireRegle(r)}
+                        <strong>{nomCie.get(r.compagnie_id ?? "") ?? "Compagnie"}</strong> —{" "}
+                        {decrireRegle(r)}
                         {r.notes ? <span className="text-ink-muted"> · {r.notes}</span> : null}
                       </span>
                       <span className="flex gap-3">
-                        <button onClick={() => setEdition(r)} className="underline underline-offset-4">
-                          Modifier
-                        </button>
                         <button
-                          onClick={() => supprimer(r.id!)}
-                          className="text-red-700 underline underline-offset-4"
+                          onClick={() => setEdition(r)}
+                          className="underline underline-offset-4"
                         >
-                          Supprimer
+                          Modifier
                         </button>
                       </span>
                     </li>
@@ -261,7 +265,9 @@ function FormulaireRegle({
               type="number"
               step="0.01"
               value={f.taux_pourcentage ?? ""}
-              onChange={(e) => setF({ ...f, taux_pourcentage: e.target.value ? Number(e.target.value) : null })}
+              onChange={(e) =>
+                setF({ ...f, taux_pourcentage: e.target.value ? Number(e.target.value) : null })
+              }
               className={inp}
               required
             />
@@ -274,7 +280,11 @@ function FormulaireRegle({
               className={inp}
             >
               <option value="prime">Prime</option>
-              <option value="economie_realisee">Économie réalisée</option>
+              {f.base_calcul === "economie_realisee" && (
+                <option value="economie_realisee" disabled>
+                  Économies — à revoir (frais)
+                </option>
+              )}
             </select>
           </label>
         </>
@@ -285,7 +295,9 @@ function FormulaireRegle({
             type="number"
             step="0.01"
             value={f.montant_fixe ?? ""}
-            onChange={(e) => setF({ ...f, montant_fixe: e.target.value ? Number(e.target.value) : null })}
+            onChange={(e) =>
+              setF({ ...f, montant_fixe: e.target.value ? Number(e.target.value) : null })
+            }
             className={inp}
             required
           />
@@ -309,7 +321,11 @@ function FormulaireRegle({
         >
           Enregistrer
         </button>
-        <button type="button" onClick={onCancel} className="text-sm text-ink-muted underline underline-offset-4">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-sm text-ink-muted underline underline-offset-4"
+        >
           Annuler
         </button>
       </div>

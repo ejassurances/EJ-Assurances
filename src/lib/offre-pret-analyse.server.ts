@@ -43,7 +43,10 @@ const CHAMPS_PRET = [
   ["duree_mois", "durée totale du prêt en mois (nombre entier)"],
   ["mensualite", "mensualité hors assurance en euros (nombre)"],
   ["taux_assurance", "taux annuel de l'assurance emprunteur de la banque en % (nombre)"],
-  ["cotisation_assurance_mensuelle", "cotisation mensuelle d'assurance emprunteur en euros (nombre)"],
+  [
+    "cotisation_assurance_mensuelle",
+    "cotisation mensuelle d'assurance emprunteur en euros (nombre)",
+  ],
   [
     "cout_assurance_total",
     "coût total de l'assurance emprunteur écrit dans l'offre ou sur la ligne Total du tableau d'amortissement, en euros (nombre)",
@@ -53,10 +56,16 @@ const CHAMPS_PRET = [
     "date_edition_document",
     "date d'édition / d'établissement du document (offre de prêt, tableau d'amortissement) AAAA-MM-JJ",
   ],
+  ["capital_restant_du", "capital restant dû explicitement écrit, en euros"],
+  ["date_capital_restant_du", "date associée au capital restant dû, AAAA-MM-JJ"],
+  ["date_fin_pret", "date de fin du prêt écrite, AAAA-MM-JJ"],
+  ["cout_total_pret", "coût total du prêt explicitement écrit, euros"],
   ["objet_pret", "objet du financement tel qu'écrit (résidence principale, locatif…)"],
 ] as const;
 
 const NOMBRES = new Set([
+  "capital_restant_du",
+  "cout_total_pret",
   "montant_capital",
   "taux_nominal",
   "duree_mois",
@@ -83,7 +92,7 @@ function prompt(): string {
     "",
     "Emprunteurs : pour chaque personne empruntrice nommée dans le document, relève",
     "prenom, nom, date_naissance (AAAA-MM-JJ), quotite_pct (quotité assurée en %, nombre),",
-    "csp (profession écrite), fumeur (true/false seulement si écrit, sinon null),",
+    "csp (profession écrite), fumeur toujours null : ne pas extraire de données de santé ou tabagisme,",
     "email, telephone. Toute valeur non écrite vaut null.",
     "",
     "Où chercher ces informations (parcours TOUTES les pages, y compris les annexes) :",
@@ -105,7 +114,11 @@ function prompt(): string {
 }
 
 function extraireJson(texte: string): Record<string, unknown> {
-  const nettoye = texte.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+  const nettoye = texte
+    .trim()
+    .replace(/^```(?:json)?/i, "")
+    .replace(/```$/, "")
+    .trim();
   try {
     return JSON.parse(nettoye) as Record<string, unknown>;
   } catch {
@@ -128,7 +141,12 @@ function nombreOuNull(v: unknown): number | null {
   const n =
     typeof v === "number"
       ? v
-      : Number(String(v).replace(/\s/g, "").replace(/[^\d.,-]/g, "").replace(",", "."));
+      : Number(
+          String(v)
+            .replace(/\s/g, "")
+            .replace(/[^\d.,-]/g, "")
+            .replace(",", "."),
+        );
   return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
@@ -167,7 +185,7 @@ function normaliserEmprunteurs(brut: unknown): EmprunteurDetecte[] {
       date_naissance: dateIsoOuNull(o["date_naissance"]) ?? "",
       quotite_pct: nombreOuNull(o["quotite_pct"]),
       csp: csp && !NON_CSP.test(csp) ? csp : "",
-      fumeur: typeof o["fumeur"] === "boolean" ? (o["fumeur"] as boolean) : null,
+      fumeur: null,
       email: texteOuNull(o["email"]),
       telephone: texteOuNull(o["telephone"]),
     });
@@ -218,10 +236,9 @@ export async function analyserOffrePretFichier(fichier: {
 
   const lisible = brut["document_lisible"] !== false;
   const conf = Number(brut["confidence"]);
-  const source = (typeof brut["pret"] === "object" && brut["pret"] !== null ? brut["pret"] : {}) as Record<
-    string,
-    unknown
-  >;
+  const source = (
+    typeof brut["pret"] === "object" && brut["pret"] !== null ? brut["pret"] : {}
+  ) as Record<string, unknown>;
 
   const pret: Record<string, unknown> = {};
   if (lisible) {
@@ -234,7 +251,7 @@ export async function analyserOffrePretFichier(fichier: {
       }
       const s = texteOuNull(v);
       if (!s) continue;
-      if (nom === "date_premiere_echeance" || nom === "date_edition_document") {
+      if (nom.startsWith("date_")) {
         const iso = dateIsoOuNull(s);
         if (iso) pret[nom] = iso;
         continue;

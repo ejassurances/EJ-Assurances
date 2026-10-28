@@ -4,11 +4,14 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { declencherLettreMissionAuto } from "@/lib/lettres-mission.functions";
 import {
-  analyserOffrePretCreation,
   creerFichesEmprunteurs,
   type EmprunteurPropose,
 } from "@/lib/offre-pret-creation.functions";
 
+import { ImportPretVerifie } from "@/components/import-pret-verifie";
+import { normaliserNomFichierPourStockage } from "@/lib/storage-key";
+import type { LecturePret } from "@/lib/import-pret-verification";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { estimerEconomie } from "@/lib/insurance-rates";
 import { CompagnieProduitPicker } from "@/components/compagnie-produit-picker";
@@ -37,6 +40,22 @@ import {
 } from "@tabler/icons-react";
 
 export const Route = createFileRoute("/_authenticated/espace/dossiers/")({
+  head: () => ({
+    meta: [
+      { title: "Dossiers — EJ Assurances" },
+      {
+        name: "description",
+        content: "Dossiers de souscription et import vérifié des documents du prêt.",
+      },
+      { property: "og:title", content: "Dossiers — EJ Assurances" },
+      {
+        property: "og:description",
+        content: "Dossiers de souscription et import vérifié des documents du prêt.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: DossiersList,
 });
 
@@ -64,7 +83,9 @@ function DossiersList() {
     setLoading(true);
     const { data } = await supabase
       .from("dossiers")
-      .select("id,reference,client_nom,statut,type_assurance,capital,duree_mois,economie_estimee,created_at")
+      .select(
+        "id,reference,client_nom,statut,type_assurance,capital,duree_mois,economie_estimee,created_at",
+      )
       .order("created_at", { ascending: false });
     setItems((data ?? []) as Dossier[]);
     setLoading(false);
@@ -129,61 +150,72 @@ function DossiersList() {
         </div>
       ) : (
         <>
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Total dossiers" value={items.length} icon={IconFolders} accent />
-        <StatCard label="En cours" value={enCours} icon={IconClockHour4} />
-        <StatCard label="Signés" value={signes} icon={IconCircleCheck} />
-        <StatCard label="Perdus" value={perdus} icon={IconAlertTriangle} />
-      </div>
-
-      {showForm && canCreate && (
-        <NewDossierForm
-          onCreated={() => {
-            setShowForm(false);
-            load();
-          }}
-          userId={user!.id}
-        />
-      )}
-
-      <div className="mt-6 overflow-hidden rounded-2xl border border-line bg-surface-elevated">
-        {loading ? (
-          <p className="p-6 text-sm text-ink-muted">Chargement…</p>
-        ) : items.length === 0 ? (
-          <p className="p-6 text-sm text-ink-muted">Aucun dossier pour le moment.</p>
-        ) : (
-          <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-sm">
-            <thead className="border-b border-line bg-background/50 text-left text-xs uppercase tracking-wide text-ink-muted">
-              <tr>
-                <th className="px-4 py-3">Référence</th>
-                <th className="px-4 py-3">Client</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Statut</th>
-                <th className="px-4 py-3">Prime d'assurances</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((d) => (
-                <tr key={d.id} className="border-b border-line last:border-0 hover:bg-background/50">
-                  <td className="px-4 py-3">
-                    <Link to="/espace/dossiers/$id" params={{ id: d.id }} className="font-medium hover:underline">
-                      {d.reference}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3">{d.client_nom}</td>
-                  <td className="px-4 py-3 text-xs text-ink-muted">{labelForBranche(d.type_assurance)}</td>
-                  <td className="px-4 py-3">
-                    <StatutBadge s={d.statut} />
-                  </td>
-                  <td className="px-4 py-3">{d.capital ? `${Number(d.capital).toLocaleString("fr-FR")} €` : "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard label="Total dossiers" value={items.length} icon={IconFolders} accent />
+            <StatCard label="En cours" value={enCours} icon={IconClockHour4} />
+            <StatCard label="Signés" value={signes} icon={IconCircleCheck} />
+            <StatCard label="Perdus" value={perdus} icon={IconAlertTriangle} />
           </div>
-        )}
-      </div>
+
+          {showForm && canCreate && (
+            <NewDossierForm
+              onCreated={() => {
+                setShowForm(false);
+                load();
+              }}
+              userId={user!.id}
+            />
+          )}
+
+          <div className="mt-6 overflow-hidden rounded-2xl border border-line bg-surface-elevated">
+            {loading ? (
+              <p className="p-6 text-sm text-ink-muted">Chargement…</p>
+            ) : items.length === 0 ? (
+              <p className="p-6 text-sm text-ink-muted">Aucun dossier pour le moment.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px] text-sm">
+                  <thead className="border-b border-line bg-background/50 text-left text-xs uppercase tracking-wide text-ink-muted">
+                    <tr>
+                      <th className="px-4 py-3">Référence</th>
+                      <th className="px-4 py-3">Client</th>
+                      <th className="px-4 py-3">Type</th>
+                      <th className="px-4 py-3">Statut</th>
+                      <th className="px-4 py-3">Prime d'assurances</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((d) => (
+                      <tr
+                        key={d.id}
+                        className="border-b border-line last:border-0 hover:bg-background/50"
+                      >
+                        <td className="px-4 py-3">
+                          <Link
+                            to="/espace/dossiers/$id"
+                            params={{ id: d.id }}
+                            className="font-medium hover:underline"
+                          >
+                            {d.reference}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-3">{d.client_nom}</td>
+                        <td className="px-4 py-3 text-xs text-ink-muted">
+                          {labelForBranche(d.type_assurance)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <StatutBadge s={d.statut} />
+                        </td>
+                        <td className="px-4 py-3">
+                          {d.capital ? `${Number(d.capital).toLocaleString("fr-FR")} €` : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>
@@ -207,7 +239,9 @@ function StatutBadge({ s }: { s: string }) {
     perdu: "bg-red-100 text-red-900",
   };
   return (
-    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${map[s] ?? "bg-surface"}`}>
+    <span
+      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${map[s] ?? "bg-surface"}`}
+    >
       {s.replace("_", " ")}
     </span>
   );
@@ -241,7 +275,9 @@ export function NewDossierForm({
     presetClient ? [presetClient.prenom, presetClient.nom].filter(Boolean).join(" ") : "",
   );
   const [clientEmail, setClientEmail] = useState(presetClient?.email ?? "");
-  const [clientPhone, setClientPhone] = useState(presetClient?.mobile ?? presetClient?.telephone ?? "");
+  const [clientPhone, setClientPhone] = useState(
+    presetClient?.mobile ?? presetClient?.telephone ?? "",
+  );
   const [recueil, setRecueil] = useState<Record<string, unknown>>({});
   const [notes, setNotes] = useState("");
   const [compagnieId, setCompagnieId] = useState<string | null>(null);
@@ -253,14 +289,13 @@ export function NewDossierForm({
   const [offreFiles, setOffreFiles] = useState<File[]>([]);
   /** Destinataire de chaque document déposé : index de l'emprunteur, -1 = prêt commun. */
   const [offreCibles, setOffreCibles] = useState<number[]>([]);
-  const [analyseEtat, setAnalyseEtat] = useState<string | null>(null);
-  const [analysing, setAnalysing] = useState(false);
+  const [offreNatures, setOffreNatures] = useState<LecturePret["nature"][]>([]);
+  const [lecturesPret, setLecturesPret] = useState<LecturePret[]>([]);
+  const [valeursPret, setValeursPret] = useState<LecturePret["valeurs"]>({});
   const [emprunteurs, setEmprunteurs] = useState<EmprunteurPropose[]>([]);
 
   const lancerLettreMission = useServerFn(declencherLettreMissionAuto);
-  const analyserOffre = useServerFn(analyserOffrePretCreation);
   const creerFiches = useServerFn(creerFichesEmprunteurs);
-
 
   useEffect(() => {
     (async () => {
@@ -276,7 +311,9 @@ export function NewDossierForm({
   const filteredClients = useMemo(() => {
     const t = clientQuery.trim().toLowerCase();
     if (!t) return clients.slice(0, 50);
-    return clients.filter((c) => `${c.prenom ?? ""} ${c.nom} ${c.email ?? ""}`.toLowerCase().includes(t)).slice(0, 50);
+    return clients
+      .filter((c) => `${c.prenom ?? ""} ${c.nom} ${c.email ?? ""}`.toLowerCase().includes(t))
+      .slice(0, 50);
   }, [clients, clientQuery]);
 
   const selectClient = (c: ClientOption) => {
@@ -288,98 +325,24 @@ export function NewDossierForm({
       // Préremplissage du statut fumeur sur l'assuré principal de la liste.
       setRecueil((r) => {
         const list = assuresEmprunteur(r["assures"]);
-        const rows = list.length > 0 ? list : [{ lien: "principal", date_naissance: "", quotite_pct: null, csp: "", fumeur: false }];
+        const rows =
+          list.length > 0
+            ? list
+            : [
+                {
+                  lien: "principal",
+                  date_naissance: "",
+                  quotite_pct: null,
+                  csp: "",
+                  fumeur: false,
+                },
+              ];
         return { ...r, assures: rows.map((p, i) => (i === 0 ? { ...p, fumeur: !!c.fumeur } : p)) };
       });
     }
   };
 
   const branche = type ? getBranche(type) : undefined;
-
-  /** Lit un fichier en base64 (sans le préfixe data:). */
-  const enBase64 = (file: File) =>
-    new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const s = String(reader.result ?? "");
-        resolve(s.includes(",") ? s.slice(s.indexOf(",") + 1) : s);
-      };
-      reader.onerror = () => reject(new Error("Lecture du fichier impossible"));
-      reader.readAsDataURL(file);
-    });
-
-  /**
-   * Analyse IA de l'offre de prêt / du tableau d'amortissement déposé avant
-   * création : les données du prêt et les emprunteurs sont reportés dans le
-   * formulaire, sans jamais écraser une valeur déjà saisie.
-   */
-  const analyserOffreDeposee = async (files: File[]) => {
-    setOffreFiles((prev) => [...prev, ...files]);
-    setOffreCibles((prev) => [...prev, ...files.map(() => -1)]);
-    if (files.length === 0) return;
-
-    setAnalysing(true);
-    setAnalyseEtat("Lecture du document par l'IA…");
-    try {
-      const fichiers = await Promise.all(
-        files.map(async (f) => ({
-          nom: f.name.slice(0, 200),
-          mime: f.type || "application/pdf",
-          contenu_base64: await enBase64(f),
-        })),
-      );
-      const res = await analyserOffre({ data: { fichiers } });
-      const extrait = JSON.parse(res.recueil_json) as Record<string, unknown>;
-      setRecueil((r) => {
-        const fusion: Record<string, unknown> = { ...r };
-        for (const [k, v] of Object.entries(extrait)) {
-          const actuel = fusion[k];
-          const vide = actuel === undefined || actuel === null || actuel === "" || (Array.isArray(actuel) && actuel.length === 0);
-          if (vide) fusion[k] = v;
-        }
-        return fusion;
-      });
-      // Les documents importés font foi : ils complètent et corrigent la saisie
-      // manuelle, sans supprimer un emprunteur ajouté à la main.
-      setEmprunteurs((prev) => {
-        const cle = (x: { nom: string; prenom: string }) => `${x.nom} ${x.prenom}`.trim().toLowerCase();
-        const out = prev.filter((e) => e.nom.trim() !== "");
-        for (const e of res.emprunteurs) {
-          const i = out.findIndex((x) => cle(x) === cle(e));
-          const existant = out[i];
-          if (existant) out[i] = { ...existant, ...e, client_id: e.client_id ?? existant.client_id };
-          else out.push(e);
-        }
-        return out;
-      });
-
-      const principal = res.emprunteurs[0];
-      if (principal) {
-        if (!clientId) {
-          if (principal.client_id) setClientId(principal.client_id);
-          setClientNom([principal.prenom, principal.nom].filter(Boolean).join(" ").trim());
-          if (principal.email) setClientEmail(principal.email);
-          if (principal.telephone) setClientPhone(principal.telephone);
-        }
-      }
-      const nouveaux = res.emprunteurs.filter((e) => !e.client_id).length;
-      setAnalyseEtat(
-        [
-          res.ajouts.length > 0 ? `Données du prêt reportées : ${res.ajouts.join(", ")}.` : "Aucune donnée de prêt exploitable détectée.",
-          res.emprunteurs.length > 0
-            ? `${res.emprunteurs.length} emprunteur(s) détecté(s)${nouveaux > 0 ? `, dont ${nouveaux} sans fiche client (créée à l'enregistrement)` : ", tous rapprochés d'une fiche existante"}.`
-            : "Aucun emprunteur nommé détecté : saisie manuelle.",
-          res.manquants.length > 0 ? `À compléter : ${res.manquants.join(", ")}.` : "",
-          res.erreurs.length > 0 ? `Documents non exploités : ${res.erreurs.join(" ; ")}` : "",
-        ]
-          .filter(Boolean)
-          .join(" "),
-      );
-    } catch (e) {
-      setAnalyseEtat(`Analyse IA indisponible : ${e instanceof Error ? e.message : "erreur"} — saisie manuelle.`);
-    }
-    setAnalysing(false);
-  };
 
   /**
    * Archive les documents déposés sur le dossier créé et coche la pièce requise.
@@ -395,13 +358,13 @@ export function NewDossierForm({
       const cible = offreCibles[index] ?? -1;
       const clientDoc = (cible >= 0 ? idsAssures[cible] : null) ?? clientDossierId;
       try {
-        const safeName = file.name.replace(/[^\w.-]+/g, "_").slice(0, 120);
-        const path = `${clientDoc ?? dossierId}/${Date.now()}-${safeName}`;
+        const safeName = normaliserNomFichierPourStockage(file.name);
+        const path = `${dossierId}/pret/${crypto.randomUUID()}-${safeName}`;
         const { error: upErr } = await supabase.storage
           .from("dossier-documents")
-          .upload(path, file, { upsert: true });
+          .upload(path, file, { upsert: false });
         if (upErr) throw upErr;
-        const { data: doc } = await supabase
+        const { data: doc, error: docError } = await supabase
           .from("documents")
           .insert({
             dossier_id: dossierId,
@@ -413,26 +376,36 @@ export function NewDossierForm({
             file_size: file.size,
             mime_type: file.type || null,
             categorie: "dossier",
-            type_document: "offre_pret",
+            type_document: offreNatures[index] ?? "offre_pret",
           })
           .select("id")
           .maybeSingle();
+        if (docError || !doc) {
+          const cleanup = await supabase.storage.from("dossier-documents").remove([path]);
+          if (cleanup.error) toast.error("Archivage échoué ; nettoyage du fichier à vérifier.");
+          throw new Error(docError?.message ?? "Document non enregistré");
+        }
         if (doc?.id) {
-          await supabase
+          const checklist = await supabase
             .from("dossier_pieces_requises")
             .update({ statut: "recue", recue_le: new Date().toISOString(), document_id: doc.id })
             .eq("dossier_id", dossierId)
-            .in("code", ["offre_pret", "tableau_amortissement"]);
+            .eq("code", offreNatures[index] ?? "offre_pret");
+          if (checklist.error) toast.error("Document archivé, checklist à vérifier.");
         }
       } catch (e) {
-        console.error("[offre de prêt] archivage impossible", e);
+        toast.error(
+          `Dossier créé, archivage partiel : ${file.name}. ${e instanceof Error ? e.message : "Erreur"}`,
+        );
       }
     }
   };
 
-
   /** Emprunteurs réellement exploitables (un nom au minimum). */
-  const emprunteursValides = useMemo(() => emprunteurs.filter((e) => e.nom.trim() !== ""), [emprunteurs]);
+  const emprunteursValides = useMemo(
+    () => emprunteurs.filter((e) => e.nom.trim() !== ""),
+    [emprunteurs],
+  );
 
   /**
    * Reporte la liste des emprunteurs du prêt dans les assurés du recueil, sans
@@ -489,9 +462,15 @@ export function NewDossierForm({
             // Les fiches clients reçoivent la valeur corrigée dans le recueil
             // (assuresSynchronises), jamais celle de l'étape 1 si elle a été rectifiée.
             emprunteurs: emprunteursValides.map((e, i) => {
-              const a = (assuresEmprunteur(recueilFinal["assures"])[i] ?? null) as
-                | ({ prenom?: string; nom?: string; date_naissance?: string; quotite_pct?: number | null; csp?: string; fumeur?: boolean; client_id?: string | null })
-                | null;
+              const a = (assuresEmprunteur(recueilFinal["assures"])[i] ?? null) as {
+                prenom?: string;
+                nom?: string;
+                date_naissance?: string;
+                quotite_pct?: number | null;
+                csp?: string;
+                fumeur?: boolean;
+                client_id?: string | null;
+              } | null;
               return {
                 prenom: a?.prenom || e.prenom,
                 nom: a?.nom || e.nom,
@@ -513,7 +492,7 @@ export function NewDossierForm({
         if (assures.length > 0) {
           recueilFinal = {
             ...recueilFinal,
-            assures: assures.map((a, i) => (ids[i] ? { ...a, client_id: ids[i]!.client_id } : a)),
+            assures: assures.map((a, i) => (ids[i] ? { ...a, client_id: ids[i]?.client_id } : a)),
           };
         }
       } catch (e) {
@@ -523,9 +502,6 @@ export function NewDossierForm({
       }
     }
     const recueilSoumis = recueilFinal;
-
-
-
 
     // Champs de compat pour emprunteur (pour garder les colonnes existantes utiles)
     let capital: number | null = null;
@@ -550,25 +526,43 @@ export function NewDossierForm({
       }
     }
 
-    const { data: created, error: insErr } = await supabase.from("dossiers").insert({
-      client_id: clientPrincipalId || null,
-      client_nom: nomDossier,
-      client_email: clientEmail || null,
-      client_phone: clientPhone || null,
-      type_assurance: type,
-      compagnie_id: compagnieId,
-      produit_id: produitId,
-      recueil_besoins: recueilSoumis as never,
+    const { data: created, error: insErr } = await supabase
+      .from("dossiers")
+      .insert({
+        client_id: clientPrincipalId || null,
+        client_nom: nomDossier,
+        client_email: clientEmail || null,
+        client_phone: clientPhone || null,
+        type_assurance: type,
+        compagnie_id: compagnieId,
+        produit_id: produitId,
+        recueil_besoins: recueilSoumis as never,
+        ...(lecturesPret.length
+          ? {
+              analyse_ia: {
+                imports_pret_verifies: [
+                  {
+                    confirme_par: userId,
+                    confirme_le: new Date().toISOString(),
+                    valeurs: valeursPret,
+                    lectures: lecturesPret,
+                  },
+                ],
+              } as never,
+            }
+          : {}),
 
-      capital,
-      duree_mois,
-      age,
-      fumeur,
-      notes: notes || null,
-      economie_estimee: economie,
-      apporteur_id: userId,
-      created_by: userId,
-    }).select("id").single();
+        capital,
+        duree_mois,
+        age,
+        fumeur,
+        notes: notes || null,
+        economie_estimee: economie,
+        apporteur_id: userId,
+        created_by: userId,
+      })
+      .select("id")
+      .single();
     if (insErr || !created) {
       setSaving(false);
       setError(insErr?.message ?? "Erreur de création");
@@ -576,7 +570,8 @@ export function NewDossierForm({
     }
 
     // Offre de prêt déposée à la création : archivée sur le dossier.
-    if (offreFiles.length > 0) await archiverOffres(created.id, clientPrincipalId || null, idsAssures);
+    if (offreFiles.length > 0)
+      await archiverOffres(created.id, clientPrincipalId || null, idsAssures);
 
     // Recueil validé → lettre de mission générée et envoyée automatiquement
     const res = await lancerLettreMission({ data: { dossier_id: created.id } });
@@ -590,7 +585,9 @@ export function NewDossierForm({
     return (
       <div className="mt-4 rounded-2xl border border-line bg-surface-elevated p-6">
         <h2 className="font-serif text-lg">Étape 1 · Type d'assurance</h2>
-        <p className="mt-1 text-sm text-ink-muted">Choisissez la branche concernée pour ce dossier.</p>
+        <p className="mt-1 text-sm text-ink-muted">
+          Choisissez la branche concernée pour ce dossier.
+        </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {BRANCHES_CREATION.map((b) => (
             <button
@@ -598,7 +595,9 @@ export function NewDossierForm({
               type="button"
               onClick={() => setType(b.value)}
               className={`rounded-2xl border p-4 text-left transition ${
-                type === b.value ? "border-ink bg-background" : "border-line bg-background/40 hover:border-ink/40"
+                type === b.value
+                  ? "border-ink bg-background"
+                  : "border-line bg-background/40 hover:border-ink/40"
               }`}
             >
               <p className="font-medium text-ink">{b.label}</p>
@@ -615,14 +614,24 @@ export function NewDossierForm({
 
         {type === "emprunteur" ? (
           <>
+            <ImportPretVerifie
+              onConfirm={(appliquer, pieces, lectures, valeurs) => {
+                setRecueil(appliquer);
+                setOffreFiles(pieces.map((p) => p.file));
+                setOffreNatures(pieces.map((p) => p.nature));
+                setOffreCibles(pieces.map(() => -1));
+                setLecturesPret(lectures);
+                setValeursPret(valeurs);
+              }}
+            />
             {/* Un dossier = un prêt : Monsieur et Madame figurent dans le même dossier. */}
             <div className="mt-6 rounded-2xl border border-line bg-background/40 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="text-sm font-medium text-ink">Emprunteurs du prêt</p>
                   <p className="mt-1 text-xs text-ink-muted">
-                    Un seul dossier pour le prêt, avec le détail de chaque emprunteur. Les fiches clients manquantes sont
-                    créées à l'enregistrement.
+                    Un seul dossier pour le prêt, avec le détail de chaque emprunteur. Les fiches
+                    clients manquantes sont créées à l'enregistrement.
                   </p>
                 </div>
                 <button
@@ -657,9 +666,14 @@ export function NewDossierForm({
                 <div className="mt-4 space-y-3">
                   {emprunteurs.map((e, i) => {
                     const maj = (patch: Partial<EmprunteurPropose>) =>
-                      setEmprunteurs((prev) => prev.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+                      setEmprunteurs((prev) =>
+                        prev.map((x, j) => (j === i ? { ...x, ...patch } : x)),
+                      );
                     return (
-                      <div key={`emp-${i}`} className="rounded-xl border border-line bg-surface-elevated p-3">
+                      <div
+                        key={`emp-${i}`}
+                        className="rounded-xl border border-line bg-surface-elevated p-3"
+                      >
                         <div className="flex items-center justify-between">
                           <p className="text-xs font-semibold uppercase tracking-wide text-[#B99B3F]">
                             {i === 0 ? "Assuré principal" : `Co-emprunteur ${i}`}
@@ -671,7 +685,9 @@ export function NewDossierForm({
                             type="button"
                             onClick={() => {
                               setEmprunteurs((prev) => prev.filter((_, j) => j !== i));
-                              setOffreCibles((prev) => prev.map((c) => (c === i ? -1 : c > i ? c - 1 : c)));
+                              setOffreCibles((prev) =>
+                                prev.map((c) => (c === i ? -1 : c > i ? c - 1 : c)),
+                              );
                             }}
                             className="text-xs text-destructive hover:underline"
                           >
@@ -679,7 +695,11 @@ export function NewDossierForm({
                           </button>
                         </div>
                         <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                          <TextInput label="Prénom" value={e.prenom} onChange={(v) => maj({ prenom: v })} />
+                          <TextInput
+                            label="Prénom"
+                            value={e.prenom}
+                            onChange={(v) => maj({ prenom: v })}
+                          />
                           <TextInput label="Nom" value={e.nom} onChange={(v) => maj({ nom: v })} />
                           <TextInput
                             label="Date de naissance"
@@ -691,7 +711,9 @@ export function NewDossierForm({
                             label="Quotité (%)"
                             type="number"
                             value={e.quotite_pct === null ? "" : String(e.quotite_pct)}
-                            onChange={(v) => maj({ quotite_pct: v.trim() === "" ? null : Number(v) })}
+                            onChange={(v) =>
+                              maj({ quotite_pct: v.trim() === "" ? null : Number(v) })
+                            }
                           />
                           <TextInput
                             label="Email"
@@ -711,68 +733,10 @@ export function NewDossierForm({
                 </div>
               )}
             </div>
-
-            <div className="mt-4 rounded-2xl border border-line bg-background/40 p-4">
-              <p className="text-sm font-medium text-ink">Offre de prêt ou tableau d'amortissement (facultatif)</p>
-              <p className="mt-1 text-xs text-ink-muted">
-                Déposez le document : les caractéristiques du prêt et les emprunteurs sont relevés automatiquement. Les
-                informations lues dans le document font foi et corrigent la saisie.
-              </p>
-              <input
-                type="file"
-                multiple
-                accept="application/pdf,image/*"
-                disabled={analysing}
-                onChange={(e) => {
-                  const files = Array.from(e.target.files ?? []);
-                  if (files.length > 0) void analyserOffreDeposee(files);
-                  e.target.value = "";
-                }}
-                className="mt-3 block w-full text-sm"
-              />
-              {offreFiles.length > 0 ? (
-                <ul className="mt-3 space-y-2 text-xs text-ink">
-                  {offreFiles.map((f, i) => (
-                    <li key={`${f.name}-${i}`} className="flex flex-wrap items-center gap-2">
-                      <span className="flex-1 truncate">{f.name}</span>
-                      <label className="flex items-center gap-1 text-ink-muted">
-                        Concerne
-                        <select
-                          value={String(offreCibles[i] ?? -1)}
-                          onChange={(ev) =>
-                            setOffreCibles((prev) => prev.map((c, j) => (j === i ? Number(ev.target.value) : c)))
-                          }
-                          className="rounded-md border border-line bg-background px-2 py-1 text-xs"
-                        >
-                          <option value="-1">Le prêt (commun)</option>
-                          {emprunteurs.map((e, j) => (
-                            <option key={`cible-${j}`} value={String(j)}>
-                              {[e.prenom, e.nom].filter(Boolean).join(" ") || `Emprunteur ${j + 1}`}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setOffreFiles((prev) => prev.filter((_, j) => j !== i));
-                          setOffreCibles((prev) => prev.filter((_, j) => j !== i));
-                        }}
-                        className="text-destructive hover:underline"
-                      >
-                        Retirer
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-              {analyseEtat ? <p className="mt-3 text-xs text-ink">{analyseEtat}</p> : null}
-            </div>
           </>
         ) : null}
 
         <div className="mt-6 flex justify-end">
-
           <button
             onClick={() => {
               setRecueil((r) => assuresSynchronises(r));
@@ -784,7 +748,6 @@ export function NewDossierForm({
             Continuer → Recueil des besoins
           </button>
         </div>
-
       </div>
     );
   }
@@ -806,7 +769,9 @@ export function NewDossierForm({
         <div className="space-y-6">
           {!presetClient ? (
             <div className="rounded-xl border border-line bg-background/40 p-4">
-              <label className="text-xs font-medium uppercase tracking-wide text-ink-muted">Client</label>
+              <label className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+                Client
+              </label>
               <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                 <input
                   placeholder="Rechercher (nom, prénom, email)…"
@@ -834,7 +799,12 @@ export function NewDossierForm({
               </div>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
                 <TextInput label="Nom du client" value={clientNom} onChange={setClientNom} />
-                <TextInput label="Email" value={clientEmail} onChange={setClientEmail} type="email" />
+                <TextInput
+                  label="Email"
+                  value={clientEmail}
+                  onChange={setClientEmail}
+                  type="email"
+                />
                 <TextInput label="Téléphone" value={clientPhone} onChange={setClientPhone} />
               </div>
             </div>
@@ -865,7 +835,9 @@ export function NewDossierForm({
           </div>
 
           <div>
-            <label className="text-xs font-medium uppercase tracking-wide text-ink-muted">Notes internes</label>
+            <label className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+              Notes internes
+            </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -914,7 +886,8 @@ export function RecueilField({
   value: unknown;
   onChange: (v: unknown) => void;
 }) {
-  const cls = "mt-1 w-full rounded-md border border-line bg-background px-3 py-2 text-sm outline-none focus:border-ink";
+  const cls =
+    "mt-1 w-full rounded-md border border-line bg-background px-3 py-2 text-sm outline-none focus:border-ink";
   if (field.type === "checkbox") {
     return (
       <label className="flex items-center gap-2 text-sm">
@@ -926,7 +899,9 @@ export function RecueilField({
   if (field.type === "textarea") {
     return (
       <label className="block sm:col-span-2">
-        <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">{field.label}</span>
+        <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+          {field.label}
+        </span>
         <textarea
           rows={3}
           value={(value as string) ?? ""}
@@ -940,8 +915,14 @@ export function RecueilField({
   if (field.type === "select") {
     return (
       <label className="block">
-        <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">{field.label}</span>
-        <select value={(value as string) ?? ""} onChange={(e) => onChange(e.target.value)} className={cls}>
+        <span className="text-xs font-medium uppercase tracking-wide text-ink-muted">
+          {field.label}
+        </span>
+        <select
+          value={(value as string) ?? ""}
+          onChange={(e) => onChange(e.target.value)}
+          className={cls}
+        >
           <option value="">—</option>
           {field.options?.map((o) => (
             <option key={o.value} value={o.value}>
@@ -962,7 +943,13 @@ export function RecueilField({
         type={field.type === "number" ? "number" : "text"}
         value={(value as string | number | undefined) ?? ""}
         onChange={(e) =>
-          onChange(field.type === "number" ? (e.target.value === "" ? "" : Number(e.target.value)) : e.target.value)
+          onChange(
+            field.type === "number"
+              ? e.target.value === ""
+                ? ""
+                : Number(e.target.value)
+              : e.target.value,
+          )
         }
         placeholder={field.placeholder}
         className={cls}

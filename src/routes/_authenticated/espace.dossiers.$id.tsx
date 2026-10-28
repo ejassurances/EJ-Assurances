@@ -55,8 +55,23 @@ import { CompletudeRings } from "@/components/completude-rings";
 import { useCompletudeDossier } from "@/hooks/use-completude";
 import { usePreuvesParcours } from "@/hooks/use-preuves-parcours";
 
-
 export const Route = createFileRoute("/_authenticated/espace/dossiers/$id")({
+  head: () => ({
+    meta: [
+      { title: "Dossier client — EJ Assurances" },
+      {
+        name: "description",
+        content: "Suivi du dossier emprunteur et vérification des pièces du prêt.",
+      },
+      { property: "og:title", content: "Dossier client — EJ Assurances" },
+      {
+        property: "og:description",
+        content: "Suivi du dossier emprunteur et vérification des pièces du prêt.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   validateSearch: (search: Record<string, unknown>): { etape?: string } => ({
     etape: typeof search.etape === "string" ? search.etape : undefined,
   }),
@@ -257,14 +272,14 @@ function DossierDetail() {
     if (etape && parcoursEtape(etape, liste)) setParcours(etape as ParcoursKey);
   }, [etape, dossier?.type_assurance]);
 
-
-
   useEffect(() => {
     const clientId = dossier?.client_id;
     if (!clientId) return setScoreKyc(null);
     let annule = false;
     (async () => {
-      const { data } = await supabase.rpc("calculer_score_conformite_client", { _client_id: clientId });
+      const { data } = await supabase.rpc("calculer_score_conformite_client", {
+        _client_id: clientId,
+      });
       if (!annule) setScoreKyc(typeof data === "number" ? data : null);
     })();
     return () => {
@@ -306,7 +321,6 @@ function DossierDetail() {
     load();
   };
 
-
   return (
     <div className="space-y-8">
       {devoirAConfirmer && (
@@ -316,9 +330,9 @@ function DossierDetail() {
               Échelonnement des frais de distribution à renseigner
             </p>
             <p className="text-sm text-ink-soft">
-              Le client de ce dossier a demandé, à la signature du devoir de conseil, l'échelonnement des
-              frais de distribution en 12 fois. Rendez-vous sur l'intranet du partenaire pour renseigner cet
-              échelonnement avant de continuer.
+              Le client de ce dossier a demandé, à la signature du devoir de conseil,
+              l'échelonnement des frais de distribution en 12 fois. Rendez-vous sur l'intranet du
+              partenaire pour renseigner cet échelonnement avant de continuer.
             </p>
             <button
               type="button"
@@ -334,7 +348,9 @@ function DossierDetail() {
               }}
               className="w-full rounded-full bg-[#D4AF37] px-5 py-2 text-sm font-semibold text-[#0A192F] disabled:opacity-50"
             >
-              {confirmationEnCours ? "Enregistrement…" : "J'ai bien renseigné l'échelonnement sur l'intranet du partenaire"}
+              {confirmationEnCours
+                ? "Enregistrement…"
+                : "J'ai bien renseigné l'échelonnement sur l'intranet du partenaire"}
             </button>
           </div>
         </div>
@@ -358,9 +374,9 @@ function DossierDetail() {
             Dossier gelé — conformité KYC insuffisante
           </p>
           <p className="mt-2 text-sm text-ink">
-            Le score de conformité du client est de <strong>{scoreKyc} %</strong> (seuil réglementaire : 50 %).
-            L'édition du projet, la saisie de devis et la génération des documents DDA sont bloquées jusqu'à la
-            régularisation des pièces KYC.
+            Le score de conformité du client est de <strong>{scoreKyc} %</strong> (seuil
+            réglementaire : 50 %). L'édition du projet, la saisie de devis et la génération des
+            documents DDA sont bloquées jusqu'à la régularisation des pièces KYC.
           </p>
           {dossier.client_id && (
             <Link
@@ -446,19 +462,26 @@ function DossierDetail() {
         </div>
       )}
 
-
       {(dossier.type_assurance === "sante" || dossier.type_assurance === "prevoyance_sante") && (
         <div className="crm-card flex flex-wrap items-center justify-between gap-3 p-4">
           <div>
             <p className="text-sm font-semibold text-ink">Recueil santé</p>
             <p className="text-xs text-ink-muted">
               {(() => {
-                const rs = (dossier.recueil_besoins as Record<string, any> | null)?.["recueil_sante"];
-                return rs ? `Statut : ${({ commence: "commencé", en_cours: "en cours", termine: "terminé", a_revoir: "à revoir" } as Record<string, string>)[rs.statut] ?? rs.statut}` : "Pas encore commencé";
+                const rs = (
+                  dossier.recueil_besoins as Record<string, { statut: string } | undefined> | null
+                )?.["recueil_sante"];
+                return rs
+                  ? `Statut : ${({ commence: "commencé", en_cours: "en cours", termine: "terminé", a_revoir: "à revoir" } as Record<string, string>)[rs.statut] ?? rs.statut}`
+                  : "Pas encore commencé";
               })()}
             </p>
           </div>
-          <Link to="/espace/recueil-sante/$dossierId" params={{ dossierId: id }} className="rounded-full bg-[color:var(--crm-navy)] px-4 py-2 text-xs font-medium text-primary-foreground">
+          <Link
+            to="/espace/recueil-sante/$dossierId"
+            params={{ dossierId: id }}
+            className="rounded-full bg-[color:var(--crm-navy)] px-4 py-2 text-xs font-medium text-primary-foreground"
+          >
             Faire le point sur les besoins
           </Link>
         </div>
@@ -475,7 +498,6 @@ function DossierDetail() {
         />
       )}
 
-
       <div className="min-w-0">
         {userId && modeAffichage === "synthese" && parcoursActif ? (
           <DossierSynthese
@@ -487,7 +509,12 @@ function DossierDetail() {
             onSaved={load}
           />
         ) : modeAffichage === "assures" && parcoursActif ? (
-          <CoordonneesEtape dossier={dossier} dossierId={id} canEditSuivi={canEditSuivi} onSaved={load} />
+          <CoordonneesEtape
+            dossier={dossier}
+            dossierId={id}
+            canEditSuivi={canEditSuivi}
+            onSaved={load}
+          />
         ) : modeAffichage === "lettre_mission" && parcoursActif ? (
           <div className="crm-card p-6">
             <p className="crm-eyebrow">Lettre de mission</p>
@@ -501,11 +528,28 @@ function DossierDetail() {
           </div>
         ) : parcoursActif && modeAffichage === "pret" ? (
           <div className="space-y-6">
-          {canEdit && (
-            <ImportDocumentsEmprunteur
+            {canEdit && (
+              <ImportDocumentsEmprunteur
+                dossierId={id}
+                recueil={dossier.recueil_besoins}
+                onChanged={load}
+                client={{
+                  id: dossier.client_id,
+                  nom: dossier.client_nom,
+                  email: dossier.client_email,
+                  telephone: dossier.client_phone,
+                  reference: dossier.reference,
+                }}
+              />
+            )}
+            <RecueilDossierPanel
               dossierId={id}
+              typeAssurance={dossier.type_assurance}
               recueil={dossier.recueil_besoins}
-              onChanged={load}
+              canEdit={canEdit}
+              onSaved={load}
+              sectionUnique
+              filtreSections={(titre) => /pr[eê]t/i.test(titre)}
               client={{
                 id: dossier.client_id,
                 nom: dossier.client_nom,
@@ -514,23 +558,6 @@ function DossierDetail() {
                 reference: dossier.reference,
               }}
             />
-          )}
-          <RecueilDossierPanel
-            dossierId={id}
-            typeAssurance={dossier.type_assurance}
-            recueil={dossier.recueil_besoins}
-            canEdit={canEdit}
-            onSaved={load}
-            sectionUnique
-            filtreSections={(titre) => /pr[eê]t/i.test(titre)}
-            client={{
-              id: dossier.client_id,
-              nom: dossier.client_nom,
-              email: dossier.client_email,
-              telephone: dossier.client_phone,
-              reference: dossier.reference,
-            }}
-          />
           </div>
         ) : parcoursActif && (modeAffichage === "engin" || modeAffichage === "usage") ? (
           <RecueilDossierPanel
@@ -551,7 +578,6 @@ function DossierDetail() {
               reference: dossier.reference,
             }}
           />
-
         ) : userId && modeAffichage === "devis" && parcoursActif ? (
           <DossierDevisPanel
             dossierId={id}
@@ -585,7 +611,11 @@ function DossierDetail() {
           <DossierTachesPanel dossierId={id} />
         ) : userId && modeAffichage === "fichiers" && parcoursActif ? (
           <section className="space-y-6" aria-label="Fichiers du dossier">
-            <PiecesSection dossierId={id} clientEmail={dossier.client_email} canValidate={canEdit} />
+            <PiecesSection
+              dossierId={id}
+              clientEmail={dossier.client_email}
+              canValidate={canEdit}
+            />
             <DocumentsPanel dossierId={id} userId={userId} />
           </section>
         ) : modeAffichage === "modifier" && parcoursActif ? (
@@ -690,8 +720,6 @@ function DossierDetail() {
           )
         )}
       </div>
-
-
     </div>
   );
 }
@@ -754,7 +782,9 @@ function OngletModifier({
         charge_de_projet: valeurs.charge_de_projet || null,
         date_butoir: valeurs.date_butoir || null,
         prime_mensuelle: valeurs.prime_mensuelle ? Number(valeurs.prime_mensuelle) : null,
-        prime_trimestrielle: valeurs.prime_trimestrielle ? Number(valeurs.prime_trimestrielle) : null,
+        prime_trimestrielle: valeurs.prime_trimestrielle
+          ? Number(valeurs.prime_trimestrielle)
+          : null,
         prime_semestrielle: valeurs.prime_semestrielle ? Number(valeurs.prime_semestrielle) : null,
         prime_annuelle: valeurs.prime_annuelle ? Number(valeurs.prime_annuelle) : null,
       })
@@ -768,7 +798,8 @@ function OngletModifier({
     onSaved();
   };
 
-  const set = (cle: keyof typeof valeurs, v: string | boolean) => setValeurs((p) => ({ ...p, [cle]: v }));
+  const set = (cle: keyof typeof valeurs, v: string | boolean) =>
+    setValeurs((p) => ({ ...p, [cle]: v }));
 
   return (
     <div className="crm-card space-y-6 p-6">
@@ -988,20 +1019,20 @@ function OngletConfiguration({
           />
         </div>
         {estPret && (
-        <div>
-          <label className={labelCls}>Cadre de financement</label>
-          <select
-            className={inputCls}
-            disabled={!canEdit}
-            value={valeurs.cadre_financement}
-            onChange={(e) => setValeurs((p) => ({ ...p, cadre_financement: e.target.value }))}
-          >
-            <option value="">—</option>
-            <option value="nouveau_pret">Nouveau prêt</option>
-            <option value="rachat">Rachat</option>
-            <option value="renegociation">Renégociation</option>
-          </select>
-        </div>
+          <div>
+            <label className={labelCls}>Cadre de financement</label>
+            <select
+              className={inputCls}
+              disabled={!canEdit}
+              value={valeurs.cadre_financement}
+              onChange={(e) => setValeurs((p) => ({ ...p, cadre_financement: e.target.value }))}
+            >
+              <option value="">—</option>
+              <option value="nouveau_pret">Nouveau prêt</option>
+              <option value="rachat">Rachat</option>
+              <option value="renegociation">Renégociation</option>
+            </select>
+          </div>
         )}
       </div>
 
@@ -1068,7 +1099,9 @@ function DossierSynthese({
         <div className="crm-card p-5">
           <p className="crm-eyebrow">Économie estimée</p>
           <p className="mt-2 font-serif text-xl font-medium text-ink">
-            {dossier.economie_estimee ? `${dossier.economie_estimee.toLocaleString("fr-FR")} €` : "—"}
+            {dossier.economie_estimee
+              ? `${dossier.economie_estimee.toLocaleString("fr-FR")} €`
+              : "—"}
           </p>
         </div>
       </div>
@@ -1314,7 +1347,13 @@ function CoordonneesEtape({
   const brut = Array.isArray(dossier.recueil_besoins?.["assures"])
     ? (dossier.recueil_besoins?.["assures"] as Record<string, unknown>[])
     : [];
-  type Fiche = { id: string; nom: string; prenom: string | null; email: string | null; telephone: string | null };
+  type Fiche = {
+    id: string;
+    nom: string;
+    prenom: string | null;
+    email: string | null;
+    telephone: string | null;
+  };
   const [fiches, setFiches] = useState<Record<string, Fiche>>({});
 
   const ids = [
@@ -1353,7 +1392,8 @@ function CoordonneesEtape({
         (String(a.lien) === "principal" ? dossier.client_nom : "") ||
         "Emprunteur sans nom";
       const email = fiche?.email ?? (String(a.lien) === "principal" ? dossier.client_email : null);
-      const tel = fiche?.telephone ?? (String(a.lien) === "principal" ? dossier.client_phone : null);
+      const tel =
+        fiche?.telephone ?? (String(a.lien) === "principal" ? dossier.client_phone : null);
       return {
         cle: `${nom}-${i}`,
         nom,
@@ -1652,7 +1692,14 @@ function StageContent({
 
   // Étape 1 — Coordonnées : identité et contacts, sans les champs du prêt.
   if (parcours === "coordonnees") {
-    content = <CoordonneesEtape dossier={dossier} dossierId={dossier.id} canEditSuivi={canEdit} onSaved={onChanged} />;
+    content = (
+      <CoordonneesEtape
+        dossier={dossier}
+        dossierId={dossier.id}
+        canEditSuivi={canEdit}
+        onSaved={onChanged}
+      />
+    );
   }
 
   // Étape 2 — Informations personnelles : les assurés à couvrir uniquement.
@@ -1740,8 +1787,6 @@ function StageContent({
     content = <>{souscription}</>;
   }
 
-
-
   // Étape 5 du parcours emprunteur : lettre de mission, objectif fixe rappelé.
   if (parcours === "lettre_mission") {
     content = (
@@ -1754,9 +1799,7 @@ function StageContent({
             au client pour signature.
           </p>
         </div>
-        {canEdit && (
-          <LettreMissionPanel dossierId={dossierId} clientEmail={dossier.client_email} />
-        )}
+        {canEdit && <LettreMissionPanel dossierId={dossierId} clientEmail={dossier.client_email} />}
         {documents}
       </>
     );
@@ -1768,9 +1811,7 @@ function StageContent({
       <>
         {souscription}
         <div className="rounded-2xl border border-line bg-surface-elevated p-5">
-          <h3 className="font-serif text-lg font-medium text-ink">
-            Documents reçus de l'assureur
-          </h3>
+          <h3 className="font-serif text-lg font-medium text-ink">Documents reçus de l'assureur</h3>
           <p className="mt-2 text-sm text-ink-soft">
             Déposez ici le devis final, la lettre de mission signée et le devoir de conseil signé
             reçus de la compagnie : chaque document est classé et rattaché au dossier.
@@ -1818,8 +1859,6 @@ function StageContent({
       )}
       {!parcours && canEdit && <CopilotePanel dossierId={dossierId} />}
       {content}
-
-
     </section>
   );
 }
@@ -2078,7 +2117,10 @@ function DocumentsPanel({ dossierId, userId }: { dossierId: string; userId: stri
 
   const remove = async (doc: Doc) => {
     await supabase.storage.from("dossier-documents").remove([doc.storage_path]);
-    await supabase.from("documents").update({ archive_le: new Date().toISOString() }).eq("id", doc.id);
+    await supabase
+      .from("documents")
+      .update({ archive_le: new Date().toISOString() })
+      .eq("id", doc.id);
     load();
   };
 

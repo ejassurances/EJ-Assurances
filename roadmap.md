@@ -7,5 +7,6 @@
 - [x] Vérification ordinateur/mobile et capture finale
 
 - [x] Recueil santé humain v1 (intro, une question/écran, hospitalisation, soins courants, optique, dentaire, auditif, médecine douce, synthèse modifiable ; réponses brutes / besoins normalisés / règles / résultats séparés ; statut recueil ; lié client + dossier santé) — après le chantier nomenclatures, audit puis proposition
-- [ ] Frais de distribution + barèmes commission — code, formulaire et tests faits ; bloqué : application de la migration (base en pause) puis étape 2 (index unique) à valider
+- [ ] Frais de distribution + barèmes commission — code et tests terminés ; SQL/trigger/historique préparés, application et tests transactionnels bloqués par base en pause ; index historique intact
+- [ ] Import emprunteur facultatif — code et tests terminés pour champs financiers ; vérification authentifiée/archivage/IA bloquée par base en pause ; extraction détaillée ligne par ligne de l'échéancier reste à compléter
 - [ ] Nomenclatures CL-/DOX- + dossier Drive client (plan prêt, en pause)
