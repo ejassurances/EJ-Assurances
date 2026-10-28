@@ -10,7 +10,7 @@
  * affichée comme telle, signalée « lu sur le devis, non validé », et jamais
  * consolidée dans le comparatif validé.
  */
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import {
   COUVERTURE_LABEL,
   grillePourFamille,
@@ -64,6 +64,9 @@ export function DevisComparatifTable({
 }) {
   const grille = grillePourFamille(familleCode);
   const estEmprunteur = familleCode === "emprunteur";
+  const [voirToutesGaranties, setVoirToutesGaranties] = useState(false);
+  const garantiesPrincipales = new Set(["deces", "ptia", "itt", "ipt", "ipp"]);
+  const nbGarantiesDetail = grille ? grille.garanties.filter((g) => !garantiesPrincipales.has(g.code)).length : 0;
   if (devis.length === 0) return null;
 
   const valeurs = (d: DevisColonne): ValeursGrille | null =>
@@ -198,7 +201,12 @@ export function DevisComparatifTable({
 
 
             {grille ? (
-              groupesGrille(grille).map((sec) => (
+              groupesGrille(grille).map((sec) => {
+                const garantiesAffichees = estEmprunteur && !voirToutesGaranties
+                  ? sec.garanties.filter((g) => garantiesPrincipales.has(g.code))
+                  : sec.garanties;
+                if (garantiesAffichees.length === 0) return null;
+                return (
                 <Fragment key={sec.groupe ?? "garanties"}>
                   <tr>
                     <td
@@ -208,7 +216,7 @@ export function DevisComparatifTable({
                       {sec.groupe ?? "Garanties"}
                     </td>
                   </tr>
-                  {sec.garanties.map((g) => (
+                  {garantiesAffichees.map((g) => (
                     <tr key={g.code}>
                       <td className={lbl}>
                         {g.libelle}
@@ -238,7 +246,8 @@ export function DevisComparatifTable({
                     </tr>
                   ))}
                 </Fragment>
-              ))
+                );
+              })
             ) : (
               <tr>
                 <td className={lbl} colSpan={devis.length + 1}>
@@ -266,6 +275,18 @@ export function DevisComparatifTable({
             </tr>
           </tbody>
         </table>
+        {estEmprunteur && grille && nbGarantiesDetail > 0 && (
+          <button
+            type="button"
+            onClick={() => setVoirToutesGaranties((value) => !value)}
+            className="mt-3 rounded-full border border-line px-3 py-2 text-xs font-medium text-ink hover:bg-surface"
+            aria-expanded={voirToutesGaranties}
+          >
+            {voirToutesGaranties
+              ? "Masquer les détails techniques"
+              : "Voir les " + nbGarantiesDetail + " autres critères : franchises, exclusions, options et conditions"}
+          </button>
+        )}
         {devis.some((d) => !d.produit_id || !grillesProduits[d.produit_id]) && (
           <p className="mt-3 text-[11px] text-ink-muted">
             Les colonnes sans grille validée affichent « non disponible » sur les lignes de garanties : seules les
