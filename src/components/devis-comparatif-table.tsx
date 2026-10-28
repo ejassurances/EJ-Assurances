@@ -202,50 +202,58 @@ export function DevisComparatifTable({
 
             {grille ? (
               groupesGrille(grille).map((sec) => {
-                const garantiesAffichees = estEmprunteur && !voirToutesGaranties
-                  ? sec.garanties.filter((g) => garantiesPrincipales.has(g.code))
-                  : sec.garanties;
+                const garantiesAffichees =
+                  estEmprunteur && !voirToutesGaranties
+                    ? sec.garanties.filter((g) => garantiesPrincipales.has(g.code))
+                    : sec.garanties;
                 if (garantiesAffichees.length === 0) return null;
+
                 return (
-                <Fragment key={sec.groupe ?? "garanties"}>
-                  <tr>
-                    <td
-                      className="border-b border-line bg-surface px-2 py-1.5 font-serif text-[11px] uppercase tracking-wide text-ink-muted"
-                      colSpan={devis.length + 1}
-                    >
-                      {sec.groupe ?? "Garanties"}
-                    </td>
-                  </tr>
-                  {garantiesAffichees.map((g) => (
-                    <tr key={g.code}>
-                      <td className={lbl}>
-                        {g.libelle}
-                        {g.obligatoire && <span className="ml-1 text-[color:var(--crm-gold)]">•</span>}
+                  <Fragment key={sec.groupe ?? "garanties"}>
+                    <tr>
+                      <td
+                        className="border-b border-line bg-surface px-2 py-1.5 font-serif text-[11px] uppercase tracking-wide text-ink-muted"
+                        colSpan={devis.length + 1}
+                      >
+                        {sec.groupe ?? "Garanties"}
                       </td>
-                      {devis.map((d) => {
-                        const v = valeurs(d)?.[g.code];
-                        if (!v) return (
-                          <td key={d.id} className={td}>
-                            {ND}
-                          </td>
-                        );
-                        const detail = [
-                          v.plafond ? `plafond ${v.plafond}` : null,
-                          v.franchise ? `franchise ${v.franchise}` : null,
-                          v.delai_carence ? `carence ${v.delai_carence}` : null,
-                        ]
-                          .filter(Boolean)
-                          .join(" · ");
-                        return (
-                          <td key={d.id} className={td + " text-ink"}>
-                            {COUVERTURE_LABEL[v.couverture]}
-                            {detail && <span className="block text-[11px] text-ink-soft">{detail}</span>}
-                          </td>
-                        );
-                      })}
                     </tr>
-                  ))}
-                </Fragment>
+                    {garantiesAffichees.map((g) => (
+                      <tr key={g.code}>
+                        <td className={lbl}>
+                          {g.libelle}
+                          {g.obligatoire && (
+                            <span className="ml-1 text-[color:var(--crm-gold)]">•</span>
+                          )}
+                        </td>
+                        {devis.map((d) => {
+                          const v = valeurs(d)?.[g.code];
+                          if (!v) {
+                            return (
+                              <td key={d.id} className={td}>
+                                {ND}
+                              </td>
+                            );
+                          }
+                          const detail = [
+                            v.plafond ? `plafond ${v.plafond}` : null,
+                            v.franchise ? `franchise ${v.franchise}` : null,
+                            v.delai_carence ? `carence ${v.delai_carence}` : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ");
+                          return (
+                            <td key={d.id} className={td + " text-ink"}>
+                              {COUVERTURE_LABEL[v.couverture]}
+                              {detail && (
+                                <span className="block text-[11px] text-ink-soft">{detail}</span>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </Fragment>
                 );
               })
             ) : (
@@ -262,7 +270,9 @@ export function DevisComparatifTable({
                 <td key={d.id} className={td}>
                   {d.garanties_resume ? (
                     <>
-                      <span className="whitespace-pre-wrap text-ink-soft">{d.garanties_resume}</span>
+                      <span className="whitespace-pre-wrap text-ink-soft">
+                        {d.garanties_resume}
+                      </span>
                       <span className="mt-1 block rounded-md border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] text-amber-800">
                         lu sur le devis, non validé
                       </span>
@@ -284,13 +294,15 @@ export function DevisComparatifTable({
           >
             {voirToutesGaranties
               ? "Masquer les détails techniques"
-              : "Voir les " + nbGarantiesDetail + " autres critères : franchises, exclusions, options et conditions"}
+              : "Voir les " +
+                nbGarantiesDetail +
+                " autres critères : franchises, exclusions, options et conditions"}
           </button>
         )}
         {devis.some((d) => !d.produit_id || !grillesProduits[d.produit_id]) && (
           <p className="mt-3 text-[11px] text-ink-muted">
-            Les colonnes sans grille validée affichent « non disponible » sur les lignes de garanties : seules les
-            valeurs validées dans le CRM sont comparables.
+            Les colonnes sans grille validée affichent « non disponible » sur les lignes de garanties :
+            seules les valeurs validées dans le CRM sont comparables.
           </p>
         )}
       </div>
