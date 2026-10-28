@@ -212,9 +212,8 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
     donneesSource: Donnees = donnees,
     typeSource: string = typeAssurance,
     attestationSource: File | null = attestation,
-    apresVerification = false,
   ) => {
-    if (envoi && !apresVerification) return;
+    if (envoi) return;
     if (!attestationSource || !donneesSource.nom.trim() || !typeSource) {
       setErreur("L'attestation, le nom et le type d'assurance sont obligatoires.");
       return;
@@ -250,8 +249,9 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
     donneesSource: Donnees = donnees,
     typeSource: string = typeAssurance,
     attestationSource: File | null = attestation,
+    apresVerification = false,
   ) => {
-    if (envoi) return;
+    if (envoi && !apresVerification) return;
     if (!attestationSource || !donneesSource.nom.trim() || !typeSource) {
       setErreur("L'attestation, le nom et le type d'assurance sont obligatoires.");
       return;
