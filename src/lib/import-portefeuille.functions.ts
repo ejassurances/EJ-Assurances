@@ -52,7 +52,7 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
                 {
                   type: "text",
                   text:
-                    'Extrais ces champs si présents : civilite (M., Mme ou Autre), prenom, nom, date_naissance, email, mobile, telephone, adresse, code_postal, ville, assureur, numero_contrat, date_effet, date_echeance, type_couverture. Réponds avec les clés exactes et null si la valeur n’est pas visible. Le nom du fichier est ' +
+                    "Extrais ces champs si présents : civilite (M., Mme ou Autre), prenom, nom, date_naissance, email, mobile, telephone, adresse, code_postal, ville, assureur, numero_contrat, date_effet, date_echeance, type_couverture. Réponds avec les clés exactes et null si la valeur n’est pas visible. Le nom du fichier est " +
                     data.file_name,
                 },
                 {
@@ -71,8 +71,14 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
 
     if (!response.ok) {
       const detail = await response.text().catch(() => "");
-      console.error("[import portefeuille] extraction IA indisponible", response.status, detail.slice(0, 500));
-      throw new Error("Lecture automatique impossible. Vous pouvez saisir les informations manuellement.");
+      console.error(
+        "[import portefeuille] extraction IA indisponible",
+        response.status,
+        detail.slice(0, 500),
+      );
+      throw new Error(
+        "Lecture automatique impossible. Vous pouvez saisir les informations manuellement.",
+      );
     }
 
     const payload = (await response.json()) as {
@@ -81,7 +87,7 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
     const content = payload.choices?.[0]?.message?.content;
     const texte = Array.isArray(content)
       ? content.map((part) => part.text ?? "").join("\n")
-      : content ?? "";
+      : (content ?? "");
     const json = texte.match(/\{[\s\S]*\}/)?.[0];
     if (!json) throw new Error("L'attestation n'a pas pu être lue. Vous pouvez saisir les informations manuellement.");
 
