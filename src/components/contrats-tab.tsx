@@ -129,12 +129,12 @@ export function ContratsTab({ clientId, canEdit }: { clientId: string; canEdit: 
         <div className="crm-card flex items-center justify-between px-4 py-3">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
-              Commissions générées (cumul)
+              Commissions compagnie historiques (cumul)
             </p>
             <p className="text-[11px] text-ink-muted">Information interne — non visible par le client.</p>
           </div>
           <p className="font-serif text-xl font-medium text-ink">
-            {fmtEuros(rows.reduce((s, r) => s + commissionContrat(r).montant, 0))}
+            {rows.some(r => commissionContrat(r).montant == null) ? "À configurer" : fmtEuros(rows.reduce((s, r) => s + (commissionContrat(r).montant ?? 0), 0))}
           </p>
         </div>
       )}

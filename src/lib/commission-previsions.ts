@@ -82,7 +82,8 @@ export function montantMensuelEstime(
   regle: RegleCommission,
   cotisationEcheance: number | null,
 ): number | null {
-  if (regle.type === "fixe") return Number(regle.montant_fixe ?? 0);
+  if (regle.base_calcul === "economie_realisee") return null;
+  if (regle.type === "fixe") return regle.montant_fixe;
   if (cotisationEcheance == null) return null;
   // Assiette = prime d'assurance pure de l'échéance, hors frais et taxes.
   return calculerCommission(
@@ -188,21 +189,12 @@ export function previsionsSynthetiques(
 
     const hist = parContrat.get(ct.id);
     const periodicite = periodiciteDe(ct.fractionnement);
-    // Cotisation d'une échéance : annuelle si le contrat est réglé une fois l'an.
-    const cotisationEcheance =
-      ct.prime_annuelle != null
-        ? periodicite === "annuelle"
-          ? Number(ct.prime_annuelle)
-          : Number(ct.prime_annuelle) / 12
-        : null;
     const mensuel =
       hist && hist.mois.size > 0
         ? periodicite === "annuelle"
           ? hist.total / Math.max(1, new Set([...hist.mois].map((m) => m.slice(0, 4))).size)
           : hist.total / hist.mois.size
-        : cotisationEcheance != null
-          ? cotisationEcheance * 0.05
-          : null;
+        : null;
     if (mensuel == null || mensuel <= 0) continue;
 
     const duree = ct.duree_mois != null ? Number(ct.duree_mois) : null;

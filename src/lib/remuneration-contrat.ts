@@ -23,7 +23,11 @@ export type ResultatFrais =
   | { statut: "a_verifier"; montant: null; motif: string };
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
-const num = (v: unknown) => (v === null || v === undefined || v === "" ? null : Number(v));
+const num = (v: unknown) => {
+  if (v === null || v === undefined || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
 
 /**
  * Frais de distribution.
@@ -45,12 +49,15 @@ export function calculerFraisDistribution(input: {
   if (famille === "autre")
     return { statut: "calcule", montant: FRAIS_FORFAIT_CONTRAT, assiette: null, detail: "Forfait 20 € par contrat" };
 
+  if ([input.dureeMois, input.economieRealisee, input.coutGroupeTotal, input.coutDelegueTotal].some(v => v != null && !Number.isFinite(Number(v))))
+    return { statut: "a_verifier", montant: null, motif: "Données numériques invalides" };
   const duree = num(input.dureeMois);
   if (!duree || duree <= 0) return { statut: "a_verifier", montant: null, motif: "Durée du prêt absente" };
 
   const eco = num(input.economieRealisee);
   const g = num(input.coutGroupeTotal);
   const d = num(input.coutDelegueTotal);
+  if ((g !== null && g < 0) || (d !== null && d < 0)) return { statut: "a_verifier", montant: null, motif: "Coût total négatif" };
   const ecart = g !== null && d !== null ? g - d : null;
 
   let assiette: number;
@@ -83,6 +90,8 @@ export interface BaremeCompagnie {
   branche: string;
   produit_id?: string | null;
   mode: ModeCommission | null;
+  base_calcul?: string | null;
+  periodicite?: string | null;
   /** Taux en % de la prime annuelle. Linéaire : taux_annee_1 s'applique à chaque année. */
   taux_annee_1: number | null;
   taux_renouvellement: number | null;
@@ -95,19 +104,15 @@ export function choisirBareme(
   baremes: BaremeCompagnie[],
   ctx: { compagnieId: string | null; branche: string | null; produitId?: string | null; date: string | null },
 ): BaremeCompagnie | null {
-  if (!ctx.compagnieId || !ctx.branche || !ctx.date) return null;
-  const valides = baremes.filter(
-    (b) =>
-      b.compagnie_id === ctx.compagnieId &&
-      b.branche === ctx.branche &&
-      b.mode &&
-      b.date_effet &&
-      b.date_effet <= ctx.date! &&
-      (!b.date_fin || b.date_fin >= ctx.date!) &&
-      (!b.produit_id || b.produit_id === ctx.produitId),
-  );
-  valides.sort((a, b) => Number(!!b.produit_id) - Number(!!a.produit_id) || (b.date_effet! < a.date_effet! ? -1 : 1));
-  return valides[0] ?? null;
+  const { compagnieId, branche, date } = ctx;
+  if (!compagnieId || !branche || !date) return null;
+  const valides = baremes.filter(b => b.compagnie_id === compagnieId && b.branche === branche &&
+    b.mode && b.date_effet && b.date_effet <= date && (!b.date_fin || b.date_fin >= date) &&
+    (!b.produit_id || b.produit_id === ctx.produitId));
+  const specifiques = valides.filter(b => b.produit_id === ctx.produitId && !!b.produit_id);
+  const candidats = specifiques.length ? specifiques : valides.filter(b => !b.produit_id);
+  // Une période ambiguë n'autorise pas un choix arbitraire.
+  return candidats.length === 1 ? candidats[0] ?? null : null;
 }
 
 export interface LigneCommission {
@@ -127,17 +132,20 @@ export function calculerCommissionPrevisionnelle(input: {
   contratId: string;
   bareme: BaremeCompagnie | null;
   primeAnnuelle: number | null;
+  primeNetteAnnuelle?: number | null;
   dureeMois: number | null;
 }): ResultatCommission {
   const { bareme } = input;
   if (!bareme || !bareme.mode) return { statut: "non_calculable", motif: "Barème à configurer", lignes: [] };
-  const prime = num(input.primeAnnuelle);
+  if (bareme.base_calcul && !["prime", "prime_nette"].includes(bareme.base_calcul))
+    return { statut: "non_calculable", motif: "Assiette à revoir : les économies relèvent des frais de distribution", lignes: [] };
+  const prime = num(bareme.base_calcul === "prime_nette" ? input.primeNetteAnnuelle : input.primeAnnuelle);
   if (!prime || prime <= 0) return { statut: "non_calculable", motif: "Prime annuelle absente", lignes: [] };
   const duree = num(input.dureeMois);
-  if (!duree || duree <= 0) return { statut: "non_calculable", motif: "Durée du contrat absente", lignes: [] };
+  if (!duree || duree <= 0 || !Number.isInteger(duree)) return { statut: "non_calculable", motif: "Durée du contrat absente", lignes: [] };
   const t1 = num(bareme.taux_annee_1);
   const tn = bareme.mode === "lineaire" ? t1 : num(bareme.taux_renouvellement);
-  if (t1 === null || (duree > 12 && tn === null))
+  if (t1 === null || t1 < 0 || t1 > 100 || (duree > 12 && (tn === null || tn < 0 || tn > 100)))
     return { statut: "non_calculable", motif: "Taux du barème incomplet", lignes: [] };
 
   const annees = Math.ceil(duree / 12);
@@ -145,7 +153,8 @@ export function calculerCommissionPrevisionnelle(input: {
   for (let a = 1; a <= annees; a++) {
     const mois = a < annees ? 12 : duree - 12 * (annees - 1);
     const base = r2((prime * mois) / 12);
-    const taux = a === 1 ? t1 : tn!;
+    const taux = a === 1 ? t1 : tn;
+    if (taux === null) return { statut: "non_calculable", motif: "Taux du barème incomplet", lignes: [] };
     lignes.push({ cle: `${input.contratId}:commission:${a}`, annee: a, base, taux, montant: r2((base * taux) / 100) });
   }
   return {

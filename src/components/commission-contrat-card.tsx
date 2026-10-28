@@ -92,7 +92,7 @@ export function CommissionContratCard({
             </p>
           )}
         </div>
-        <p className="font-serif text-2xl font-medium text-ink">{fmtEuros(montant)}</p>
+        <p className="font-serif text-2xl font-medium text-ink">{montant == null ? "Non calculable — à configurer" : fmtEuros(montant)}</p>
       </div>
 
       <div className="grid gap-3 md:grid-cols-4">

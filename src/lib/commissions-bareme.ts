@@ -45,35 +45,11 @@ export const LIBELLE_BASE: Record<BaseCalcul, string> = {
   economie_realisee: "Économie réalisée",
 };
 
-/** Défaut emprunteur : 5 % de l'économie réalisée, prélevé sur la 1re mensualité. */
-export const DEFAUT_EMPRUNTEUR: Omit<RegleCommission, "branche"> = {
-  niveau: "branche",
-  compagnie_id: null,
-  type: "pourcentage",
-  montant_fixe: null,
-  taux_pourcentage: 5,
-  base_calcul: "economie_realisee",
-  notes: "Défaut cabinet : 5 % de l'économie réalisée, prélevé sur la première mensualité.",
-};
-
-/**
- * Défaut toutes autres branches (santé, prévoyance, IARD…) : l'équivalent d'un
- * mois de cotisation, soit 100 % de la prime d'assurance mensuelle pure.
- */
-export const DEFAUT_GENERIQUE: Omit<RegleCommission, "branche"> = {
-  niveau: "branche",
-  compagnie_id: null,
-  type: "pourcentage",
-  montant_fixe: null,
-  taux_pourcentage: 100,
-  base_calcul: "prime",
-  assiette_mensuelle: true,
-  notes: "Défaut cabinet : un mois de cotisation (100 % de la prime mensuelle pure, hors frais et taxes).",
-};
-
+/** Compatibilité historique : absence de barème = aucun taux inventé. */
 export function regleParDefaut(branche: string): RegleCommission {
-  const base = branche === "emprunteur" ? DEFAUT_EMPRUNTEUR : DEFAUT_GENERIQUE;
-  return { ...base, branche };
+  return { niveau: "branche", compagnie_id: null, branche, type: "pourcentage",
+    montant_fixe: null, taux_pourcentage: null, base_calcul: "prime",
+    notes: "Commission compagnie non calculable : barème à configurer." };
 }
 
 export type SourceRegle = "compagnie" | "branche" | "defaut";
@@ -99,19 +75,23 @@ export function resoudreRegle(
 export function calculerCommission(
   regle: RegleCommission,
   bases: { prime?: number | null; primeMensuelle?: number | null; economie?: number | null },
-): number {
-  if (regle.type === "fixe") return Number(regle.montant_fixe ?? 0);
+): number | null {
+  if (regle.base_calcul === "economie_realisee") return null;
+  if (regle.type === "fixe") return regle.montant_fixe != null && Number.isFinite(Number(regle.montant_fixe)) ? Number(regle.montant_fixe) : null;
+  if (regle.taux_pourcentage == null || !Number.isFinite(Number(regle.taux_pourcentage))) return null;
   const assiette =
     regle.base_calcul === "economie_realisee"
       ? bases.economie
       : regle.assiette_mensuelle
         ? (bases.primeMensuelle ?? null)
         : bases.prime;
-  if (assiette == null) return 0;
+  if (assiette == null || !Number.isFinite(Number(assiette))) return null;
   return (Number(assiette) * Number(regle.taux_pourcentage ?? 0)) / 100;
 }
 
 export function decrireRegle(regle: RegleCommission): string {
+  if (regle.base_calcul === "economie_realisee") return "À revoir : économies = frais de distribution, pas commission";
+  if (regle.montant_fixe == null && regle.taux_pourcentage == null) return "Non calculable — barème à configurer";
   const cycle = regle.periodicite === "annuelle" ? " · chaque année" : "";
   if (regle.type === "fixe")
     return `${Number(regle.montant_fixe ?? 0).toLocaleString("fr-FR")} € fixes${cycle}`;
@@ -123,7 +103,7 @@ export function decrireRegle(regle: RegleCommission): string {
 export const LIBELLE_SOURCE: Record<SourceRegle, string> = {
   compagnie: "Règle compagnie",
   branche: "Règle branche",
-  defaut: "Défaut cabinet",
+  defaut: "À configurer",
 };
 
 /** Branche déduite d'un contrat (l'emprunteur est porté par un booléen dédié). */

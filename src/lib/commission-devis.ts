@@ -30,6 +30,8 @@ export function tauxDefautDevis(
   compagnieId: string | null,
 ): TauxDevis {
   const { regle, source } = resoudreRegle(regles, branche, compagnieId);
+  if (regle.base_calcul === "economie_realisee" || (regle.taux_pourcentage == null && regle.montant_fixe == null))
+    return { taux: null, montant_fixe: null, base: "prime", source };
   if (regle.type === "fixe") {
     return { taux: null, montant_fixe: Number(regle.montant_fixe ?? 0), base: "prime", source };
   }
@@ -64,13 +66,6 @@ export interface CommissionPrevue {
 
 const arrondi = (n: number) => Math.round(n * 100) / 100;
 
-function partAssure(a: AssietteCommission): number {
-  const q = a.quotitePct != null ? Number(a.quotitePct) : null;
-  const t = a.totalQuotites != null ? Number(a.totalQuotites) : null;
-  if (q == null || t == null || t <= 0) return 1;
-  return q / t;
-}
-
 /**
  * Commission prévisionnelle d'un contrat d'assuré, calculée depuis le taux du
  * devis retenu.
@@ -84,7 +79,7 @@ export function commissionDepuisDevis(
   taux: { taux: number | null; montant_fixe?: number | null; base: BaseCommission },
   assiette: AssietteCommission,
 ): CommissionPrevue {
-  const part = partAssure(assiette);
+  if (taux.base === "economie_realisee") return { mensuel: null, mois: null, total: null };
 
   if (taux.montant_fixe != null && (taux.taux == null || taux.taux === 0)) {
     const m = arrondi(Number(taux.montant_fixe));
@@ -93,11 +88,6 @@ export function commissionDepuisDevis(
   const pct = taux.taux != null ? Number(taux.taux) : null;
   if (pct == null || !Number.isFinite(pct)) return { mensuel: null, mois: null, total: null };
 
-  if (taux.base === "economie_realisee") {
-    if (assiette.economie == null) return { mensuel: null, mois: 1, total: null };
-    const m = arrondi((Number(assiette.economie) * part * pct) / 100);
-    return { mensuel: m, mois: 1, total: m };
-  }
 
   if (assiette.cotisationMensuelle == null) return { mensuel: null, mois: null, total: null };
   const mensuel = arrondi((Number(assiette.cotisationMensuelle) * pct) / 100);

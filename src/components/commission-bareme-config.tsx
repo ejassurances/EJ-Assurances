@@ -42,9 +42,12 @@ export function CommissionBaremeConfig() {
 
   async function enregistrer(r: Partial<RegleCommission>) {
     setErr(null);
+    if (!r.branche || r.base_calcul === "economie_realisee") return setErr("Les économies relèvent des frais de distribution, pas des commissions compagnie.");
+    const valeur = r.type === "fixe" ? r.montant_fixe : r.taux_pourcentage;
+    if (valeur == null || !Number.isFinite(Number(valeur)) || Number(valeur) < 0) return setErr("Montant ou taux explicite obligatoire.");
     const payload = {
       niveau: r.niveau ?? "branche",
-      branche: r.branche!,
+      branche: r.branche,
       compagnie_id: r.niveau === "compagnie" ? (r.compagnie_id ?? null) : null,
       type: (r.type ?? "fixe") as TypeCommission,
       montant_fixe: r.type === "fixe" ? Number(r.montant_fixe ?? 0) : null,
@@ -61,12 +64,6 @@ export function CommissionBaremeConfig() {
     await load();
   }
 
-  async function supprimer(id: string) {
-    const { error } = await supabase.from("commission_bareme").delete().eq("id", id);
-    if (error) return setErr(error.message);
-    await load();
-  }
-
   if (loading) return <p className="mt-8 text-sm text-ink-muted">Chargement du barème…</p>;
 
   return (
@@ -75,8 +72,7 @@ export function CommissionBaremeConfig() {
         <div>
           <h2 className="font-serif text-xl font-medium text-ink">Barème de commissions</h2>
           <p className="mt-1 text-xs text-ink-muted">
-            Une règle « compagnie » remplace la règle de sa branche. Sans règle en base, le défaut cabinet
-            s'applique (20 € fixes sur la prime ; 5 % de l'économie réalisée en emprunteur).
+            Règles historiques : sans barème explicite, commission non calculable. Les frais de distribution sont suivis séparément. Configurez les modes et dates depuis la fiche compagnie.
           </p>
         </div>
         <button
@@ -105,7 +101,7 @@ export function CommissionBaremeConfig() {
                     {decrireRegle(effective)}
                     {!regleBranche && (
                       <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-900">
-                        Défaut cabinet
+                        À configurer
                       </span>
                     )}
                   </p>
@@ -117,14 +113,7 @@ export function CommissionBaremeConfig() {
                   >
                     {regleBranche ? "Modifier" : "Définir la règle"}
                   </button>
-                  {regleBranche?.id && (
-                    <button
-                      onClick={() => supprimer(regleBranche.id!)}
-                      className="text-red-700 underline underline-offset-4"
-                    >
-                      Revenir au défaut
-                    </button>
-                  )}
+
                 </div>
               </div>
 
@@ -140,12 +129,7 @@ export function CommissionBaremeConfig() {
                         <button onClick={() => setEdition(r)} className="underline underline-offset-4">
                           Modifier
                         </button>
-                        <button
-                          onClick={() => supprimer(r.id!)}
-                          className="text-red-700 underline underline-offset-4"
-                        >
-                          Supprimer
-                        </button>
+
                       </span>
                     </li>
                   ))}
@@ -274,7 +258,7 @@ function FormulaireRegle({
               className={inp}
             >
               <option value="prime">Prime</option>
-              <option value="economie_realisee">Économie réalisée</option>
+              {f.base_calcul === "economie_realisee" && <option value="economie_realisee" disabled>Économies — à revoir (frais)</option>}
             </select>
           </label>
         </>
