@@ -6,12 +6,16 @@ const schema = z.object({
   client_id: z.string().uuid().optional().nullable(),
   contrat_id: z.string().uuid().optional().nullable(),
   client: z.object({
+    civilite: z.string().trim().max(20).optional().nullable(),
     nom: z.string().trim().min(1).max(120),
     prenom: z.string().trim().max(120).optional().nullable(),
     date_naissance: z.string().max(10).optional().nullable(),
     email: z.string().trim().max(255).optional().nullable(),
     mobile: z.string().trim().max(30).optional().nullable(),
     telephone: z.string().trim().max(30).optional().nullable(),
+    adresse: z.string().trim().max(255).optional().nullable(),
+    code_postal: z.string().trim().max(20).optional().nullable(),
+    ville: z.string().trim().max(120).optional().nullable(),
   }),
   contrat: z.object({
     assureur: z.string().trim().min(1).max(160),
@@ -28,7 +32,7 @@ const schema = z.object({
   })).max(4).optional().default([]),
 });
 
-/** Importe un contrat de portefeuille sans créer de dossier ni de fiche client artificielle. */
+/** Importe un contrat de portefeuille ; si aucun client fiable n'est retrouvé, crée sa fiche à partir des données de l'attestation. */
 export const enregistrerContratImportPortefeuille = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => schema.parse(input))
@@ -51,7 +55,33 @@ export const enregistrerContratImportPortefeuille = createServerFn({ method: "PO
       });
       clientId = match?.client_id ?? null;
     }
-    if (!clientId) throw new Error("Aucune fiche client existante reconnue. Ouvrez ou créez la fiche client avant l'import.");
+    if (!clientId) {
+      // L'import de portefeuille est une action explicite : si aucun client fiable
+      // n'est retrouvé, créer sa fiche permet de conserver le contrat et son attestation.
+      // Le rapprochement préalable reste obligatoire pour éviter les doublons évidents.
+      const { data: createdClient, error: clientError } = await supabaseAdmin
+        .from("clients")
+        .insert({
+          civilite: data.client.civilite || "M.",
+          nom: data.client.nom,
+          prenom: data.client.prenom || null,
+          date_naissance: data.client.date_naissance || null,
+          email: data.client.email || null,
+          mobile: data.client.mobile || null,
+          telephone: data.client.telephone || null,
+          adresse: data.client.adresse || null,
+          code_postal: data.client.code_postal || null,
+          ville: data.client.ville || null,
+          created_by: context.userId,
+          origine: "import_portefeuille",
+        })
+        .select("id")
+        .single();
+      if (clientError || !createdClient) {
+        throw new Error("Création de la fiche client impossible : " + (clientError?.message ?? "erreur inconnue"));
+      }
+      clientId = createdClient.id;
+    }
     const { data: access } = await context.supabase.rpc("can_access_client", { _client_id: clientId });
     if (access !== true) throw new Error("Vous n'avez pas accès à cette fiche client.");
 
