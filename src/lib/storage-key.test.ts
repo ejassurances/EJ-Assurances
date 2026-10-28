@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normaliserNomFichierPourStockage } from "@/lib/storage-key";
+import { normaliserNomFichierPourStockage } from "./storage-key";
 
 describe("normaliserNomFichierPourStockage", () => {
   it("preserves a simple filename and its extension", () => {
