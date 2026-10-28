@@ -13,3 +13,4 @@
 
 - Remuneration forecasts use the pure remuneration calculator and an atomic SQL recalculation RPC with database triggers; only forecast rows and their history may change, never recorded payments.
 - Optional loan imports use separate document readings, an allowlisted financial DTO and explicit human confirmation; preserve document provenance outside the strict borrower recueil schema.
+- Loan confirmation and reload share the pure import mapping and persistence payload; refresh mounted forms without overwriting pending human edits, and use an updated-at guard for server confirmation to prevent stale writes.

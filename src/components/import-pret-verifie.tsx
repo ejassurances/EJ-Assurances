@@ -60,6 +60,8 @@ export function ImportPretVerifie({
         setMessage("Une analyse n'a pas abouti. Vous pouvez continuer sans import.");
     } catch {
       setMessage("Analyse indisponible. Vous pouvez continuer sans ces documents.");
+      setAnalyseFaite(true);
+      setConfirme(false);
     } finally {
       setBusy(false);
     }
@@ -120,6 +122,7 @@ export function ImportPretVerifie({
             setPieces([]);
             setLectures([]);
             setValeurs({});
+            setConfirme(false);
             setAnalyseFaite(false);
             setMessage("Import ignoré ; saisie manuelle.");
           }}

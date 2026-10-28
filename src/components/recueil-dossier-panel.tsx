@@ -327,9 +327,13 @@ export function RecueilDossierPanel({
   // Le panneau reste monté entre deux vues : ne pas garder le recueil initial
   // après une confirmation d'import et le rechargement du dossier parent.
   useEffect(() => {
-    setValues((actuel) => dirtyRef.current
-      ? fusionnerRecueilPret(actuel, recueil ?? {})
-      : { ...(recueil ?? {}) });
+    setValues((actuel) => {
+      const prochain = dirtyRef.current
+        ? fusionnerRecueilPret(actuel, recueil ?? {})
+        : { ...(recueil ?? {}) };
+      valuesRef.current = prochain;
+      return JSON.stringify(prochain) === JSON.stringify(actuel) ? actuel : prochain;
+    });
   }, [dossierId, recueil]);
 
   useEffect(() => {
