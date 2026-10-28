@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { BRANCHES_COMMISSION, brancheContrat } from "@/lib/commissions-bareme";
@@ -8,6 +9,9 @@ type Form = {
   id?: string;
   branche: string;
   mode: "lineaire" | "precompte";
+  produit_id: string;
+  base_previsionnelle: "prime" | "prime_nette";
+  periodicite: "mensuelle" | "annuelle";
   taux_annee_1: string;
   taux_renouvellement: string;
   date_effet: string;
@@ -18,6 +22,9 @@ type Form = {
 const vide = (): Form => ({
   branche: "emprunteur",
   mode: "lineaire",
+  produit_id: "",
+  base_previsionnelle: "prime_nette",
+  periodicite: "annuelle",
   taux_annee_1: "",
   taux_renouvellement: "",
   date_effet: "",
@@ -59,13 +66,14 @@ export function CompagnieBaremeDate({
   const [err, setErr] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [form, setForm] = useState<Form | null>(null);
+  const [produits, setProduits] = useState<{ id: string; nom: string }[]>([]);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     const { data, error } = await db
       .from("commission_bareme")
       .select(
-        "id,compagnie_id,branche,produit_id,mode,taux_annee_1,taux_renouvellement,date_effet,date_fin,notes",
+        "id,compagnie_id,branche,produit_id,mode,taux_annee_1,taux_renouvellement,date_effet,date_fin,notes,base_calcul,base_previsionnelle,periodicite",
       )
       .eq("compagnie_id", compagnieId)
       .not("mode", "is", null)
@@ -81,16 +89,19 @@ export function CompagnieBaremeDate({
 
   useEffect(() => {
     load();
-  }, [load]);
+    void supabase.from("produits").select("id,nom").eq("compagnie_id", compagnieId).then(({ data }) => setProduits(data ?? []));
+  }, [load, compagnieId]);
 
   const recalculerContrats = async () => {
-    const { data: contrats } = await supabase
+    const { data: contrats, error: lectureError } = await supabase
       .from("contrats")
       .select(
-        "id,compagnie_id,produit_id,date_effet,prime_annuelle,duree_mois,is_emprunteur,economie_realisee,economie_cout_groupe,economie_cout_delegue,dossier:dossiers(type_assurance)",
+        "id,compagnie_id,produit_id,date_effet,prime_annuelle,prime_nette_annuelle,duree_mois,is_emprunteur,economie_realisee,economie_cout_groupe,economie_cout_delegue,dossier:dossiers(type_assurance)",
       )
       .eq("compagnie_id", compagnieId);
+    if (lectureError) throw new Error("Barème enregistré, lecture des contrats impossible.");
     let n = 0;
+    let echecs = 0;
     for (const c of contrats ?? []) {
       const d = (c as unknown as { dossier: { type_assurance: string | null } | null }).dossier;
       const branche = brancheContrat({
@@ -99,9 +110,9 @@ export function CompagnieBaremeDate({
       });
       const r = await calculerRemuneration(supabase, c, branche);
       const res = await enregistrerRemuneration(supabase, c.id, r);
-      if (res.ok) n++;
+      if (res.ok) n++; else echecs++;
     }
-    return n;
+    return { n, echecs };
   };
 
   const enregistrer = async () => {
@@ -118,6 +129,9 @@ export function CompagnieBaremeDate({
       branche: form.branche,
       type: "pourcentage",
       base_calcul: "prime",
+      base_previsionnelle: form.base_previsionnelle,
+      periodicite: form.periodicite,
+      produit_id: form.produit_id || null,
       taux_pourcentage: t1,
       montant_fixe: null,
       mode: form.mode,
@@ -145,9 +159,11 @@ export function CompagnieBaremeDate({
     }
     setForm(null);
     await load();
-    const n = await recalculerContrats();
-    setInfo(`Barème enregistré. Prévisionnel recalculé pour ${n} contrat(s).`);
-    setBusy(false);
+    try {
+      const { n, echecs } = await recalculerContrats();
+      setInfo(`Barème enregistré. ${n} contrat(s) recalculé(s) ; ${echecs} recalcul(s) à vérifier.`);
+    } catch (e) { setErr(e instanceof Error ? e.message : "Recalcul incomplet."); }
+    finally { setBusy(false); }
   };
 
   const editer = (r: BaremeVersionneRow) =>
@@ -155,6 +171,9 @@ export function CompagnieBaremeDate({
       id: r.id,
       branche: r.branche,
       mode: r.mode ?? "lineaire",
+      produit_id: r.produit_id ?? "",
+      base_previsionnelle: r.base_previsionnelle ?? "prime_nette",
+      periodicite: r.periodicite ?? "annuelle",
       taux_annee_1: r.taux_annee_1 != null ? String(r.taux_annee_1) : "",
       taux_renouvellement: r.taux_renouvellement != null ? String(r.taux_renouvellement) : "",
       date_effet: r.date_effet ?? "",
@@ -173,13 +192,13 @@ export function CompagnieBaremeDate({
             sont pas une commission.
           </p>
         </div>
-        {canEdit && !indispo && (
-          <button
+        {canEdit && (
+          <Button
             onClick={() => setForm(vide())}
             className="rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
           >
             + Nouveau barème
-          </button>
+          </Button>
         )}
       </div>
 
@@ -210,13 +229,13 @@ export function CompagnieBaremeDate({
                 {r.mode === "precompte"
                   ? `Précompte : ${r.taux_annee_1} % année 1, ${r.taux_renouvellement} % ensuite`
                   : `Linéaire : ${r.taux_annee_1} % chaque année`}{" "}
-                · du {r.date_effet}
+                · {r.base_previsionnelle === "prime_nette" ? "prime nette" : "prime contractuelle"} · {r.periodicite} · du {r.date_effet}
                 {r.date_fin ? ` au ${r.date_fin}` : " (sans fin)"}
               </span>
               {canEdit && (
-                <button onClick={() => editer(r)} className="text-xs underline underline-offset-4">
+                <Button onClick={() => editer(r)} className="text-xs underline underline-offset-4">
                   Modifier
-                </button>
+                </Button>
               )}
             </li>
           ))}
@@ -237,6 +256,21 @@ export function CompagnieBaremeDate({
                   {b.label}
                 </option>
               ))}
+            </select>
+          </label>
+          <label className="text-xs text-ink-muted">Produit (facultatif)
+            <select className={inp} value={form.produit_id} onChange={e => setForm({ ...form, produit_id: e.target.value })}>
+              <option value="">Tous les produits de la branche</option>{produits.map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}
+            </select>
+          </label>
+          <label className="text-xs text-ink-muted">Base de calcul
+            <select className={inp} value={form.base_previsionnelle} onChange={e => setForm({ ...form, base_previsionnelle: e.target.value as Form["base_previsionnelle"] })}>
+              <option value="prime_nette">Prime annuelle hors taxes et frais</option><option value="prime">Prime annuelle contractuelle</option>
+            </select>
+          </label>
+          <label className="text-xs text-ink-muted">Périodicité de versement
+            <select className={inp} value={form.periodicite} onChange={e => setForm({ ...form, periodicite: e.target.value as Form["periodicite"] })}>
+              <option value="annuelle">Annuelle</option><option value="mensuelle">Mensuelle</option>
             </select>
           </label>
           <label className="text-xs text-ink-muted">
@@ -305,19 +339,19 @@ export function CompagnieBaremeDate({
             />
           </label>
           <div className="flex gap-3 md:col-span-3">
-            <button
-              disabled={busy}
+            <Button
+              disabled={busy || indispo}
               onClick={enregistrer}
               className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
             >
               {busy ? "Enregistrement…" : "Enregistrer"}
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => setForm(null)}
               className="text-sm text-ink-muted underline underline-offset-4"
             >
               Annuler
-            </button>
+            </Button>
           </div>
         </div>
       )}

@@ -49,6 +49,9 @@ export type BaremeVersionneRow = {
   branche: string;
   produit_id: string | null;
   mode: "lineaire" | "precompte" | null;
+  base_calcul: string;
+  base_previsionnelle: "prime" | "prime_nette" | null;
+  periodicite: "mensuelle" | "annuelle" | null;
   taux_annee_1: number | null;
   taux_renouvellement: number | null;
   date_effet: string | null;
