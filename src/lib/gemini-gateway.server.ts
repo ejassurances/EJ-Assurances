@@ -111,16 +111,16 @@ export async function geminiFetch(
   try {
     request = JSON.parse(String(init?.body ?? "{}")) as OpenAIChatRequest;
   } catch {
-    return Response.json({ error: { message: "Corps de requête IA JSON invalide." } }, { status: 400 });
+    return Response.json(
+      { error: { message: "Corps de requête IA JSON invalide." } },
+      { status: 400 },
+    );
   }
 
   const cle = process.env["ANTHROPIC_API_KEY"];
   const workspaceId = process.env["ANTHROPIC_WORKSPACE_ID"];
   if (!cle) {
-    return Response.json(
-      { error: { message: "ANTHROPIC_API_KEY est absente." } },
-      { status: 500 },
-    );
+    return Response.json({ error: { message: "ANTHROPIC_API_KEY est absente." } }, { status: 500 });
   }
   if (!request.model || !request.messages?.length) {
     return Response.json(
