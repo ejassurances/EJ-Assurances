@@ -89,7 +89,11 @@ export function CompagnieBaremeDate({
 
   useEffect(() => {
     load();
-    void supabase.from("produits").select("id,nom").eq("compagnie_id", compagnieId).then(({ data }) => setProduits(data ?? []));
+    void supabase
+      .from("produits")
+      .select("id,nom")
+      .eq("compagnie_id", compagnieId)
+      .then(({ data }) => setProduits(data ?? []));
   }, [load, compagnieId]);
 
   const recalculerContrats = async () => {
@@ -110,7 +114,8 @@ export function CompagnieBaremeDate({
       });
       const r = await calculerRemuneration(supabase, c, branche);
       const res = await enregistrerRemuneration(supabase, c.id, r);
-      if (res.ok) n++; else echecs++;
+      if (res.ok) n++;
+      else echecs++;
     }
     return { n, echecs };
   };
@@ -161,9 +166,14 @@ export function CompagnieBaremeDate({
     await load();
     try {
       const { n, echecs } = await recalculerContrats();
-      setInfo(`Barème enregistré. ${n} contrat(s) recalculé(s) ; ${echecs} recalcul(s) à vérifier.`);
-    } catch (e) { setErr(e instanceof Error ? e.message : "Recalcul incomplet."); }
-    finally { setBusy(false); }
+      setInfo(
+        `Barème enregistré. ${n} contrat(s) recalculé(s) ; ${echecs} recalcul(s) à vérifier.`,
+      );
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Recalcul incomplet.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const editer = (r: BaremeVersionneRow) =>
@@ -229,7 +239,8 @@ export function CompagnieBaremeDate({
                 {r.mode === "precompte"
                   ? `Précompte : ${r.taux_annee_1} % année 1, ${r.taux_renouvellement} % ensuite`
                   : `Linéaire : ${r.taux_annee_1} % chaque année`}{" "}
-                · {r.base_previsionnelle === "prime_nette" ? "prime nette" : "prime contractuelle"} · {r.periodicite} · du {r.date_effet}
+                · {r.base_previsionnelle === "prime_nette" ? "prime nette" : "prime contractuelle"}{" "}
+                · {r.periodicite} · du {r.date_effet}
                 {r.date_fin ? ` au ${r.date_fin}` : " (sans fin)"}
               </span>
               {canEdit && (
@@ -258,19 +269,48 @@ export function CompagnieBaremeDate({
               ))}
             </select>
           </label>
-          <label className="text-xs text-ink-muted">Produit (facultatif)
-            <select className={inp} value={form.produit_id} onChange={e => setForm({ ...form, produit_id: e.target.value })}>
-              <option value="">Tous les produits de la branche</option>{produits.map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}
+          <label className="text-xs text-ink-muted">
+            Produit (facultatif)
+            <select
+              className={inp}
+              value={form.produit_id}
+              onChange={(e) => setForm({ ...form, produit_id: e.target.value })}
+            >
+              <option value="">Tous les produits de la branche</option>
+              {produits.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nom}
+                </option>
+              ))}
             </select>
           </label>
-          <label className="text-xs text-ink-muted">Base de calcul
-            <select className={inp} value={form.base_previsionnelle} onChange={e => setForm({ ...form, base_previsionnelle: e.target.value as Form["base_previsionnelle"] })}>
-              <option value="prime_nette">Prime annuelle hors taxes et frais</option><option value="prime">Prime annuelle contractuelle</option>
+          <label className="text-xs text-ink-muted">
+            Base de calcul
+            <select
+              className={inp}
+              value={form.base_previsionnelle}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  base_previsionnelle: e.target.value as Form["base_previsionnelle"],
+                })
+              }
+            >
+              <option value="prime_nette">Prime annuelle hors taxes et frais</option>
+              <option value="prime">Prime annuelle contractuelle</option>
             </select>
           </label>
-          <label className="text-xs text-ink-muted">Périodicité de versement
-            <select className={inp} value={form.periodicite} onChange={e => setForm({ ...form, periodicite: e.target.value as Form["periodicite"] })}>
-              <option value="annuelle">Annuelle</option><option value="mensuelle">Mensuelle</option>
+          <label className="text-xs text-ink-muted">
+            Périodicité de versement
+            <select
+              className={inp}
+              value={form.periodicite}
+              onChange={(e) =>
+                setForm({ ...form, periodicite: e.target.value as Form["periodicite"] })
+              }
+            >
+              <option value="annuelle">Annuelle</option>
+              <option value="mensuelle">Mensuelle</option>
             </select>
           </label>
           <label className="text-xs text-ink-muted">

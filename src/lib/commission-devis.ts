@@ -9,7 +9,7 @@
  * Information strictement interne : jamais exposée au client, au prescripteur ni
  * dans un document remis.
  */
-import { resoudreRegle, type RegleCommission, type SourceRegle } from "@/lib/commissions-bareme";
+import { resoudreRegle, type RegleCommission, type SourceRegle } from "./commissions-bareme";
 
 export type BaseCommission = "prime" | "economie_realisee";
 export type SourceTaux = SourceRegle | "manuel";
@@ -30,7 +30,10 @@ export function tauxDefautDevis(
   compagnieId: string | null,
 ): TauxDevis {
   const { regle, source } = resoudreRegle(regles, branche, compagnieId);
-  if (regle.base_calcul === "economie_realisee" || (regle.taux_pourcentage == null && regle.montant_fixe == null))
+  if (
+    regle.base_calcul === "economie_realisee" ||
+    (regle.taux_pourcentage == null && regle.montant_fixe == null)
+  )
     return { taux: null, montant_fixe: null, base: "prime", source };
   if (regle.type === "fixe") {
     return { taux: null, montant_fixe: Number(regle.montant_fixe ?? 0), base: "prime", source };
@@ -87,7 +90,6 @@ export function commissionDepuisDevis(
   }
   const pct = taux.taux != null ? Number(taux.taux) : null;
   if (pct == null || !Number.isFinite(pct)) return { mensuel: null, mois: null, total: null };
-
 
   if (assiette.cotisationMensuelle == null) return { mensuel: null, mois: null, total: null };
   const mensuel = arrondi((Number(assiette.cotisationMensuelle) * pct) / 100);

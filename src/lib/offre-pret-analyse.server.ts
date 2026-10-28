@@ -43,7 +43,10 @@ const CHAMPS_PRET = [
   ["duree_mois", "durée totale du prêt en mois (nombre entier)"],
   ["mensualite", "mensualité hors assurance en euros (nombre)"],
   ["taux_assurance", "taux annuel de l'assurance emprunteur de la banque en % (nombre)"],
-  ["cotisation_assurance_mensuelle", "cotisation mensuelle d'assurance emprunteur en euros (nombre)"],
+  [
+    "cotisation_assurance_mensuelle",
+    "cotisation mensuelle d'assurance emprunteur en euros (nombre)",
+  ],
   [
     "cout_assurance_total",
     "coût total de l'assurance emprunteur écrit dans l'offre ou sur la ligne Total du tableau d'amortissement, en euros (nombre)",
@@ -111,7 +114,11 @@ function prompt(): string {
 }
 
 function extraireJson(texte: string): Record<string, unknown> {
-  const nettoye = texte.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+  const nettoye = texte
+    .trim()
+    .replace(/^```(?:json)?/i, "")
+    .replace(/```$/, "")
+    .trim();
   try {
     return JSON.parse(nettoye) as Record<string, unknown>;
   } catch {
@@ -134,7 +141,12 @@ function nombreOuNull(v: unknown): number | null {
   const n =
     typeof v === "number"
       ? v
-      : Number(String(v).replace(/\s/g, "").replace(/[^\d.,-]/g, "").replace(",", "."));
+      : Number(
+          String(v)
+            .replace(/\s/g, "")
+            .replace(/[^\d.,-]/g, "")
+            .replace(",", "."),
+        );
   return Number.isFinite(n) && n >= 0 ? n : null;
 }
 
@@ -224,10 +236,9 @@ export async function analyserOffrePretFichier(fichier: {
 
   const lisible = brut["document_lisible"] !== false;
   const conf = Number(brut["confidence"]);
-  const source = (typeof brut["pret"] === "object" && brut["pret"] !== null ? brut["pret"] : {}) as Record<
-    string,
-    unknown
-  >;
+  const source = (
+    typeof brut["pret"] === "object" && brut["pret"] !== null ? brut["pret"] : {}
+  ) as Record<string, unknown>;
 
   const pret: Record<string, unknown> = {};
   if (lisible) {

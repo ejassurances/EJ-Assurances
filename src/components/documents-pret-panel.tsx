@@ -21,23 +21,28 @@ type Doc = {
 };
 
 /** Motifs reconnus : offre de prêt, tableau d'amortissement, échéancier. */
-const MOTIF = /(offre[-_ ]?de[-_ ]?pret|offre[-_ ]?pret|amortissement|amort|echeancier|échéancier|pret[-_ ]?immo)/i;
+const MOTIF =
+  /(offre[-_ ]?de[-_ ]?pret|offre[-_ ]?pret|amortissement|amort|echeancier|échéancier|pret[-_ ]?immo)/i;
 
 /** Motifs de l'étape « Devoir de conseil » : devis et devoir de conseil. */
-const MOTIF_DEVIS = /(devis|proposition|tarification|devoir[-_ ]?de[-_ ]?conseil|devoir_conseil|recommandation)/i;
+const MOTIF_DEVIS =
+  /(devis|proposition|tarification|devoir[-_ ]?de[-_ ]?conseil|devoir_conseil|recommandation)/i;
 
 /** Motifs de l'étape « Analyse et décision » : documents reçus de l'assureur. */
 const MOTIF_ASSUREUR =
   /(document_assureur|assureur|certificat|attestation|adhesion|adhésion|lettre[-_ ]?de[-_ ]?mission|lettre_mission|devis|devoir[-_ ]?de[-_ ]?conseil|devoir_conseil)/i;
 
 function correspond(d: Doc, motif: RegExp): boolean {
-  return motif.test(d.type_document ?? "") || motif.test(d.categorie ?? "") || motif.test(d.file_name ?? "");
+  return (
+    motif.test(d.type_document ?? "") ||
+    motif.test(d.categorie ?? "") ||
+    motif.test(d.file_name ?? "")
+  );
 }
 
 function estDocumentPret(d: Doc): boolean {
   return correspond(d, MOTIF);
 }
-
 
 /** Natures de document proposées par étape du parcours emprunteur. */
 export const TYPES_DOCUMENT: Record<string, { value: string; label: string }[]> = {
@@ -106,7 +111,6 @@ export function DocumentsPretPanel({
   const natures = TYPES_DOCUMENT[filtre] ?? [];
   const [nature, setNature] = useState<string>(natures[0]?.value ?? typeDocument);
 
-
   const load = useCallback(async () => {
     const [{ data: rows }, { data: dossier }] = await Promise.all([
       supabase
@@ -131,9 +135,8 @@ export function DocumentsPretPanel({
             ? tous.filter((d) => retenu(d, MOTIF_ASSUREUR))
             : tous.filter((d) => retenu(d, MOTIF)),
     );
-    setClientId(((dossier as { client_id: string | null } | null)?.client_id) ?? null);
+    setClientId((dossier as { client_id: string | null } | null)?.client_id ?? null);
   }, [dossierId, filtre]);
-
 
   useEffect(() => {
     void load();
@@ -316,7 +319,6 @@ export function DocumentsPretPanel({
         />
       </div>
 
-
       {docs.length === 0 ? (
         <p className="mt-2 text-xs text-ink-muted">
           {filtre === "pret"
@@ -325,7 +327,6 @@ export function DocumentsPretPanel({
               ? "Aucun devis ni devoir de conseil rattaché à ce dossier."
               : "Aucun document rattaché à ce dossier."}
         </p>
-
       ) : (
         <ul className="mt-2 space-y-1 text-sm">
           {docs.map((d) => (

@@ -94,6 +94,7 @@ type PendingDatabase = Omit<Database, "public"> & {
       >;
     };
     Functions: Database["public"]["Functions"] & {
+      recalculer_remuneration_contrat: { Args: { p_contrat_id: string }; Returns: undefined };
       creer_client_manuel_securise: {
         Args: {
           p_client: Json;

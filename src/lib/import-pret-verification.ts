@@ -39,7 +39,9 @@ export function filtrerValeursPret(brut: Record<string, unknown>): LecturePret["
 export function croiserLecturesPret(lectures: LecturePret[]) {
   const valeurs: LecturePret["valeurs"] = {};
   const contradictions: ChampImportPret[] = [];
-  const provenance: Partial<Record<ChampImportPret, { source: string; confiance: number; valeur: string | number }[]>> = {};
+  const provenance: Partial<
+    Record<ChampImportPret, { source: string; confiance: number; valeur: string | number }[]>
+  > = {};
   for (const lecture of lectures) {
     for (const [cle, valeur] of Object.entries(filtrerValeursPret(lecture.valeurs))) {
       const champ = cle as ChampImportPret;
@@ -50,7 +52,7 @@ export function croiserLecturesPret(lectures: LecturePret[]) {
   }
   for (const cle of Object.keys(provenance) as ChampImportPret[]) {
     const sources = provenance[cle] ?? [];
-    const uniques = new Set(sources.map(s => String(s.valeur).trim().toLowerCase()));
+    const uniques = new Set(sources.map((s) => String(s.valeur).trim().toLowerCase()));
     if (uniques.size > 1) contradictions.push(cle);
     else if (sources[0]) valeurs[cle] = sources[0].valeur;
   }
@@ -58,18 +60,27 @@ export function croiserLecturesPret(lectures: LecturePret[]) {
 }
 
 /** Aucun calcul dérivé, aucune identité ni donnée de santé ; complète seulement les vides. */
-export function appliquerValeursPret(base: Record<string, unknown>, valeurs: LecturePret["valeurs"]) {
+export function appliquerValeursPret(
+  base: Record<string, unknown>,
+  valeurs: LecturePret["valeurs"],
+) {
   const correspondances: Partial<Record<ChampImportPret, string>> = {
-    banque: "banque", montant_capital: "capital", duree_mois: "duree_mois",
-    taux_nominal: "taux_pret", date_premiere_echeance: "date_premiere_echeance",
-    taux_assurance: "taux_assurance_banque", cotisation_assurance_mensuelle: "assurance_banque_mensuelle",
-    cout_assurance_total: "assurance_banque_cout_total", capital_restant_du: "capital_restant_du",
+    banque: "banque",
+    montant_capital: "capital",
+    duree_mois: "duree_mois",
+    taux_nominal: "taux_pret",
+    date_premiere_echeance: "date_premiere_echeance",
+    taux_assurance: "taux_assurance_banque",
+    cotisation_assurance_mensuelle: "assurance_banque_mensuelle",
+    cout_assurance_total: "assurance_banque_cout_total",
+    capital_restant_du: "capital_restant_du",
     objet_pret: "objet_pret",
   };
   const recueil = { ...base };
   for (const [cle, valeur] of Object.entries(filtrerValeursPret(valeurs))) {
     const destination = correspondances[cle as ChampImportPret];
-    if (destination && (recueil[destination] == null || recueil[destination] === "")) recueil[destination] = valeur;
+    if (destination && (recueil[destination] == null || recueil[destination] === ""))
+      recueil[destination] = valeur;
   }
   return recueil;
 }

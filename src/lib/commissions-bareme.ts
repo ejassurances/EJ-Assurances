@@ -5,7 +5,7 @@
  * prévaut sur la règle « branche » correspondante ; à défaut, la règle
  * « branche » ; à défaut, la valeur par défaut codée ici.
  */
-import { BRANCHES, type BrancheAssurance } from "@/lib/recueil-besoins-schemas";
+import { BRANCHES, type BrancheAssurance } from "./recueil-besoins-schemas";
 
 export type NiveauRegle = "branche" | "compagnie";
 export type TypeCommission = "fixe" | "pourcentage";
@@ -35,10 +35,12 @@ export interface RegleCommission {
   assiette_mensuelle?: boolean;
 }
 
-export const BRANCHES_COMMISSION: { value: BrancheAssurance; label: string }[] = BRANCHES.map((b) => ({
-  value: b.value,
-  label: b.label,
-}));
+export const BRANCHES_COMMISSION: { value: BrancheAssurance; label: string }[] = BRANCHES.map(
+  (b) => ({
+    value: b.value,
+    label: b.label,
+  }),
+);
 
 export const LIBELLE_BASE: Record<BaseCalcul, string> = {
   prime: "Prime",
@@ -47,9 +49,16 @@ export const LIBELLE_BASE: Record<BaseCalcul, string> = {
 
 /** Compatibilité historique : absence de barème = aucun taux inventé. */
 export function regleParDefaut(branche: string): RegleCommission {
-  return { niveau: "branche", compagnie_id: null, branche, type: "pourcentage",
-    montant_fixe: null, taux_pourcentage: null, base_calcul: "prime",
-    notes: "Commission compagnie non calculable : barème à configurer." };
+  return {
+    niveau: "branche",
+    compagnie_id: null,
+    branche,
+    type: "pourcentage",
+    montant_fixe: null,
+    taux_pourcentage: null,
+    base_calcul: "prime",
+    notes: "Commission compagnie non calculable : barème à configurer.",
+  };
 }
 
 export type SourceRegle = "compagnie" | "branche" | "defaut";
@@ -77,8 +86,12 @@ export function calculerCommission(
   bases: { prime?: number | null; primeMensuelle?: number | null; economie?: number | null },
 ): number | null {
   if (regle.base_calcul === "economie_realisee") return null;
-  if (regle.type === "fixe") return regle.montant_fixe != null && Number.isFinite(Number(regle.montant_fixe)) ? Number(regle.montant_fixe) : null;
-  if (regle.taux_pourcentage == null || !Number.isFinite(Number(regle.taux_pourcentage))) return null;
+  if (regle.type === "fixe")
+    return regle.montant_fixe != null && Number.isFinite(Number(regle.montant_fixe))
+      ? Number(regle.montant_fixe)
+      : null;
+  if (regle.taux_pourcentage == null || !Number.isFinite(Number(regle.taux_pourcentage)))
+    return null;
   const assiette =
     regle.base_calcul === "economie_realisee"
       ? bases.economie
@@ -90,12 +103,18 @@ export function calculerCommission(
 }
 
 export function decrireRegle(regle: RegleCommission): string {
-  if (regle.base_calcul === "economie_realisee") return "À revoir : économies = frais de distribution, pas commission";
-  if (regle.montant_fixe == null && regle.taux_pourcentage == null) return "Non calculable — barème à configurer";
+  if (regle.base_calcul === "economie_realisee")
+    return "À revoir : économies = frais de distribution, pas commission";
+  if (regle.montant_fixe == null && regle.taux_pourcentage == null)
+    return "Non calculable — barème à configurer";
   const cycle = regle.periodicite === "annuelle" ? " · chaque année" : "";
   if (regle.type === "fixe")
     return `${Number(regle.montant_fixe ?? 0).toLocaleString("fr-FR")} € fixes${cycle}`;
-  if (regle.assiette_mensuelle && regle.base_calcul === "prime" && Number(regle.taux_pourcentage) === 100)
+  if (
+    regle.assiette_mensuelle &&
+    regle.base_calcul === "prime" &&
+    Number(regle.taux_pourcentage) === 100
+  )
     return "Un mois de cotisation (prime mensuelle pure)";
   return `${Number(regle.taux_pourcentage ?? 0).toLocaleString("fr-FR")} % · ${LIBELLE_BASE[regle.base_calcul]}${cycle}`;
 }
@@ -107,10 +126,17 @@ export const LIBELLE_SOURCE: Record<SourceRegle, string> = {
 };
 
 /** Branche déduite d'un contrat (l'emprunteur est porté par un booléen dédié). */
-export function brancheContrat(c: { is_emprunteur?: boolean | null; type_assurance?: string | null }): string {
+export function brancheContrat(c: {
+  is_emprunteur?: boolean | null;
+  type_assurance?: string | null;
+}): string {
   if (c.is_emprunteur) return "emprunteur";
   return c.type_assurance ?? "iard";
 }
 
 export const fmtEuros = (n: number) =>
-  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 2 }).format(n);
+  new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 2,
+  }).format(n);

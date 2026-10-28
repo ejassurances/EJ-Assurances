@@ -69,27 +69,58 @@ export function ImportDocumentsEmprunteur({
           titre="Dépôt des pièces du prêt"
           sousTitre="Offre de prêt et / ou tableau d'amortissement — PDF, image ou tableur"
         >
-          <ImportPretVerifie onConfirm={async (_appliquer, pieces, lectures, valeurs) => {
-            // Human confirmation is the only business-data write boundary.
-            await confirmer({ data: { dossierId, valeurs, lectures } });
-            const { data: auth } = await supabase.auth.getUser();
-            if (!auth.user) throw new Error("Session expirée.");
-            const erreurs: string[] = [];
-            for (const p of pieces) {
-              const path = `${dossierId}/pret/${crypto.randomUUID()}-${normaliserNomFichierPourStockage(p.file.name)}`;
-              const upload = await supabase.storage.from("dossier-documents").upload(path, p.file, { upsert: false });
-              if (upload.error) { erreurs.push(p.file.name); continue; }
-              const { data: doc, error } = await supabase.from("documents").insert({ dossier_id: dossierId, client_id: client.id, uploader_id: auth.user.id, storage_path: path, file_name: p.file.name, file_size: p.file.size, mime_type: p.file.type, categorie: "dossier", type_document: p.nature }).select("id").single();
-              if (error || !doc) {
-                const cleanup = await supabase.storage.from("dossier-documents").remove([path]);
-                erreurs.push(`${p.file.name}${cleanup.error ? " (nettoyage à vérifier)" : ""}`); continue;
+          <ImportPretVerifie
+            onConfirm={async (_appliquer, pieces, lectures, valeurs) => {
+              // Human confirmation is the only business-data write boundary.
+              await confirmer({ data: { dossierId, valeurs, lectures } });
+              const { data: auth } = await supabase.auth.getUser();
+              if (!auth.user) throw new Error("Session expirée.");
+              const erreurs: string[] = [];
+              for (const p of pieces) {
+                const path = `${dossierId}/pret/${crypto.randomUUID()}-${normaliserNomFichierPourStockage(p.file.name)}`;
+                const upload = await supabase.storage
+                  .from("dossier-documents")
+                  .upload(path, p.file, { upsert: false });
+                if (upload.error) {
+                  erreurs.push(p.file.name);
+                  continue;
+                }
+                const { data: doc, error } = await supabase
+                  .from("documents")
+                  .insert({
+                    dossier_id: dossierId,
+                    client_id: client.id,
+                    uploader_id: auth.user.id,
+                    storage_path: path,
+                    file_name: p.file.name,
+                    file_size: p.file.size,
+                    mime_type: p.file.type,
+                    categorie: "dossier",
+                    type_document: p.nature,
+                  })
+                  .select("id")
+                  .single();
+                if (error || !doc) {
+                  const cleanup = await supabase.storage.from("dossier-documents").remove([path]);
+                  erreurs.push(`${p.file.name}${cleanup.error ? " (nettoyage à vérifier)" : ""}`);
+                  continue;
+                }
+                const piece = await supabase
+                  .from("dossier_pieces_requises")
+                  .update({
+                    statut: "recue",
+                    document_id: doc.id,
+                    recue_le: new Date().toISOString(),
+                  })
+                  .eq("dossier_id", dossierId)
+                  .eq("code", p.nature);
+                if (piece.error) erreurs.push(`${p.file.name} (checklist à vérifier)`);
               }
-              const piece = await supabase.from("dossier_pieces_requises").update({ statut: "recue", document_id: doc.id, recue_le: new Date().toISOString() }).eq("dossier_id", dossierId).eq("code", p.nature);
-              if (piece.error) erreurs.push(`${p.file.name} (checklist à vérifier)`);
-            }
-            onChanged();
-            if (erreurs.length) throw new Error(`Données confirmées, archivage partiel : ${erreurs.join(", ")}`);
-          }} />
+              onChanged();
+              if (erreurs.length)
+                throw new Error(`Données confirmées, archivage partiel : ${erreurs.join(", ")}`);
+            }}
+          />
           <DocumentsPretPanel dossierId={dossierId} filtre="pret" analyseAutorisee={false} />
         </Bloc>
       </div>

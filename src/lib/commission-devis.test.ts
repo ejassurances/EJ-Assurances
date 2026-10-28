@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { commissionDepuisDevis, tauxDefautDevis, tauxEnFraction } from "@/lib/commission-devis";
-import type { RegleCommission } from "@/lib/commissions-bareme";
+import { commissionDepuisDevis, tauxDefautDevis, tauxEnFraction } from "./commission-devis";
+import type { RegleCommission } from "./commissions-bareme";
 
 const regleCompagnie: RegleCommission = {
   id: "r1",
@@ -10,44 +10,57 @@ const regleCompagnie: RegleCommission = {
   type: "pourcentage",
   montant_fixe: null,
   taux_pourcentage: 8,
-  base_calcul: "economie_realisee",
+  base_calcul: "prime",
   notes: null,
 };
 
 describe("taux par défaut d'un devis", () => {
   it("retient la règle compagnie avant la règle branche", () => {
-    const branche: RegleCommission = { ...regleCompagnie, id: "r2", niveau: "branche", compagnie_id: null, taux_pourcentage: 6 };
+    const branche: RegleCommission = {
+      ...regleCompagnie,
+      id: "r2",
+      niveau: "branche",
+      compagnie_id: null,
+      taux_pourcentage: 6,
+    };
     expect(tauxDefautDevis([branche, regleCompagnie], "emprunteur", "c1")).toMatchObject({
       taux: 8,
-      base: "economie_realisee",
+      base: "prime",
       source: "compagnie",
     });
   });
 
-  it("retombe sur le défaut cabinet emprunteur : 5 % de l'économie", () => {
+  it("sans barème emprunteur : aucun taux supposé", () => {
     expect(tauxDefautDevis([], "emprunteur", null)).toMatchObject({
-      taux: 5,
-      base: "economie_realisee",
+      taux: null,
+      base: "prime",
       source: "defaut",
     });
   });
 
-  it("retombe sur un mois de cotisation hors emprunteur", () => {
-    expect(tauxDefautDevis([], "sante", null)).toMatchObject({ taux: 100, base: "prime", source: "defaut" });
+  it("sans barème hors emprunteur : aucun taux supposé", () => {
+    expect(tauxDefautDevis([], "sante", null)).toMatchObject({
+      taux: null,
+      base: "prime",
+      source: "defaut",
+    });
   });
 });
 
 describe("commission prévisionnelle depuis le devis", () => {
-  it("applique le taux à l'économie au prorata de la quotité", () => {
+  it("refuse les économies comme commission compagnie", () => {
     const r = commissionDepuisDevis(
       { taux: 5, base: "economie_realisee" },
       { economie: 4000, quotitePct: 75, totalQuotites: 100 },
     );
-    expect(r).toEqual({ mensuel: 150, mois: 1, total: 150 });
+    expect(r).toEqual({ mensuel: null, mois: null, total: null });
   });
 
   it("applique le taux à chaque cotisation sur les mois restants", () => {
-    const r = commissionDepuisDevis({ taux: 10, base: "prime" }, { cotisationMensuelle: 30, moisRestants: 24 });
+    const r = commissionDepuisDevis(
+      { taux: 10, base: "prime" },
+      { cotisationMensuelle: 30, moisRestants: 24 },
+    );
     expect(r).toEqual({ mensuel: 3, mois: 24, total: 72 });
   });
 
