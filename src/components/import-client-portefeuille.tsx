@@ -109,7 +109,7 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
           base64: await lireBase64(file),
         },
       });
-      const donneesExtraites = { ...donnees };
+      const donneesExtraites = { ...VIDE };
       for (const [key, value] of Object.entries(resultat)) {
         if (key in donneesExtraites && typeof value === "string" && value)
           (donneesExtraites as Record<string, string>)[key] = value;
