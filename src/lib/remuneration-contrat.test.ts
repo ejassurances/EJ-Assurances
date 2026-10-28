@@ -76,7 +76,7 @@ describe("commission compagnie", () => {
   });
 });
 
-import { lignesAPersister } from "@/lib/remuneration-previsionnelle";
+import { lignesAPersister } from "./remuneration-previsionnelle";
 
 describe("lignesAPersister (prévisionnel enregistré)", () => {
   const bareme = {
