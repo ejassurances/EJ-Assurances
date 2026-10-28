@@ -177,8 +177,23 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
       date_effet: date("date_effet"),
       date_echeance: date("date_echeance"),
       type_couverture: champ("type_couverture", 160),
-      prime_montant: typeof brut["prime_montant"] === "number" && Number.isFinite(brut["prime_montant"]) && (brut["prime_montant"] as number) >= 0 ? brut["prime_montant"] : (typeof brut["prime_montant"] === "string" && Number.isFinite(Number((brut["prime_montant"] as string).replace(",", "."))) && Number((brut["prime_montant"] as string).replace(",", ".")) >= 0 ? Number((brut["prime_montant"] as string).replace(",", ".")) : null),
-      prime_periodicite: ["mensuelle", "annuelle"].includes(champ("prime_periodicite", 20) ?? "") ? champ("prime_periodicite", 20) : null,
+      prime_montant:
+        typeof brut["prime_montant"] === "number" &&
+        Number.isFinite(brut["prime_montant"]) &&
+        (brut["prime_montant"] as number) >= 0
+          ? brut["prime_montant"]
+          : typeof brut["prime_montant"] === "string" &&
+              Number.isFinite(
+                Number((brut["prime_montant"] as string).replace(",", ".")),
+              ) &&
+              Number((brut["prime_montant"] as string).replace(",", ".")) >= 0
+            ? Number((brut["prime_montant"] as string).replace(",", "."))
+            : null,
+      prime_periodicite: ["mensuelle", "annuelle"].includes(
+        champ("prime_periodicite", 20) ?? "",
+      )
+        ? champ("prime_periodicite", 20)
+        : null,
       type_assurance: BRANCHES_CREATION.some((b) => b.value === champ("type_assurance", 80))
         ? champ("type_assurance", 80)
         : null,
