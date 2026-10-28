@@ -183,6 +183,162 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
     };
   });
 
+
+const verificationSchema = z.object({
+  nom: z.string().trim().min(1).max(120),
+  prenom: z.string().trim().max(120).optional().nullable(),
+  date_naissance: z.string().max(10).optional().nullable(),
+  email: z.string().trim().max(255).optional().nullable(),
+  mobile: z.string().trim().max(30).optional().nullable(),
+  telephone: z.string().trim().max(30).optional().nullable(),
+  assureur: z.string().trim().max(160).optional().nullable(),
+  numero_contrat: z.string().trim().max(120).optional().nullable(),
+  date_effet: z.string().max(10).optional().nullable(),
+  date_echeance: z.string().max(10).optional().nullable(),
+  type_couverture: z.string().trim().max(160).optional().nullable(),
+});
+
+const normaliserComparaison = (value: unknown): string =>
+  String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\\u0300-\\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+
+/**
+ * Vérifie en lecture seule si le contrat importé est déjà présent dans le CRM.
+ * Le numéro de contrat est le critère prioritaire ; à défaut, on recherche
+ * les contrats du client reconnu et on compare assureur et dates.
+ */
+export const verifierContratImportPortefeuille = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => verificationSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    let autorise = false;
+    for (const role of ["admin", "mandataire", "prescripteur"] as const) {
+      const { data: aLeRole } = await context.supabase.rpc("has_role", {
+        _user_id: context.userId,
+        _role: role,
+      });
+      if (aLeRole === true) {
+        autorise = true;
+        break;
+      }
+    }
+    if (!autorise) throw new Error("Vérification du contrat non autorisée.");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    type LigneContrat = {
+      id: string;
+      numero: string | null;
+      assureur: string;
+      produit: string;
+      date_effet: string | null;
+      date_echeance: string | null;
+      client_id: string;
+      clients: {
+        id: string;
+        nom: string;
+        prenom: string | null;
+        email: string | null;
+        mobile: string | null;
+        telephone: string | null;
+        date_naissance: string | null;
+      } | null;
+    };
+    const selection =
+      "id, numero, assureur, produit, date_effet, date_echeance, client_id, clients:client_id(id, nom, prenom, email, mobile, telephone, date_naissance)";
+    let candidats: LigneContrat[] = [];
+    let critere: "numero_contrat" | "client_assureur" = "client_assureur";
+
+    const numero = data.numero_contrat?.trim();
+    if (numero) {
+      const { data: parNumero, error } = await supabaseAdmin
+        .from("contrats")
+        .select(selection)
+        .ilike("numero", numero)
+        .limit(10);
+      if (error) throw new Error(`Recherche du numéro de contrat impossible : ${error.message}`);
+      candidats = (parNumero ?? []) as unknown as LigneContrat[];
+      if (candidats.length) critere = "numero_contrat";
+    }
+
+    if (!candidats.length) {
+      const { trouverClientExistant } = await import("@/lib/client-dedoublonnage.server");
+      const client = await trouverClientExistant(supabaseAdmin, {
+        nom: data.nom,
+        prenom: data.prenom ?? null,
+        date_naissance: data.date_naissance ?? null,
+        email: data.email ?? null,
+        mobile: data.mobile ?? null,
+        telephone: data.telephone ?? null,
+        exigerDateNaissancePourNom: true,
+      });
+      if (client) {
+        const { data: parClient, error } = await supabaseAdmin
+          .from("contrats")
+          .select(selection)
+          .eq("client_id", client.client_id)
+          .limit(100);
+        if (error) throw new Error(`Recherche des contrats du client impossible : ${error.message}`);
+        const assureurImport = normaliserComparaison(data.assureur);
+        candidats = ((parClient ?? []) as unknown as LigneContrat[]).filter((contrat) => {
+          const assureurCorrespond =
+            !assureurImport ||
+            normaliserComparaison(contrat.assureur) === assureurImport;
+          const dateEffetCorrespond =
+            !data.date_effet || !contrat.date_effet || contrat.date_effet === data.date_effet;
+          return assureurCorrespond && dateEffetCorrespond;
+        });
+      }
+    }
+
+    const champs: Array<{ key: string; label: string; imported: string | null; existing: string | null }> = [];
+    const comparer = (key: string, label: string, imported: string | null | undefined, existing: string | null | undefined) => {
+      if (!imported?.trim() || !existing?.trim()) return;
+      if (normaliserComparaison(imported) !== normaliserComparaison(existing)) {
+        champs.push({ key, label, imported: imported.trim(), existing: existing.trim() });
+      }
+    };
+
+    return {
+      found: candidats.length > 0,
+      criterion: critere,
+      matches: candidats.slice(0, 5).map((contrat) => {
+        const differences: typeof champs = [];
+        const addDifference = (key: string, label: string, imported: string | null | undefined, existing: string | null | undefined) => {
+          if (!imported?.trim() || !existing?.trim()) return;
+          if (normaliserComparaison(imported) !== normaliserComparaison(existing)) {
+            differences.push({ key, label, imported: imported.trim(), existing: existing.trim() });
+          }
+        };
+        addDifference("numero_contrat", "Numéro de contrat", data.numero_contrat, contrat.numero);
+        addDifference("assureur", "Assureur", data.assureur, contrat.assureur);
+        addDifference("date_effet", "Date d'effet", data.date_effet, contrat.date_effet);
+        addDifference("date_echeance", "Date d'échéance", data.date_echeance, contrat.date_echeance);
+        addDifference("type_couverture", "Type de couverture", data.type_couverture, contrat.produit);
+        addDifference("nom", "Nom du client", data.nom, contrat.clients?.nom);
+        addDifference("prenom", "Prénom", data.prenom, contrat.clients?.prenom);
+        addDifference("email", "E-mail", data.email, contrat.clients?.email);
+        addDifference("mobile", "Mobile", data.mobile, contrat.clients?.mobile);
+        addDifference("telephone", "Téléphone", data.telephone, contrat.clients?.telephone);
+        addDifference("date_naissance", "Date de naissance", data.date_naissance, contrat.clients?.date_naissance);
+        return {
+          contrat_id: contrat.id,
+          client_id: contrat.client_id,
+          client_nom: [contrat.clients?.prenom, contrat.clients?.nom].filter(Boolean).join(" "),
+          numero: contrat.numero,
+          assureur: contrat.assureur,
+          produit: contrat.produit,
+          date_effet: contrat.date_effet,
+          date_echeance: contrat.date_echeance,
+          differences,
+        };
+      }),
+    };
+  });
+
 const CODES_PIECES = ["attestation_assurance", "cni", "justificatif_domicile", "rib"] as const;
 const TAILLE_MAX_OCTETS = 8 * 1024 * 1024;
 
