@@ -14,6 +14,7 @@ import { libelleVariante, varianteCapital } from "@/lib/variante-capital";
 import { EmailsLiesPanel } from "@/components/emails-lies-panel";
 import { ImageUploadField, StoredImage } from "@/components/image-upload-field";
 import { CompagnieTauxCommission } from "@/components/compagnie-taux-commission";
+import { CompagnieBaremeDate } from "@/components/compagnie-bareme-date";
 import { PageHeader } from "@/components/page-header";
 import { SectionNav, type SectionNavItem } from "@/components/section-nav";
 import { telechargerPdfBlob } from "@/lib/telecharger-pdf";
@@ -350,6 +351,7 @@ function CompagnieDetail() {
             <div className="space-y-6">
               <PartenariatsTab compagnieId={c.id} compagnieNom={c.nom} isAdmin={isAdmin} />
               <CompagnieTauxCommission compagnieId={c.id} canEdit={isAdmin} />
+              <CompagnieBaremeDate compagnieId={c.id} canEdit={isAdmin} />
             </div>
           )}
           {tab === "emails" && (
