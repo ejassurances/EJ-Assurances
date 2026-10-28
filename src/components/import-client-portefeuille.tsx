@@ -364,8 +364,7 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
       <div className="rounded-xl border border-line p-4">
         <h3 className="font-semibold text-ink">Documents KYC (ajout possible plus tard)</h3>
         <p className="mt-1 text-sm text-ink-muted">
-          Les trois documents seront archivés dans la fiche client et reliés à la checklist du
-          dossier.
+          Vous pouvez ajouter les documents disponibles maintenant ou les déposer plus tard depuis la fiche client. Les pièces absentes resteront à fournir dans la checklist du dossier.
         </p>
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
           {(
@@ -376,9 +375,8 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
             ] as const
           ).map(([key, label]) => (
             <label key={key} className="block text-sm text-ink-soft">
-              <span className="mb-1 block">{label} *</span>
+              <span className="mb-1 block">{label}</span>
               <input
-                required
                 type="file"
                 accept=".pdf,.jpg,.jpeg,.png,.webp"
                 onChange={(e) =>
