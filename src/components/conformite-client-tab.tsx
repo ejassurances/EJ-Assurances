@@ -125,7 +125,17 @@ export function ConformiteClientTab({
   }, [clientId]);
 
   const upload = async (type: KycDoc["type"], file: File) => {
-    const path = `${clientId}/kyc/${type}-${Date.now()}-${file.name}`;
+    // Supabase Storage rejects keys containing accents, spaces and punctuation from raw filenames.
+    // Keep the original name in the database, but use a normalized ASCII key for storage.
+    const safeName =
+      file.name
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^A-Za-z0-9._-]+/g, "_")
+        .replace(/_{2,}/g, "_")
+        .replace(/^[_\-.]+|[_\-.]+$/g, "")
+        .slice(0, 120) || "document";
+    const path = `${clientId}/kyc/${type}-${Date.now()}-${safeName}`;
     const { error: upErr } = await supabase.storage.from("dossier-documents").upload(path, file);
     if (upErr) {
       alert("Upload : " + upErr.message);
