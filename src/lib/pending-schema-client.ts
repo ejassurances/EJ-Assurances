@@ -79,7 +79,12 @@ type PendingDatabase = Omit<Database, "public"> & {
       dossiers_lies: PendingTable<DossierLink, "dossier_id_1" | "dossier_id_2">;
       mandataires_contrats: PendingTable<MandataireContract, "user_id" | "reference">;
       crm_email_labels: PendingTable<CrmEmailLabel, "message_id" | "label">;
-      commission_bareme_versionne: PendingTable<BaremeVersionneRow, "branche">;
+      commission_bareme: {
+        Row: BaremeVersionneRow;
+        Insert: Partial<Omit<BaremeVersionneRow, "id">>;
+        Update: Partial<BaremeVersionneRow>;
+        Relationships: [];
+      };
       contrat_remuneration_previsionnelle: PendingTable<
         RemunerationPrevRow,
         "cle" | "contrat_id" | "type" | "statut"
