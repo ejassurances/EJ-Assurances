@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier -- legacy file formatting debt; keep other lint rules enabled */
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
@@ -206,8 +207,6 @@ export const messageComplet = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await exigerStaff(context.supabase, context.userId);
     const { lireMessage } = await import("@/lib/gmail.server");
-    const message = await lireMessage(data.id);
-
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: lien } = await supabaseAdmin
       .from("crm_emails")
@@ -215,7 +214,57 @@ export const messageComplet = createServerFn({ method: "POST" })
       .eq("gmail_message_id", data.id)
       .maybeSingle();
 
-    return { message, lien: lien ?? null };
+    try {
+      const message = await lireMessage(data.id);
+      // Archive le contenu lorsque le message est encore accessible dans IONOS.
+      // L'échec d'archivage (migration pas encore activée, par exemple) ne bloque
+      // pas la consultation du message en direct.
+      if (lien?.id) {
+        const { error: archiveError } = await supabaseAdmin
+          .from("crm_emails")
+          .update({
+            sujet: message.sujet ?? null,
+            expediteur_nom: message.expediteur_nom ?? null,
+            expediteur_email: message.expediteur_email ?? null,
+            destinataires: message.destinataires ?? null,
+            copie_cc: message.cc ?? null,
+            corps_texte: message.texte ?? null,
+            corps_html: message.html ?? null,
+            pieces_jointes: message.pieces_jointes ?? [],
+            contenu_archive_le: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", lien.id);
+        if (archiveError) console.error("[email] archivage du contenu impossible:", archiveError.message);
+      }
+      return { message, lien: lien ?? null };
+    } catch (erreurLecture) {
+      // Si IONOS ne conserve plus le message, restitue la copie CRM archivée.
+      const { data: archive, error: archiveError } = await supabaseAdmin
+        .from("crm_emails")
+        .select("id, gmail_message_id, gmail_thread_id, direction, recu_le, sujet, expediteur_nom, expediteur_email, destinataires, copie_cc, corps_texte, corps_html, pieces_jointes, contenu_archive_le")
+        .eq("gmail_message_id", data.id)
+        .maybeSingle();
+      if (archiveError || !archive?.contenu_archive_le) throw erreurLecture;
+      const message = {
+        id: archive.gmail_message_id,
+        thread_id: archive.gmail_thread_id ?? archive.gmail_message_id,
+        sujet: archive.sujet ?? "(sans objet)",
+        expediteur_nom: archive.expediteur_nom ?? null,
+        expediteur_email: archive.expediteur_email ?? null,
+        destinataires: archive.destinataires ?? "",
+        snippet: archive.corps_texte?.slice(0, 300) ?? "",
+        date: archive.recu_le ?? archive.contenu_archive_le,
+        non_lu: false,
+        etiquettes: [],
+        cc: archive.copie_cc ?? "",
+        texte: archive.corps_texte ?? null,
+        html: archive.corps_html ?? null,
+        pieces_jointes: Array.isArray(archive.pieces_jointes) ? archive.pieces_jointes : [],
+        archive_crm: true,
+      };
+      return { message, lien: lien ?? archive };
+    }
   });
 
 /** Rattache un message à un client, un dossier, un contrat ou une compagnie. */

@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier -- legacy file formatting debt; keep other lint rules enabled */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { LIBELLES_PROFILS, routeRecommandation } from "@/lib/emprunteur-notebook";
 import { noterProduitEmprunteur, type NoteProduit } from "@/lib/emprunteur-scoring-produits";
@@ -15,7 +16,7 @@ import {
   creerDevisTarifFixeFn,
 } from "@/lib/devis-classement.functions";
 import { assuranceInitialeDepuisRecueil, economieDevis } from "@/lib/assurance-initiale";
-import { lireDevisImporte } from "@/lib/devis-import.functions";
+import { lireDevisImporte, validerDevisImporte } from "@/lib/devis-import.functions";
 import { neolianeTariferDossier } from "@/lib/neoliane.functions";
 import { brancheTarifableNeoliane, nbAssuresNeoliane } from "@/lib/neoliane/branches";
 import { ugipTariferDossier } from "@/lib/ugip.functions";
@@ -125,6 +126,7 @@ export function DossierDevisPanel({
   const retenirOffre = useServerFn(retenirDevisDossierFn);
   const retenirManuel = useServerFn(retenirDevisManuelFn);
   const lireDevis = useServerFn(lireDevisImporte);
+  const validerLectureDevis = useServerFn(validerDevisImporte);
   /** Import d'un devis PDF/photo : lecture IA proposée, validation humaine obligatoire. */
   const [importBusy, setImportBusy] = useState(false);
   const [importMsg, setImportMsg] = useState<string | null>(null);
@@ -674,6 +676,16 @@ export function DossierDevisPanel({
       setSaving(false);
       return setErr(error.message);
     }
+    let erreurValidationSource: string | null = null;
+    if (importDocId) {
+      try {
+        await validerLectureDevis({ data: { dossier_id: dossierId, document_id: importDocId } });
+      } catch {
+        // Le devis est déjà enregistré ; signaler le problème sans perdre la saisie.
+        erreurValidationSource =
+          "Devis enregistré, mais la lecture de référence n'a pas pu être validée. Vérifiez la migration de versionnement.";
+      }
+    }
     if (retenirDirect) {
       try {
         await retenirManuel({ data: { devis_id: (cree as { id: string }).id, motif: LIBELLE_MOTIF[motifSaisie] } });
@@ -703,6 +715,7 @@ export function DossierDevisPanel({
     });
     setImportDocId(null);
     setImportMsg(null);
+    if (erreurValidationSource) setErr(erreurValidationSource);
     await load();
     onChanged?.();
   };
@@ -722,7 +735,7 @@ export function DossierDevisPanel({
     setErr(null);
     setImportMsg("Dépôt du devis…");
     try {
-      const safeName = file.name.replace(/[^\w.\-]+/g, "_").slice(0, 120);
+      const safeName = file.name.replace(/[^\w.-]+/g, "_").slice(0, 120);
       const path = `${dossierId}/${Date.now()}-${safeName}`;
       const { error: upErr } = await supabase.storage.from("dossier-documents").upload(path, file, { upsert: true });
       if (upErr) throw upErr;

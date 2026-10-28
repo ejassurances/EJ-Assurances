@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier -- legacy file formatting debt; keep other lint rules enabled */
 /**
  * IMPORT D'UN DEVIS ASSUREUR (PDF ou photo) — lecture IA.
  *
@@ -98,7 +99,7 @@ export async function lireDevisDocument(admin: Admin, documentId: string): Promi
 
   const { data: doc } = await admin
     .from("documents")
-    .select("id, file_name, mime_type, storage_path")
+    .select("id, dossier_id, file_name, mime_type, storage_path")
     .eq("id", documentId)
     .maybeSingle();
   if (!doc) throw new Error("Document introuvable");
@@ -116,6 +117,20 @@ export async function lireDevisDocument(admin: Admin, documentId: string): Promi
   const octets = Buffer.from(await blob.arrayBuffer());
   if (octets.byteLength === 0) throw new Error("Fichier vide");
   if (octets.byteLength > TAILLE_MAX) throw new Error("Fichier trop volumineux (12 Mo maximum)");
+
+  // Une même version source ne doit être lue par l'IA qu'une seule fois.
+  // L'empreinte détecte aussi un remplacement du fichier sous le même document_id.
+  const empreinteSha256 = Buffer.from(
+    await crypto.subtle.digest("SHA-256", octets),
+  ).toString("hex");
+  const { data: lectureExistante, error: lectureExistanteError } = await admin
+    .from("devis_import_lectures")
+    .select("extraction")
+    .eq("document_id", documentId)
+    .eq("source_sha256", empreinteSha256)
+    .maybeSingle();
+  if (lectureExistanteError) throw new Error("Référence de lecture du devis indisponible.");
+  if (lectureExistante?.extraction) return lectureExistante.extraction as DevisImporte;
 
   const mime = blob.type || d.mime_type || "application/pdf";
   const dataUrl = `data:${mime};base64,${octets.toString("base64")}`;
@@ -155,7 +170,7 @@ export async function lireDevisDocument(admin: Admin, documentId: string): Promi
   const conf = Number(brut["confidence"]);
   const quotite = nombre(brut["quotite_pct"]);
 
-  return {
+  const resultat: DevisImporte = {
     compagnie: texte(brut["compagnie"]),
     produit: texte(brut["produit"]),
     formule: texte(brut["formule"]),
@@ -170,6 +185,18 @@ export async function lireDevisDocument(admin: Admin, documentId: string): Promi
     date_effet: /^\d{4}-\d{2}-\d{2}$/.test(String(brut["date_effet"] ?? "")) ? String(brut["date_effet"]) : null,
     confidence: Number.isFinite(conf) ? Math.min(1, Math.max(0, conf)) : 0,
   };
+  const { error: sauvegardeErreur } = await admin.from("devis_import_lectures").upsert(
+    {
+      document_id: documentId,
+      dossier_id: (d as { dossier_id: string }).dossier_id,
+      source_sha256: empreinteSha256,
+      extraction: resultat,
+      statut: "proposee",
+    },
+    { onConflict: "document_id,source_sha256" },
+  );
+  if (sauvegardeErreur) throw new Error("Impossible d'archiver la lecture du devis.");
+  return resultat;
 }
 
 /** Normalisation simple pour rapprocher un nom lu du catalogue du cabinet. */

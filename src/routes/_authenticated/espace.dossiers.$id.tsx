@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { ClientOriginePicker } from "@/components/client-origine-picker";
 import { BoutonEnvoiEmail } from "@/components/envoi-rapide-email";
+import { EmailsLiesPanel } from "@/components/emails-lies-panel";
 import { useEffect, useState, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -367,6 +368,10 @@ function DossierDetail() {
           <BoutonEnvoiEmail type="dossier" id={dossier.id} />
         </div>
       </div>
+
+      <Section title="Historique des échanges">
+        <EmailsLiesPanel liens={{ client_id: dossier.client_id, dossier_id: dossier.id }} />
+      </Section>
 
       {kycBloquant && (
         <div className="rounded-2xl border-2 border-destructive/60 bg-destructive/10 p-5">

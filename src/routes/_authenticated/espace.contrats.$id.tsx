@@ -11,6 +11,7 @@ import { CommissionContratCard } from "@/components/commission-contrat-card";
 import { ContratDocumentsPanel } from "@/components/contrat-documents-panel";
 import { PageHeader } from "@/components/page-header";
 import { BoutonEnvoiEmail } from "@/components/envoi-rapide-email";
+import { EmailsLiesPanel } from "@/components/emails-lies-panel";
 import { StatCard } from "@/components/stat-card";
 import { IconFileText } from "@tabler/icons-react";
 
@@ -111,7 +112,7 @@ function ContratDetail() {
   /** Correction tracée d'un contrat verrouillé : motif obligatoire. */
   const [correctionMotif, setCorrectionMotif] = useState<string | null>(null);
   const [mode, setMode] = useState<
-    "synthese" | "modifier" | "assures" | "frais" | "echeances" | "fichiers" | "a_venir"
+    "synthese" | "modifier" | "assures" | "frais" | "echeances" | "fichiers" | "emails" | "a_venir"
   >("synthese");
   const [ongletAVenir, setOngletAVenir] = useState<string>("");
 
@@ -355,6 +356,7 @@ function ContratDetail() {
             { mode: "frais", label: "Frais & Commissionnement" },
             { mode: "echeances", label: "Échéances" },
             { mode: "fichiers", label: "Fichiers" },
+            { mode: "emails", label: "E-mails" },
           ] as const
         ).map((t) => (
           <button
@@ -1081,6 +1083,10 @@ function ContratDetail() {
           produitId={c.produit_id}
           compagnieId={c.compagnie_id}
         />
+      )}
+
+      {mode === "emails" && (
+        <EmailsLiesPanel liens={{ client_id: c.client_id, contrat_id: c.id }} />
       )}
     </div>
   );
