@@ -194,6 +194,7 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
         return;
       }
       setMessage("Aucun contrat correspondant trouvé. Recherche de la fiche client existante ; aucun dossier ne sera créé.");
+      await lancerCreation(null, donneesSource, typeSource, attestationSource);
     } catch (e) {
       setErreur(e instanceof Error ? e.message : "Vérification du contrat impossible.");
     } finally {
