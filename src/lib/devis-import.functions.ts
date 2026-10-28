@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier -- legacy file formatting debt; keep other lint rules enabled */
 /**
  * Lecture IA d'un devis déposé sur un dossier : les données lues sont
  * PROPOSÉES au conseiller (aucune écriture), avec un rapprochement au catalogue
