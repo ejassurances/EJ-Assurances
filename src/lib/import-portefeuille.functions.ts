@@ -89,7 +89,10 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
       ? content.map((part) => part.text ?? "").join("\n")
       : (content ?? "");
     const json = texte.match(/\{[\s\S]*\}/)?.[0];
-    if (!json) throw new Error("L'attestation n'a pas pu être lue. Vous pouvez saisir les informations manuellement.");
+    if (!json)
+      throw new Error(
+        "L'attestation n'a pas pu être lue. Vous pouvez saisir les informations manuellement.",
+      );
 
     const brut = JSON.parse(json) as Record<string, unknown>;
     const champ = (key: string, max = 255): string | null => {
