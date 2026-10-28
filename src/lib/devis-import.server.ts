@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier -- legacy file formatting debt; keep other lint rules enabled */
 /**
  * IMPORT D'UN DEVIS ASSUREUR (PDF ou photo) — lecture IA.
  *
