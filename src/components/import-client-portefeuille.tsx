@@ -131,16 +131,27 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
 
   /** Archive chaque pièce séparément ; retourne la liste des pièces en échec. */
   const archiverDocuments = async (clientId: string, dossierId: string) => {
-    const fichiers = [
-      { file: attestation!, code: "attestation_assurance" as const, libelle: "Attestation" },
-      { file: kyc.cni!, code: "cni" as const, libelle: "Pièce d'identité" },
-      {
-        file: kyc.justificatif_domicile!,
-        code: "justificatif_domicile" as const,
+    const fichiers: Array<{
+      file: File;
+      code: "attestation_assurance" | "cni" | "justificatif_domicile" | "rib";
+      libelle: string;
+    }> = [];
+    if (attestation) {
+      fichiers.push({
+        file: attestation,
+        code: "attestation_assurance",
+        libelle: "Attestation",
+      });
+    }
+    if (kyc.cni) fichiers.push({ file: kyc.cni, code: "cni", libelle: "Pièce d'identité" });
+    if (kyc.justificatif_domicile) {
+      fichiers.push({
+        file: kyc.justificatif_domicile,
+        code: "justificatif_domicile",
         libelle: "Justificatif de domicile",
-      },
-      { file: kyc.rib!, code: "rib" as const, libelle: "RIB" },
-    ];
+      });
+    }
+    if (kyc.rib) fichiers.push({ file: kyc.rib, code: "rib", libelle: "RIB" });
     const echecs: string[] = [];
     for (const piece of fichiers) {
       try {
@@ -173,24 +184,17 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
 
   const lancerCreation = async (confirmerClientId: string | null = null) => {
     if (envoi) return;
-    if (
-      !attestation ||
-      !donnees.nom.trim() ||
-      !typeAssurance ||
-      !kyc.cni ||
-      !kyc.justificatif_domicile ||
-      !kyc.rib
-    ) {
-      setErreur(
-        "L'attestation, le nom, le type d'assurance et les trois documents KYC sont obligatoires.",
-      );
+    if (!attestation || !donnees.nom.trim() || !typeAssurance) {
+      setErreur("L'attestation, le nom et le type d'assurance sont obligatoires.");
       return;
     }
     const invalide = [
       fichierValide(attestation, "Attestation"),
-      fichierValide(kyc.cni, "Pièce d'identité"),
-      fichierValide(kyc.justificatif_domicile, "Justificatif de domicile"),
-      fichierValide(kyc.rib, "RIB"),
+      ...(kyc.cni ? [fichierValide(kyc.cni, "Pièce d'identité")] : []),
+      ...(kyc.justificatif_domicile
+        ? [fichierValide(kyc.justificatif_domicile, "Justificatif de domicile")]
+        : []),
+      ...(kyc.rib ? [fichierValide(kyc.rib, "RIB")] : []),
     ].filter(Boolean);
     if (invalide.length) {
       setErreur(invalide.join(" "));
@@ -358,7 +362,7 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
         {champ("type_couverture", "Type de couverture")}
       </div>
       <div className="rounded-xl border border-line p-4">
-        <h3 className="font-semibold text-ink">Documents KYC obligatoires</h3>
+        <h3 className="font-semibold text-ink">Documents KYC (ajout possible plus tard)</h3>
         <p className="mt-1 text-sm text-ink-muted">
           Les trois documents seront archivés dans la fiche client et reliés à la checklist du
           dossier.
