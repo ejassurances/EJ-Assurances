@@ -334,31 +334,6 @@ function NewClientForm({
     setErreur(null);
   };
 
-  const rechercherClientExistant = async () => {
-    const terme = rechercheClient.trim();
-    if (terme.length < 2 || rechercheEnCours) return;
-    setRechercheEnCours(true);
-    setRechercheEffectuee(false);
-    setErreur(null);
-    try {
-      const motif = `%${terme.replace(/[,%()]/g, " ")}%`;
-      const { data, error: erreurRecherche } = await supabase
-        .from("clients")
-        .select("id,reference,civilite,prenom,nom,email,mobile,ville,statut,origine,marque,besoins,conformite_score,conformite_niveau,created_at,client_risque_lcbft(score_risque,niveau_vigilance)")
-        .not("etiquettes", "cs", '{"non-client"}')
-        .or(`nom.ilike.${motif},prenom.ilike.${motif},email.ilike.${motif},mobile.ilike.${motif},reference.ilike.${motif}`)
-        .order("created_at", { ascending: false })
-        .limit(20);
-      if (erreurRecherche) throw erreurRecherche;
-      setClientsExistants((data ?? []) as ClientRow[]);
-      setRechercheEffectuee(true);
-    } catch (err) {
-      setErreur(err instanceof Error ? err.message : "Recherche des clients impossible.");
-    } finally {
-      setRechercheEnCours(false);
-    }
-  };
-
   const submit = async (e?: React.FormEvent, confirmerDoublonId: string | null = null) => {
     e?.preventDefault();
     if (saving) return;
