@@ -197,7 +197,9 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
         );
         return;
       }
-      setMessage("Aucun contrat correspondant trouvé. Recherche de la fiche client existante ; aucun dossier ne sera créé.");
+      setMessage(
+        "Aucun contrat correspondant trouvé. Recherche de la fiche client existante ; aucun dossier ne sera créé.",
+      );
       await lancerCreation(null, donneesSource, typeSource, attestationSource);
     } catch (e) {
       setErreur(e instanceof Error ? e.message : "Vérification du contrat impossible.");
@@ -212,7 +214,12 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
     attestationSource: File | null = attestation,
   ) => {
     if (envoi) return;
-    if (!attestationSource || !donneesSource.nom.trim() || !typeSource || !donneesSource.assureur.trim()) {
+    if (
+      !attestationSource ||
+      !donneesSource.nom.trim() ||
+      !typeSource ||
+      !donneesSource.assureur.trim()
+    ) {
       setErreur("Nom, assureur, type de couverture et attestation sont nécessaires.");
       return;
     }
@@ -222,23 +229,57 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
       ...(kyc.justificatif_domicile ? [{ file: kyc.justificatif_domicile, code: "justificatif_domicile" as const }] : []),
       ...(kyc.rib ? [{ file: kyc.rib, code: "rib" as const }] : []),
     ];
-    const invalide = fichiersChoisis.map(({ file }) => fichierValide(file, file.name)).filter(Boolean);
-    if (invalide.length) { setErreur(invalide.join(" ")); return; }
-    setEnvoi(true); setErreur(""); setMessage("");
+    const invalide = fichiersChoisis
+      .map(({ file }) => fichierValide(file, file.name))
+      .filter(Boolean);
+    if (invalide.length) {
+      setErreur(invalide.join(" "));
+      return;
+    }
+    setEnvoi(true);
+    setErreur("");
+    setMessage("");
     try {
-      const fichiers = await Promise.all(fichiersChoisis.map(async ({ file, code }) => ({
-        code, file_name: file.name, mime_type: file.type as (typeof FORMATS)[number], base64: await lireBase64(file),
-      })));
-      const resultat = await enregistrerContrat({ data: {
-        contrat_id: contratId,
-        client: { nom: donneesSource.nom, prenom: donneesSource.prenom || null, date_naissance: donneesSource.date_naissance || null, email: donneesSource.email || null, mobile: donneesSource.mobile || null, telephone: donneesSource.telephone || null },
-        contrat: { assureur: donneesSource.assureur, numero: donneesSource.numero_contrat || null, produit: donneesSource.type_couverture || typeSource, date_effet: donneesSource.date_effet || null, date_echeance: donneesSource.date_echeance || null },
-        fichiers,
-      } });
-      toast.success(contratId ? "Contrat mis à jour et documents archivés." : "Contrat importé et documents archivés.");
+      const fichiers = await Promise.all(
+        fichiersChoisis.map(async ({ file, code }) => ({
+          code,
+          file_name: file.name,
+          mime_type: file.type as (typeof FORMATS)[number],
+          base64: await lireBase64(file),
+        })),
+      );
+      const resultat = await enregistrerContrat({
+        data: {
+          contrat_id: contratId,
+          client: {
+            nom: donneesSource.nom,
+            prenom: donneesSource.prenom || null,
+            date_naissance: donneesSource.date_naissance || null,
+            email: donneesSource.email || null,
+            mobile: donneesSource.mobile || null,
+            telephone: donneesSource.telephone || null,
+          },
+          contrat: {
+            assureur: donneesSource.assureur,
+            numero: donneesSource.numero_contrat || null,
+            produit: donneesSource.type_couverture || typeSource,
+            date_effet: donneesSource.date_effet || null,
+            date_echeance: donneesSource.date_echeance || null,
+          },
+          fichiers,
+        },
+      });
+      toast.success(
+        contratId
+          ? "Contrat mis à jour et documents archivés."
+          : "Contrat importé et documents archivés.",
+      );
       onCreated(resultat.client_id);
-    } catch (e) { setErreur(e instanceof Error ? e.message : "Import du contrat impossible."); }
-    finally { setEnvoi(false); }
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : "Import du contrat impossible.");
+    } finally {
+      setEnvoi(false);
+    }
   };
 
   const champ = (key: keyof Donnees, label: string, type = "text", required = false) => (
@@ -261,9 +302,12 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
     <section className="mt-6 space-y-4 rounded-2xl border border-line bg-surface-elevated p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-lg font-semibold text-ink">Importer un contrat déjà en portefeuille</h2>
+          <h2 className="text-lg font-semibold text-ink">
+            Importer un contrat déjà en portefeuille
+          </h2>
           <p className="mt-1 text-sm text-ink-muted">
-            Le logiciel recherche la fiche client existante et enregistre le contrat sans créer de dossier artificiel ni de nouvelle fiche client.
+            Le logiciel recherche la fiche client existante et enregistre le contrat sans créer de
+            dossier artificiel ni de nouvelle fiche client.
           </p>
         </div>
         <button type="button" onClick={onCancel} className="text-sm text-ink-muted underline">
@@ -373,7 +417,10 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
       {typeAssurance && (
         <div className="rounded-xl bg-background p-4">
           <h3 className="text-sm font-semibold text-ink">Import au portefeuille</h3>
-          <p className="mt-2 text-sm text-ink-muted">Cet import enregistre le contrat sur la fiche client existante. Il ne crée aucun dossier et ne réclame pas de pièces complémentaires absentes.</p>
+          <p className="mt-2 text-sm text-ink-muted">
+            Cet import enregistre le contrat sur la fiche client existante. Il ne crée aucun dossier
+            et ne réclame pas de pièces complémentaires absentes.
+          </p>
         </div>
       )}
       {message && (
@@ -431,17 +478,25 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
                   </p>
                 )}
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <button type="button" disabled={envoi} onClick={() => void lancerCreation(contrat.contrat_id)} className="rounded-full bg-[#0A192F] px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50">
+                  <button
+                    type="button"
+                    disabled={envoi}
+                    onClick={() => void lancerCreation(contrat.contrat_id)}
+                    className="rounded-full bg-[#0A192F] px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+                  >
                     Importer / mettre à jour ce contrat
                   </button>
-                  <button type="button" onClick={() => onCreated(contrat.client_id)} className="rounded-full border border-amber-800/30 px-3 py-1.5 text-sm font-medium">
+                  <button
+                    type="button"
+                    onClick={() => onCreated(contrat.client_id)}
+                    className="rounded-full border border-amber-800/30 px-3 py-1.5 text-sm font-medium"
+                  >
                     Ouvrir la fiche client
                   </button>
                 </div>
               </div>
             ))}
           </div>
-
         </div>
       )}
       {doublon && (
