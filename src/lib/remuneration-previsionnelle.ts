@@ -23,24 +23,37 @@ export type ContratRemuneration = {
   economie_cout_delegue: number | null;
 };
 
+export type LignePrev = {
+  cle: string;
+  contrat_id: string;
+  type: "frais_distribution" | "commission";
+  annee: number;
+  statut: "calcule" | "a_verifier" | "non_calculable";
+  base: number | null;
+  taux: number | null;
+  montant: number | null;
+  motif: string | null;
+  bareme_id: string | null;
+  bareme_snapshot: BaremeCompagnie | null;
+};
+
 /** Lignes à enregistrer (pur, testable) : clé stable par contrat/type/année. */
 export function lignesAPersister(
   contratId: string,
   frais: ResultatFrais,
   commission: ResultatCommission,
   bareme: BaremeCompagnie | null,
-) {
-  const snapshot = bareme ? (JSON.parse(JSON.stringify(bareme)) as Record<string, unknown>) : null;
-  const rows = [
+): LignePrev[] {
+  const rows: LignePrev[] = [
     {
       cle: `${contratId}:frais_distribution:1`,
       contrat_id: contratId,
-      type: "frais_distribution" as const,
+      type: "frais_distribution",
       annee: 1,
       statut: frais.statut,
-      base: frais.statut === "calcule" ? frais.base : null,
+      base: frais.statut === "calcule" ? frais.assiette : null,
       taux: null,
-      montant: frais.statut === "calcule" ? frais.montant : null,
+      montant: frais.montant,
       motif: frais.statut === "calcule" ? frais.detail : frais.motif,
       bareme_id: null,
       bareme_snapshot: null,
@@ -51,21 +64,21 @@ export function lignesAPersister(
       rows.push({
         cle: l.cle,
         contrat_id: contratId,
-        type: "commission" as never,
+        type: "commission",
         annee: l.annee,
         statut: "calcule",
         base: l.base,
-        taux: l.taux as never,
+        taux: l.taux,
         montant: l.montant,
-        motif: commission.mode === "precompte" && l.annee === 1 ? "Précompte année 1" : null as never,
-        bareme_id: commission.baremeId as never,
-        bareme_snapshot: snapshot as never,
+        motif: commission.mode === "precompte" ? (l.annee === 1 ? "Précompte année 1" : "Renouvellement") : "Linéaire",
+        bareme_id: commission.baremeId,
+        bareme_snapshot: bareme,
       });
   } else {
     rows.push({
       cle: `${contratId}:commission:1`,
       contrat_id: contratId,
-      type: "commission" as never,
+      type: "commission",
       annee: 1,
       statut: "non_calculable",
       base: null,
@@ -131,7 +144,7 @@ export async function calculerRemuneration(
         primeAnnuelle: contrat.prime_annuelle,
         dureeMois: contrat.duree_mois,
       })
-    : ({ statut: "non_calculable", motif: "Barèmes datés pas encore activés en base", lignes: [] } as const);
+    : ({ statut: "non_calculable", motif: "Barèmes datés pas encore activés en base", lignes: [] } satisfies ResultatCommission as ResultatCommission);
   return { frais, commission, bareme, schemaDisponible };
 }
 

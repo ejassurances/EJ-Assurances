@@ -75,3 +75,28 @@ describe("commission compagnie", () => {
     expect(new Set(a.lignes.map((l) => l.cle)).size).toBe(a.lignes.length);
   });
 });
+
+import { lignesAPersister } from "@/lib/remuneration-previsionnelle";
+
+describe("lignesAPersister (prévisionnel enregistré)", () => {
+  const bareme = {
+    id: "b1", compagnie_id: "c1", branche: "prevoyance", mode: "precompte" as const,
+    taux_annee_1: 40, taux_renouvellement: 10, date_effet: "2026-01-01", date_fin: null,
+  };
+  it("frais et commission restent sur des lignes séparées, clés stables", () => {
+    const com = calculerCommissionPrevisionnelle({ contratId: "k", bareme, primeAnnuelle: 1200, dureeMois: 24 });
+    const frais = calculerFraisDistribution({ branche: "prevoyance" });
+    const rows = lignesAPersister("k", frais, com, bareme);
+    expect(rows.map((r) => r.cle)).toEqual(["k:frais_distribution:1", "k:commission:1", "k:commission:2"]);
+    expect(rows[0].montant).toBe(20);
+    expect(rows[1].montant).toBe(480);
+    expect(rows[2].montant).toBe(120);
+    expect(lignesAPersister("k", frais, com, bareme)).toEqual(rows);
+  });
+  it("sans barème : une ligne commission non calculable, aucun montant", () => {
+    const com = calculerCommissionPrevisionnelle({ contratId: "k", bareme: null, primeAnnuelle: 1200, dureeMois: 24 });
+    const rows = lignesAPersister("k", calculerFraisDistribution({ branche: "assurance_vie" }), com, null);
+    expect(rows[0].montant).toBe(0);
+    expect(rows[1]).toMatchObject({ statut: "non_calculable", montant: null });
+  });
+});
