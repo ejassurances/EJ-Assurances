@@ -723,39 +723,41 @@ function ProduitsTab({
   }
 
   async function importerProduitsCatalogue() {
-    const selection = produitsCatalogue.filter((produit) => produit.inclure && !produit.existeDeja);
+    const selection = produitsCatalogue.filter(
+      (produit) =>
+        produit.inclure && (!produit.existeDeja || Boolean(produit.documentReference)),
+    );
     if (selection.length === 0) {
-      toast.error("Sélectionnez au moins un produit à importer.");
+      toast.error("Sélectionnez un nouveau produit ou joignez un contrat à un produit existant.");
       return;
     }
-    const nomVide = selection.find((produit) => !produit.nom.trim());
+    const nouveauxProduits = selection.filter((produit) => !produit.existeDeja);
+    const nomVide = nouveauxProduits.find((produit) => !produit.nom.trim());
     if (nomVide) {
       toast.error("Le nom de chaque produit importé est obligatoire.");
       return;
     }
-    const sansFamille = selection.find(
+    const sansFamille = nouveauxProduits.find(
       (produit) => !familles.some((famille) => famille.code === produit.famille_code),
     );
     if (sansFamille) {
       toast.error(`Choisissez une famille pour « ${sansFamille.nom} ».`);
       return;
     }
-    const nomsSelection = selection.map((produit) => normaliserNomProduit(produit.nom));
+    const nomsNouveaux = nouveauxProduits.map((produit) => normaliserNomProduit(produit.nom));
     if (
-      selection.some(
+      nouveauxProduits.some(
         (produit, index) =>
           produits.some(
-            (existant) => normaliserNomProduit(existant.nom) === nomsSelection[index],
-          ) || nomsSelection.indexOf(nomsSelection[index]) !== index,
+            (existant) => normaliserNomProduit(existant.nom) === nomsNouveaux[index],
+          ) || nomsNouveaux.indexOf(nomsNouveaux[index]) !== index,
       )
     ) {
-      toast.error(
-        "Un produit sélectionné existe déjà dans le catalogue ou en doublon dans la liste.",
-      );
+      toast.error("Un nouveau produit est déjà présent ou apparaît plusieurs fois dans la liste.");
       return;
     }
 
-    const produitsAInserer = selection.map((produit) => {
+    const produitsAInserer = nouveauxProduits.map((produit) => {
       const famille = familles.find((item) => item.code === produit.famille_code)!;
       return {
         compagnie_id: compagnieId,
@@ -769,8 +771,9 @@ function ProduitsTab({
 
     setImportCatalogueEnCours(true);
     try {
-      const produitsCrees: { id: string; nom: string }[] = [];
-      for (const [index, produit] of selection.entries()) {
+      const produitsTraites: { id: string; nom: string }[] = [];
+      const nouveauxProduitsCrees: { id: string; nom: string }[] = [];
+      for (const [index, produit] of nouveauxProduits.entries()) {
         const { data, error } = await supabase
           .from("produits")
           .insert(produitsAInserer[index])
@@ -779,16 +782,29 @@ function ProduitsTab({
         if (error || !data) {
           throw new Error(error?.message ?? `Impossible de créer le produit « ${produit.nom} ».`);
         }
-        produitsCrees.push(data as { id: string; nom: string });
+        const cree = data as { id: string; nom: string };
+        nouveauxProduitsCrees.push(cree);
+        produitsTraites.push(cree);
       }
 
       let documentsAjoutes = 0;
       let analysesLancees = 0;
       const erreursDocuments: string[] = [];
-      for (const [index, produit] of selection.entries()) {
+      for (const produit of selection) {
         const fichier = produit.documentReference;
         if (!fichier) continue;
-        const produitCree = produitsCrees[index];
+        const produitCible = produit.existeDeja
+          ? produits.find(
+              (existant) =>
+                normaliserNomProduit(existant.nom) === normaliserNomProduit(produit.nom),
+            )
+          : nouveauxProduitsCrees.find(
+              (cree) => normaliserNomProduit(cree.nom) === normaliserNomProduit(produit.nom),
+            );
+        if (!produitCible) {
+          erreursDocuments.push(`${produit.nom}: impossible de retrouver la fiche produit à mettre à jour.`);
+          continue;
+        }
         let storagePath: string | null = null;
         try {
           if (!fichier.name.toLowerCase().endsWith(".pdf") || fichier.size > 25 * 1024 * 1024) {
@@ -800,14 +816,14 @@ function ProduitsTab({
           const nomStockage = fichier.name.replace(/[^a-zA-Z0-9._-]+/g, "-");
           const { data: depot, error: depotError } = await supabase.storage
             .from("produits-documents")
-            .upload(`${produitCree.id}/${crypto.randomUUID()}-${nomStockage}`, fichier, {
+            .upload(`${produitCible.id}/${crypto.randomUUID()}-${nomStockage}`, fichier, {
               contentType: "application/pdf",
               upsert: false,
             });
           if (depotError || !depot) throw new Error(depotError?.message ?? "Dépôt du PDF impossible.");
           storagePath = depot.path;
           const { error: docError } = await supabase.from("produit_documents").insert({
-            produit_id: produitCree.id,
+            produit_id: produitCible.id,
             type: "conditions_generales",
             nom: fichier.name,
             mime_type: "application/pdf",
@@ -822,7 +838,7 @@ function ProduitsTab({
           }
           documentsAjoutes++;
           try {
-            await analyserGaranties({ data: { produit_id: produitCree.id } });
+            await analyserGaranties({ data: { produit_id: produitCible.id } });
             analysesLancees++;
           } catch (analyseError) {
             erreursDocuments.push(
@@ -837,9 +853,9 @@ function ProduitsTab({
       }
 
       toast.success(
-        `${produitsCrees.length} produit(s) ajouté(s) au catalogue de ${compagnieNom}.` +
+        `${nouveauxProduitsCrees.length} nouveau(x) produit(s) ajouté(s) au catalogue de ${compagnieNom}.` +
           (documentsAjoutes
-            ? ` ${documentsAjoutes} document(s) de référence enregistré(s), ${analysesLancees} analyse(s) lancée(s).`
+            ? ` ${documentsAjoutes} document(s) enregistré(s) sur les fiches produit, ${analysesLancees} analyse(s) lancée(s).`
             : ""),
       );
       if (erreursDocuments.length > 0) {
@@ -850,7 +866,7 @@ function ProduitsTab({
       setProduitsCatalogue([]);
       setFichierCatalogue(null);
       onChange();
-      if (produitsCrees[0]) onSelect(produitsCrees[0].id);
+      if (produitsTraites[0]) onSelect(produitsTraites[0].id);
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : "Impossible d’importer les produits.");
     } finally {
@@ -1055,7 +1071,11 @@ function ProduitsTab({
                   onClick={importerProduitsCatalogue}
                   disabled={
                     importCatalogueEnCours ||
-                    !produitsCatalogue.some((produit) => produit.inclure && !produit.existeDeja) ||
+                    !produitsCatalogue.some(
+                      (produit) =>
+                        produit.inclure &&
+                        (!produit.existeDeja || Boolean(produit.documentReference)),
+                    ) ||
                     produitsCatalogue.some(
                       (produit) =>
                         produit.inclure &&
@@ -1067,7 +1087,7 @@ function ProduitsTab({
                 >
                   {importCatalogueEnCours
                     ? "Création des produits…"
-                    : "Créer les produits sélectionnés"}
+                    : "Importer les nouveaux produits / contrats"}
                 </button>
               </div>
               <div className="space-y-2">
@@ -1079,7 +1099,7 @@ function ProduitsTab({
                     <input
                       type="checkbox"
                       checked={produit.inclure}
-                      disabled={produit.existeDeja}
+                      disabled={produit.existeDeja && !produit.documentReference}
                       aria-label={`Importer ${produit.nom}`}
                       onChange={(event) =>
                         setProduitsCatalogue((actuels) =>
@@ -1125,7 +1145,6 @@ function ProduitsTab({
                         <input
                           type="file"
                           accept=".pdf,application/pdf"
-                          disabled={produit.existeDeja}
                           onChange={(event) => {
                             const documentReference = event.target.files?.[0] ?? null;
                             setProduitsCatalogue((actuels) =>
@@ -1140,12 +1159,13 @@ function ProduitsTab({
                       {produit.documentReference && (
                         <p className="text-xs text-ink-muted">
                           Sera conservé dans la fiche produit et proposé à l’analyse des garanties
-                          après création.
+                          après import ou rattachement.
                         </p>
                       )}
                       {produit.existeDeja && (
                         <p className="text-xs text-amber-700">
-                          Produit déjà présent, ignoré pour éviter un doublon.
+                          Produit déjà présent : sélectionnez un PDF pour le rattacher à cette fiche
+                          et relancer l’analyse des garanties, sans créer de doublon.
                         </p>
                       )}
                     </div>
@@ -1189,11 +1209,10 @@ function ProduitsTab({
                 ))}
               </div>
               <p className="text-xs text-ink-muted">
-                Vérifiez chaque produit détecté par l’IA avant l’import. Les produits créés auront
-                le statut Actif ; aucun produit n’est ajouté tant que vous ne confirmez pas. Vous
-                pouvez aussi joindre les conditions générales ou le contrat de chaque produit : le
-                PDF sera conservé sur sa fiche et l’analyse des garanties sera lancée après la
-                création.
+                Vérifiez chaque produit détecté avant de confirmer. Les nouveaux produits seront
+                créés avec le statut Actif. Pour un produit déjà présent, vous pouvez joindre un
+                nouveau contrat : il sera ajouté à sa fiche existante et l’analyse des garanties
+                sera relancée, sans créer de doublon.
               </p>
             </div>
           )}
