@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier -- existing file formatting debt; keep other lint rules enabled */
 /**
  * Tableau de rapprochement des devis importés (étape « Étude et devis »).
  *
