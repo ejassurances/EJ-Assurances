@@ -142,7 +142,11 @@ export const archiverPiecesPortefeuille = createServerFn({ method: "POST" })
     const lierPiece = async (code: string, champ: "document_id" | "kyc_document_id", id: string) => {
       const { error } = await sb
         .from("dossier_pieces_requises")
-        .update({ [champ]: id, statut: "recue", recue_le: maintenant })
+        .update(
+          champ === "document_id"
+            ? { document_id: id, statut: "recue", recue_le: maintenant }
+            : { kyc_document_id: id, statut: "recue", recue_le: maintenant },
+        )
         .eq("dossier_id", data.dossier_id)
         .eq("code", code);
       if (error) throw new Error(`Rattachement à la pièce requise impossible : ${error.message}`);
