@@ -31,10 +31,10 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
     }
     if (!autorise) throw new Error("Import de client non autorisé.");
 
-    const cle = process.env["GEMINI_API_KEY"];
+    const cle = process.env["ANTHROPIC_API_KEY"];
     if (!cle) {
       throw new Error(
-        "La configuration serveur GEMINI_API_KEY est absente du Worker Cloudflare utilisé par le CRM.",
+        "La configuration serveur ANTHROPIC_API_KEY est absente du Worker Cloudflare utilisé par le CRM.",
       );
     }
 
@@ -53,26 +53,44 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
 
     let response: Response;
     try {
-      response = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
+      const contenuDocument =
+        data.mime_type === "application/pdf"
+          ? {
+              type: "document",
+              source: {
+                type: "base64",
+                media_type: data.mime_type,
+                data: data.base64,
+              },
+            }
+          : {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: data.mime_type,
+                data: data.base64,
+              },
+            };
+      response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-goog-api-key": cle,
+          "x-api-key": cle,
+          "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
-          model: "gemini-3.8-flash",
-          input: [
-            { type: "text", text: consigne },
+          model: "claude-sonnet-5-5",
+          max_tokens: 1400,
+          messages: [
             {
-              type: "document",
-              data: data.base64,
-              mime_type: data.mime_type,
+              role: "user",
+              content: [{ type: "text", text: consigne }, contenuDocument],
             },
           ],
         }),
       });
     } catch (error) {
-      console.error("[import portefeuille] échec réseau Gemini", error);
+      console.error("[import portefeuille] échec réseau Anthropic", error);
       throw new Error(
         "Le service IA n'a pas répondu. Réessayez dans quelques instants avec la même attestation.",
       );
@@ -92,13 +110,13 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
       }
       diagnostic = diagnostic.replace(/https?:\/\/\S+/g, "[lien]").slice(0, 240);
       console.error(
-        "[import portefeuille] extraction IA indisponible",
+        "[import portefeuille] extraction Claude indisponible",
         response.status,
         diagnostic,
       );
-      if (response.status === 524 || response.status === 503 || response.status === 504) {
+      if ([429, 503, 504, 524, 529].includes(response.status)) {
         throw new Error(
-          "L'analyse de l'attestation a dépassé le délai du service IA. Réessayez dans quelques instants ; aucune fiche client n'a été créée par cette étape.",
+          "Claude est temporairement indisponible ou saturé. Complétez les informations manuellement ou réessayez dans quelques instants ; aucune fiche client n'a été créée par cette étape.",
         );
       }
       throw new Error(
@@ -109,29 +127,17 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
     }
 
     const payload = (await response.json()) as {
-      outputs?: Array<{
-        type?: string;
-        text?: string;
-        content?: Array<{ type?: string; text?: string }>;
-      }>;
-      output_text?: string;
-      status?: string;
+      content?: Array<{ type?: string; text?: string }>;
+      stop_reason?: string;
     };
-    const texte =
-      payload.output_text ??
-      payload.outputs
-        ?.flatMap((output) => {
-          if (typeof output.text === "string") return [output.text];
-          return (output.content ?? [])
-            .filter((part) => part.type === "text" && typeof part.text === "string")
-            .map((part) => part.text as string);
-        })
-        .join("\n") ??
-      "";
-    const json = texte.match(/\\{[\\s\\S]*\\}/)?.[0];
+    const texte = (payload.content ?? [])
+      .filter((part) => part.type === "text" && typeof part.text === "string")
+      .map((part) => part.text as string)
+      .join("\n");
+    const json = texte.match(/\{[\s\S]*\}/)?.[0];
     if (!json) {
       console.error(
-        "[import portefeuille] réponse Gemini sans JSON exploitable",
+        "[import portefeuille] réponse Claude sans JSON exploitable",
         payload.status ?? "statut inconnu",
       );
       throw new Error(
