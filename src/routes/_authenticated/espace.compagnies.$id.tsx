@@ -689,7 +689,8 @@ function ProduitsTab({
       const vusDansLePdf = new Set<string>();
       const brouillons = resultat.produits.map((produit, index) => {
         const cle = normaliserNomProduit(produit.nom);
-        const existeDeja = dejaPresents.has(cle) || vusDansLePdf.has(cle);
+        const doublonDansPdf = vusDansLePdf.has(cle);
+        const existeDeja = dejaPresents.has(cle) || doublonDansPdf;
         vusDansLePdf.add(cle);
         return {
           id: `${index}-${crypto.randomUUID()}`,
@@ -701,7 +702,7 @@ function ProduitsTab({
           existeDeja,
           // Les produits déjà présents sont présélectionnés pour compléter leurs champs manquants.
           // Les doublons répétés dans le PDF restent décochés.
-          inclure: dejaPresents.has(cle) && !vusDansLePdf.has(cle),
+          inclure: dejaPresents.has(cle) && !doublonDansPdf,
         };
       });
       setProduitsCatalogue(brouillons);
