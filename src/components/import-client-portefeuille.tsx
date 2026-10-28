@@ -252,12 +252,16 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
         data: {
           contrat_id: contratId,
           client: {
+            civilite: donneesSource.civilite || "M.",
             nom: donneesSource.nom,
             prenom: donneesSource.prenom || null,
             date_naissance: donneesSource.date_naissance || null,
             email: donneesSource.email || null,
             mobile: donneesSource.mobile || null,
             telephone: donneesSource.telephone || null,
+            adresse: donneesSource.adresse || null,
+            code_postal: donneesSource.code_postal || null,
+            ville: donneesSource.ville || null,
           },
           contrat: {
             assureur: donneesSource.assureur,
@@ -306,8 +310,8 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
             Importer un contrat déjà en portefeuille
           </h2>
           <p className="mt-1 text-sm text-ink-muted">
-            Le logiciel recherche la fiche client existante et enregistre le contrat sans créer de
-            dossier artificiel ni de nouvelle fiche client.
+            Le logiciel recherche d'abord une fiche existante. Si aucune correspondance fiable n'est
+            trouvée, il crée la fiche client à partir des informations extraites puis archive le contrat et son attestation.
           </p>
         </div>
         <button type="button" onClick={onCancel} className="text-sm text-ink-muted underline">
