@@ -294,14 +294,6 @@ export const verifierContratImportPortefeuille = createServerFn({ method: "POST"
       }
     }
 
-    const champs: Array<{ key: string; label: string; imported: string | null; existing: string | null }> = [];
-    const comparer = (key: string, label: string, imported: string | null | undefined, existing: string | null | undefined) => {
-      if (!imported?.trim() || !existing?.trim()) return;
-      if (normaliserComparaison(imported) !== normaliserComparaison(existing)) {
-        champs.push({ key, label, imported: imported.trim(), existing: existing.trim() });
-      }
-    };
-
     return {
       found: candidats.length > 0,
       criterion: critere,
