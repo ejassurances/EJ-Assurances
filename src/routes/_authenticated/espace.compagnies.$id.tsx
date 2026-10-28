@@ -1193,8 +1193,7 @@ function ProduitsTab({
                       </label>
                       {produit.documentReference && (
                         <p className="text-xs text-ink-muted">
-                          Sera conservé dans la fiche produit et proposé à l’analyse des garanties
-                          après import ou rattachement.
+                          Ce PDF individuel sera utilisé en priorité pour compléter cette fiche. Sinon, le catalogue PDF sera utilisé.
                         </p>
                       )}
                       {produit.existeDeja && (
@@ -1248,8 +1247,7 @@ function ProduitsTab({
               <p className="text-xs text-ink-muted">
                 Vérifiez les informations extraites du PDF. Les nouveaux produits seront créés avec
                 les données détectées. Pour les produits déjà présents, le code produit et la
-                description extraits rempliront uniquement les champs encore vides. Vous pouvez
-                aussi joindre un PDF individuel pour l’ajouter à la fiche et lancer l’analyse des garanties.
+                description extraits rempliront uniquement les champs encore vides. Le catalogue PDF sert de source pour compléter chaque produit sélectionné et lancer l’analyse des garanties. Vous pouvez joindre un PDF individuel pour remplacer cette source sur un produit précis.
               </p>
             </div>
           )}
