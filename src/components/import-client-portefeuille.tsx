@@ -128,14 +128,13 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
       setDonnees(donneesExtraites);
       const brancheExtraite = resultat.type_assurance ?? "";
       setTypeAssurance(brancheExtraite);
-      if (donneesExtraites.nom.trim() && brancheExtraite) {
-        setMessage("Attestation lue. Vérification du contrat dans le CRM…");
-        await preparerCreation(donneesExtraites, brancheExtraite, file);
-      } else {
-        setMessage(
-          "Lecture terminée. Le logiciel n’a pas pu identifier avec certitude le nom ou le type d’assurance. Complétez uniquement les informations manquantes puis lancez la création.",
-        );
-      }
+      setContratsExistants(null);
+      setDoublon(null);
+      setMessage(
+        brancheExtraite
+          ? "Lecture terminée. Vérifiez le type d’assurance, le produit, les dates et la prime avant de lancer l’import. Aucun contrat n’a été créé automatiquement."
+          : "Lecture terminée, mais le type d’assurance n’a pas pu être déterminé avec certitude. Choisissez la bonne branche après vérification de l’attestation ; aucun contrat n’a été créé automatiquement.",
+      );
     } catch (e) {
       setErreur(
         e instanceof Error
