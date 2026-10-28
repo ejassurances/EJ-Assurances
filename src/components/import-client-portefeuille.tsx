@@ -161,6 +161,10 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
     typeSource: string = typeAssurance,
     attestationSource: File | null = attestation,
   ) => {
+    if (message.startsWith("Aucun contrat correspondant")) {
+      await lancerCreation(null, donneesSource, typeSource, attestationSource);
+      return;
+    }
     if (envoi) return;
     if (!attestationSource || !donneesSource.nom.trim() || !typeSource) {
       setErreur("L'attestation, le nom et le type d'assurance sont obligatoires.");
