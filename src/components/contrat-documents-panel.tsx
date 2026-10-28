@@ -95,12 +95,10 @@ export function ContratDocumentsPanel({
     // produise une clé Supabase invalide. Le nom original reste en métadonnée.
     const safeName = normaliserNomFichierPourStockage(file.name);
     const path = `${clientId}/contrats/${contratId}/${Date.now()}-${safeName}`;
-    let fichierEnvoye = false;
 
     try {
       const { error: upErr } = await supabase.storage.from("dossier-documents").upload(path, file);
       if (upErr) throw new Error(`Échec de l'envoi du fichier : ${upErr.message}`);
-      fichierEnvoye = true;
 
       const { error: dbErr } = await supabase.from("documents").insert({
         contrat_id: contratId,
@@ -116,7 +114,6 @@ export function ContratDocumentsPanel({
       if (dbErr) {
         // Évite de laisser un fichier orphelin si l'archivage des métadonnées échoue.
         const { error: cleanupErr } = await supabase.storage.from("dossier-documents").remove([path]);
-        fichierEnvoye = Boolean(cleanupErr);
         throw new Error(
           cleanupErr
             ? `Le fichier a été envoyé, mais son archivage a échoué (${dbErr.message}). Le nettoyage automatique a aussi échoué (${cleanupErr.message}).`
