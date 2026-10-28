@@ -402,11 +402,12 @@ export function NewDossierForm({
             toast.error("Document archivé, provenance non enregistrée : à vérifier.");
         }
         if (doc?.id) {
-          await supabase
+          const checklist = await supabase
             .from("dossier_pieces_requises")
             .update({ statut: "recue", recue_le: new Date().toISOString(), document_id: doc.id })
             .eq("dossier_id", dossierId)
             .eq("code", offreNatures[index] ?? "offre_pret");
+          if (checklist.error) toast.error("Document archivé, checklist à vérifier.");
         }
       } catch (e) {
         toast.error(
@@ -552,6 +553,20 @@ export function NewDossierForm({
         compagnie_id: compagnieId,
         produit_id: produitId,
         recueil_besoins: recueilSoumis as never,
+        ...(lecturesPret.length
+          ? {
+              analyse_ia: {
+                imports_pret_verifies: [
+                  {
+                    confirme_par: userId,
+                    confirme_le: new Date().toISOString(),
+                    valeurs: valeursPret,
+                    lectures: lecturesPret,
+                  },
+                ],
+              } as never,
+            }
+          : {}),
 
         capital,
         duree_mois,

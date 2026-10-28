@@ -40,11 +40,11 @@ CREATE TABLE IF NOT EXISTS public.contrat_remuneration_previsionnelle (
   calcule_le timestamptz NOT NULL DEFAULT now(),
   created_at timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX IF NOT EXISTS idx_crp_contrat ON public.contrat_remuneration_previsionnelle(contrat_id);
 
 GRANT SELECT ON public.contrat_remuneration_previsionnelle TO authenticated;
 GRANT ALL ON public.contrat_remuneration_previsionnelle TO service_role;
 ALTER TABLE public.contrat_remuneration_previsionnelle ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS idx_crp_contrat ON public.contrat_remuneration_previsionnelle(contrat_id);
 
 CREATE POLICY "Cabinet lit la remuneration previsionnelle"
   ON public.contrat_remuneration_previsionnelle FOR SELECT TO authenticated
@@ -89,7 +89,7 @@ DECLARE
 BEGIN
  SELECT * INTO c FROM public.contrats WHERE id = p_contrat_id FOR UPDATE;
  IF NOT FOUND THEN RETURN; END IF;
- IF auth.uid() IS NOT NULL AND NOT (
+ IF pg_trigger_depth() = 0 AND auth.uid() IS NOT NULL AND NOT (
    (public.has_role(auth.uid(), 'admin') OR public.has_role(auth.uid(), 'mandataire'))
    AND public.can_access_client(c.client_id)) THEN RAISE EXCEPTION 'Accès refusé'; END IF;
  branche := public.branche_contrat(c.id);
@@ -244,7 +244,7 @@ BEGIN
                                       COALESCE(c.date_effet, CURRENT_DATE)) tr;
   END IF;
 
-  IF _taux_cab IS NOT NULL AND _cotisation IS NOT NULL THEN
+  IF _taux_cab IS NOT NULL AND _cotisation IS NOT NULL AND coalesce(_assiette_cab, 'prime') IN ('prime','prime_nette','prime_ht') THEN
     _estime := ROUND(_cotisation * _taux_cab, 2);
 
   ELSE

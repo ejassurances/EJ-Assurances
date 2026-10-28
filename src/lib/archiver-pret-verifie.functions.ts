@@ -28,9 +28,18 @@ export const confirmerPretDossier = createServerFn({ method: "POST" })
       _dossier_id: data.dossierId,
     });
     if (acces !== true) throw new Error("Accès au dossier refusé.");
+    let autorise = false;
+    for (const role of ["admin", "mandataire", "prescripteur"] as const) {
+      const { data: ok } = await context.supabase.rpc("has_role", {
+        _user_id: context.userId,
+        _role: role,
+      });
+      if (ok === true) autorise = true;
+    }
+    if (!autorise) throw new Error("Modification non autorisée.");
     const { data: dossier, error } = await context.supabase
       .from("dossiers")
-      .select("recueil_besoins,analyse_ia,type_assurance")
+      .select("recueil_besoins,analyse_ia,type_assurance,capital,duree_mois")
       .eq("id", data.dossierId)
       .single();
     if (error || dossier.type_assurance !== "emprunteur")
@@ -56,8 +65,8 @@ export const confirmerPretDossier = createServerFn({ method: "POST" })
       .from("dossiers")
       .update({
         recueil_besoins: recueil as never,
-        capital: Number(recueil["capital"]) || null,
-        duree_mois: Number(recueil["duree_mois"]) || null,
+        capital: dossier.capital ?? (Number(recueil["capital"]) || null),
+        duree_mois: dossier.duree_mois ?? (Number(recueil["duree_mois"]) || null),
         analyse_ia: {
           ...audit,
           imports_pret_verifies: [

@@ -26,6 +26,7 @@ export function ImportPretVerifie({
   const [lectures, setLectures] = useState<LecturePret[]>([]);
   const [valeurs, setValeurs] = useState<LecturePret["valeurs"]>({});
   const [busy, setBusy] = useState(false);
+  const [confirme, setConfirme] = useState(false);
   const [analyseFaite, setAnalyseFaite] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const croisement = croiserLecturesPret(lectures);
@@ -90,6 +91,7 @@ export function ImportPretVerifie({
                   e.target.value = "";
                   return;
                 }
+                setConfirme(false);
                 setPieces((p) => [...p.filter((x) => x.nature !== nature), { file, nature }]);
                 setAnalyseFaite(false);
                 setLectures([]);
@@ -139,7 +141,10 @@ export function ImportPretVerifie({
                   className="mt-1 w-full rounded-md border border-line bg-background px-3 py-2 text-sm text-ink"
                   value={valeurs[cle] ?? ""}
                   placeholder="Non détecté"
-                  onChange={(e) => setValeurs((v) => ({ ...v, [cle]: e.target.value }))}
+                  onChange={(e) => {
+                    setConfirme(false);
+                    setValeurs((v) => ({ ...v, [cle]: e.target.value }));
+                  }}
                 />
                 {(croisement.provenance[cle] ?? []).map((s) => (
                   <span key={s.source} className="block">
@@ -155,7 +160,7 @@ export function ImportPretVerifie({
             ))}
           </div>
           <Button
-            disabled={busy}
+            disabled={busy || confirme}
             onClick={async () => {
               setBusy(true);
               try {
@@ -165,6 +170,7 @@ export function ImportPretVerifie({
                   lectures,
                   valeurs,
                 );
+                setConfirme(true);
                 setMessage("Valeurs confirmées. Les champs déjà saisis sont conservés.");
               } catch (e) {
                 setMessage(
