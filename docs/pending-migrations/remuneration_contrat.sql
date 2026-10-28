@@ -55,3 +55,18 @@ CREATE POLICY "Cabinet met a jour la remuneration previsionnelle"
   ON public.contrat_remuneration_previsionnelle FOR UPDATE TO authenticated
   USING (public.has_role(auth.uid(), 'admin') OR public.has_role(auth.uid(), 'mandataire'))
   WITH CHECK (public.has_role(auth.uid(), 'admin') OR public.has_role(auth.uid(), 'mandataire'));
+
+-- ---------------------------------------------------------------------------
+-- ÉTAPE 2 (NON APPLIQUÉE, à valider séparément) : autoriser plusieurs barèmes datés.
+-- L'index unique commission_bareme_compagnie_unique reste intact à ce stade :
+-- tant qu'il existe, une 2e version datée pour la même compagnie+branche est
+-- refusée (erreur 23505, message clair dans la fiche compagnie).
+-- Migration nécessaire, une fois la contrainte sans chevauchement ci-dessus en place :
+--
+--   DROP INDEX IF EXISTS public.commission_bareme_compagnie_unique;
+--   CREATE UNIQUE INDEX IF NOT EXISTS commission_bareme_compagnie_sans_date_uidx
+--     ON public.commission_bareme (compagnie_id, branche)
+--     WHERE date_effet IS NULL AND compagnie_id IS NOT NULL;
+--
+-- Effet : les anciennes règles non datées gardent l'unicité ; les règles datées
+-- sont protégées par commission_bareme_periodes_sans_chevauchement. Aucune donnée supprimée.
