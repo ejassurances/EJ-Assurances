@@ -68,8 +68,8 @@ function FichesAssures({ dossierId, canEdit }: { dossierId: string; canEdit: boo
   return (
     <PanneauLateral titre="Fiches clients des assurés">
       <p className="text-xs text-ink-muted">
-        Chaque assuré du prêt dispose de sa propre fiche client (un contrat par assuré au passage en contrat). Seuls
-        les champs vides sont complétés : aucune saisie existante n'est écrasée.
+        Chaque assuré du prêt dispose de sa propre fiche client (un contrat par assuré au passage en
+        contrat). Seuls les champs vides sont complétés : aucune saisie existante n'est écrasée.
       </p>
       {canEdit && (
         <button
@@ -106,8 +106,8 @@ function AssuranceBancaire({
   if (a.mensuel === null) {
     return (
       <p className="rounded-md bg-surface-elevated/70 px-2 py-1 text-xs text-ink-muted">
-        Assurance actuelle : renseignez le taux d'assurance de la banque ou la cotisation mensuelle de l'offre de prêt
-        pour chiffrer le coût initial et l'économie de la substitution.
+        Assurance actuelle : renseignez le taux d'assurance de la banque ou la cotisation mensuelle
+        de l'offre de prêt pour chiffrer le coût initial et l'économie de la substitution.
       </p>
     );
   }
@@ -117,18 +117,26 @@ function AssuranceBancaire({
       <dl className="mt-1 space-y-1 text-xs">
         <div className="flex justify-between gap-2">
           <dt className="text-ink-muted">
-            {a.origine === "document" ? "Première cotisation (document)" : `Cotisation mensuelle ${a.origine === "offre" ? "(offre de prêt)" : "(calcul par taux)"}`}
+            {a.origine === "document"
+              ? "Première cotisation (document)"
+              : `Cotisation mensuelle ${a.origine === "offre" ? "(offre de prêt)" : "(calcul par taux)"}`}
           </dt>
-          <dd className="text-ink">{a.mensuel.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} € / mois</dd>
+          <dd className="text-ink">
+            {a.mensuel.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} € / mois
+          </dd>
         </div>
         <div className="flex justify-between gap-2">
-          <dt className="text-ink-muted">Coût total {a.origine === "document" ? "(document bancaire)" : "(calculé)"}</dt>
+          <dt className="text-ink-muted">
+            Coût total {a.origine === "document" ? "(document bancaire)" : "(calculé)"}
+          </dt>
           <dd className="text-ink">{euros(a.coutTotal)}</dd>
         </div>
         <div className="flex justify-between gap-2">
           <dt className="text-ink-muted">Cotisation totale restante (substitution → fin)</dt>
           <dd className="font-medium text-ink">
-            {a.coutRestant === null && a.origine === "document" ? "Non disponible sans échéancier détaillé" : euros(a.coutRestant)}
+            {a.coutRestant === null && a.origine === "document"
+              ? "Non disponible sans échéancier détaillé"
+              : euros(a.coutRestant)}
             {a.moisRestants ? ` · ${a.moisRestants} mois restants` : ""}
           </dd>
         </div>
@@ -162,13 +170,16 @@ function CoherencePret({
     taux_pret: nombre("taux_pret"),
     duree_mois: nombre("duree_mois"),
     date_premiere_echeance:
-      typeof values["date_premiere_echeance"] === "string" ? (values["date_premiere_echeance"] as string) : null,
+      typeof values["date_premiere_echeance"] === "string"
+        ? (values["date_premiere_echeance"] as string)
+        : null,
     date_document: dateDocument ?? null,
     date_effet: typeof values["date_effet"] === "string" ? (values["date_effet"] as string) : null,
     dossier_cree_le: dossierCreeLe,
   });
   const alertes = incoherencesPret(values, dossierCreeLe, dateDocument ?? null);
-  const euros = (v: number | null) => (v === null ? "—" : `${Math.round(v).toLocaleString("fr-FR")} €`);
+  const euros = (v: number | null) =>
+    v === null ? "—" : `${Math.round(v).toLocaleString("fr-FR")} €`;
   const dateFr = (v: string | null) => (v ? new Date(v).toLocaleDateString("fr-FR") : "—");
 
   return (
@@ -189,7 +200,8 @@ function CoherencePret({
         </div>
         <div className="flex justify-between gap-2">
           <dt className="text-ink-muted">
-            Date d'effet {calcul.origine_date_effet === "compagnie" ? "(compagnie)" : "(création + 3 mois)"}
+            Date d'effet{" "}
+            {calcul.origine_date_effet === "compagnie" ? "(compagnie)" : "(création + 3 mois)"}
           </dt>
           <dd className="text-ink">{dateFr(calcul.date_effet)}</dd>
         </div>
@@ -221,7 +233,9 @@ function CoherencePret({
           ))}
         </ul>
       ) : (
-        <p className="text-xs text-ink-muted">Aucune incohérence détectée entre les montants et les durées saisis.</p>
+        <p className="text-xs text-ink-muted">
+          Aucune incohérence détectée entre les montants et les durées saisis.
+        </p>
       )}
     </PanneauLateral>
   );
@@ -246,13 +260,16 @@ function SynthesePret({
     taux_pret: nombre("taux_pret"),
     duree_mois: nombre("duree_mois"),
     date_premiere_echeance:
-      typeof values["date_premiere_echeance"] === "string" ? String(values["date_premiere_echeance"]) : null,
+      typeof values["date_premiere_echeance"] === "string"
+        ? String(values["date_premiere_echeance"])
+        : null,
     date_document: dateDocument,
     date_effet: typeof values["date_effet"] === "string" ? String(values["date_effet"]) : null,
     dossier_cree_le: dossierCreeLe,
   });
   const assurance = assuranceInitialeDepuisRecueil(values, calcul.mois_restants);
-  const euros = (v: number | null) => (v === null ? "—" : `${Math.round(v).toLocaleString("fr-FR")} €`);
+  const euros = (v: number | null) =>
+    v === null ? "—" : `${Math.round(v).toLocaleString("fr-FR")} €`;
   const eurosAssurance = (v: number | null) =>
     v === null
       ? "—"
@@ -262,9 +279,19 @@ function SynthesePret({
     ["Capital restant dû", euros(calcul.capital_restant_du)],
     ["Échéances déjà payées", calcul.mois_ecoules === null ? "—" : String(calcul.mois_ecoules)],
     ["Échéances restantes", calcul.mois_restants === null ? "—" : String(calcul.mois_restants)],
-    [assurance.origine === "document" ? "Première cotisation d’assurance" : "Cotisation d’assurance mensuelle", assurance.mensuel === null ? "—" : `${assurance.mensuel.toLocaleString("fr-FR")} €`],
+    [
+      assurance.origine === "document"
+        ? "Première cotisation d’assurance"
+        : "Cotisation d’assurance mensuelle",
+      assurance.mensuel === null ? "—" : `${assurance.mensuel.toLocaleString("fr-FR")} €`,
+    ],
     ["Montant total de l’assurance", eurosAssurance(assurance.coutTotal)],
-    ["Montant d’assurance restant", assurance.coutRestant === null && assurance.origine === "document" ? "Non disponible" : eurosAssurance(assurance.coutRestant)],
+    [
+      "Montant d’assurance restant",
+      assurance.coutRestant === null && assurance.origine === "document"
+        ? "Non disponible"
+        : eurosAssurance(assurance.coutRestant),
+    ],
   ];
 
   return (
@@ -338,7 +365,11 @@ export function RecueilDossierPanel({
 
   useEffect(() => {
     void (async () => {
-      const { data } = await supabase.from("dossiers").select("created_at").eq("id", dossierId).maybeSingle();
+      const { data } = await supabase
+        .from("dossiers")
+        .select("created_at")
+        .eq("id", dossierId)
+        .maybeSingle();
       setDossierCreeLe((data?.created_at as string | null) ?? null);
     })();
   }, [dossierId]);
@@ -401,7 +432,9 @@ export function RecueilDossierPanel({
         date_naissance: (data.date_naissance as string | null) ?? "",
       };
       setValues((prev) => {
-        const liste = Array.isArray(prev["assures"]) ? (prev["assures"] as Record<string, unknown>[]) : [];
+        const liste = Array.isArray(prev["assures"])
+          ? (prev["assures"] as Record<string, unknown>[])
+          : [];
         // Aucun assuré : l'assuré principal est créé depuis la fiche client.
         if (liste.length === 0) {
           return {
@@ -443,39 +476,41 @@ export function RecueilDossierPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId, typeAssurance]);
 
-
   useEffect(() => {
     valuesRef.current = values;
   }, [values]);
 
-  const enregistrerValeurs = useCallback(async (aEnregistrer: Record<string, unknown>, synchroniser = false) => {
-    const sequence = ++saveSequence.current;
-    setSaving(true);
-    setError(null);
-    const { error: err } = await supabase
-      .from("dossiers")
-      .update({ recueil_besoins: aEnregistrer as never })
-      .eq("id", dossierId);
-    if (err) {
-      setError(err.message);
-      if (sequence === saveSequence.current) setSaving(false);
-      return;
-    }
-    if (sequence === saveSequence.current) dirtyRef.current = false;
-    let complement = "";
-    if (synchroniser) {
-      try {
-        const res = await syncClients({ data: { dossier_id: dossierId } });
-        complement = ` ${res.message}`;
-      } catch {
-        complement = " Fiches clients non mises à jour.";
+  const enregistrerValeurs = useCallback(
+    async (aEnregistrer: Record<string, unknown>, synchroniser = false) => {
+      const sequence = ++saveSequence.current;
+      setSaving(true);
+      setError(null);
+      const { error: err } = await supabase
+        .from("dossiers")
+        .update({ recueil_besoins: aEnregistrer as never })
+        .eq("id", dossierId);
+      if (err) {
+        setError(err.message);
+        if (sequence === saveSequence.current) setSaving(false);
+        return;
       }
-    }
-    if (sequence === saveSequence.current) {
-      setMessage(`Enregistré automatiquement.${complement}`);
-      setSaving(false);
-    }
-  }, [dossierId, syncClients]);
+      if (sequence === saveSequence.current) dirtyRef.current = false;
+      let complement = "";
+      if (synchroniser) {
+        try {
+          const res = await syncClients({ data: { dossier_id: dossierId } });
+          complement = ` ${res.message}`;
+        } catch {
+          complement = " Fiches clients non mises à jour.";
+        }
+      }
+      if (sequence === saveSequence.current) {
+        setMessage(`Enregistré automatiquement.${complement}`);
+        setSaving(false);
+      }
+    },
+    [dossierId, syncClients],
+  );
 
   const enregistrer = useCallback(async () => {
     await enregistrerValeurs(valuesRef.current, true);
@@ -522,7 +557,9 @@ export function RecueilDossierPanel({
       taux_pret: nombre("taux_pret"),
       duree_mois: nombre("duree_mois"),
       date_premiere_echeance:
-        typeof values["date_premiere_echeance"] === "string" ? String(values["date_premiere_echeance"]) : null,
+        typeof values["date_premiere_echeance"] === "string"
+          ? String(values["date_premiere_echeance"])
+          : null,
       date_document: dateDocumentPret,
       date_effet: typeof values["date_effet"] === "string" ? String(values["date_effet"]) : null,
       dossier_cree_le: dossierCreeLe,
@@ -534,7 +571,9 @@ export function RecueilDossierPanel({
     // écarts restent signalés par les contrôles de cohérence.
     const vide = (cle: string) => {
       const v = values[cle];
-      return v === null || v === undefined || v === "" || !Number.isFinite(Number(v)) || Number(v) <= 0;
+      return (
+        v === null || v === undefined || v === "" || !Number.isFinite(Number(v)) || Number(v) <= 0
+      );
     };
     const maj: Record<string, unknown> = {};
     if (vide("capital_restant_du")) maj["capital_restant_du"] = capitalRestant;
@@ -581,33 +620,33 @@ export function RecueilDossierPanel({
     if (branche.value === "emprunteur" && estEtapePret(titre)) {
       return (
         <div className="space-y-3">
-        <PanneauLateral titre="Offre de prêt & tableau d'amortissement">
-          <DocumentsPretPanel
-            dossierId={dossierId}
-            onAnalyse={({ recueil: prerempli }) => {
-              if (!prerempli) return;
-              // Les saisies en cours (non encore enregistrées) restent prioritaires.
-              setValues((prev) => {
-                const fusion: Record<string, unknown> = { ...prerempli };
-                for (const [cle, valeur] of Object.entries(prev)) {
-                  const estVide =
-                    valeur === null ||
-                    valeur === undefined ||
-                    valeur === "" ||
-                    (Array.isArray(valeur) && valeur.length === 0);
-                  if (!estVide) fusion[cle] = valeur;
-                }
-                return fusion;
-              });
-              setMessage("Document analysé : les étapes suivantes ont été pré-remplies.");
-            }}
+          <PanneauLateral titre="Offre de prêt & tableau d'amortissement">
+            <DocumentsPretPanel
+              dossierId={dossierId}
+              onAnalyse={({ recueil: prerempli }) => {
+                if (!prerempli) return;
+                // Les saisies en cours (non encore enregistrées) restent prioritaires.
+                setValues((prev) => {
+                  const fusion: Record<string, unknown> = { ...prerempli };
+                  for (const [cle, valeur] of Object.entries(prev)) {
+                    const estVide =
+                      valeur === null ||
+                      valeur === undefined ||
+                      valeur === "" ||
+                      (Array.isArray(valeur) && valeur.length === 0);
+                    if (!estVide) fusion[cle] = valeur;
+                  }
+                  return fusion;
+                });
+                setMessage("Document analysé : les étapes suivantes ont été pré-remplies.");
+              }}
+            />
+          </PanneauLateral>
+          <CoherencePret
+            values={values}
+            dossierCreeLe={dossierCreeLe}
+            dateDocument={dateDocumentPret}
           />
-        </PanneauLateral>
-        <CoherencePret
-          values={values}
-          dossierCreeLe={dossierCreeLe}
-          dateDocument={dateDocumentPret}
-        />
         </div>
       );
     }
@@ -660,7 +699,11 @@ export function RecueilDossierPanel({
         asideSection={(section) => lateral(section.title)}
         pleineLargeurSection={(section) =>
           branche.value === "emprunteur" && estEtapePret(section.title) ? (
-            <SynthesePret values={values} dossierCreeLe={dossierCreeLe} dateDocument={dateDocumentPret} />
+            <SynthesePret
+              values={values}
+              dossierCreeLe={dossierCreeLe}
+              dateDocument={dateDocumentPret}
+            />
           ) : estEtapeTarification(section.title) && userId ? (
             <DossierDevisPanel
               dossierId={dossierId}

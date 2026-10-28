@@ -70,55 +70,108 @@ describe("confirmation et réouverture du prêt", () => {
   const confirmation = { confirme_par: "conseiller", confirme_le: "2026-10-28T17:41:00Z" };
 
   it("préremplit l'offre avant sauvegarde avec les clés réellement affichées", () => {
-    expect(appliquerValeursPret({}, {
-      banque: "LCL", montant_capital: 200000, duree_mois: 240, taux_nominal: 3.4,
-      date_premiere_echeance: "2026-12-05", cotisation_assurance_mensuelle: 35,
-    })).toEqual({
-      banque: "LCL", capital: 200000, duree_mois: 240, taux_pret: 3.4,
-      date_premiere_echeance: "2026-12-05", assurance_banque_mensuelle: 35,
+    expect(
+      appliquerValeursPret(
+        {},
+        {
+          banque: "LCL",
+          montant_capital: 200000,
+          duree_mois: 240,
+          taux_nominal: 3.4,
+          date_premiere_echeance: "2026-12-05",
+          cotisation_assurance_mensuelle: 35,
+        },
+      ),
+    ).toEqual({
+      banque: "LCL",
+      capital: 200000,
+      duree_mois: 240,
+      taux_pret: 3.4,
+      date_premiere_echeance: "2026-12-05",
+      assurance_banque_mensuelle: 35,
     });
   });
 
   it("préremplit un tableau incomplet sans inventer prêteur ni taux", () => {
-    const tableau: LecturePret = { source: "tableau.pdf", nature: "tableau_amortissement", confiance: 0.9,
-      valeurs: { montant_capital: 150000, duree_mois: 180, capital_restant_du: 130000,
-        date_premiere_echeance: "2025-01-05" } };
+    const tableau: LecturePret = {
+      source: "tableau.pdf",
+      nature: "tableau_amortissement",
+      confiance: 0.9,
+      valeurs: {
+        montant_capital: 150000,
+        duree_mois: 180,
+        capital_restant_du: 130000,
+        date_premiere_echeance: "2025-01-05",
+      },
+    };
     expect(appliquerValeursPret({}, croiserLecturesPret([tableau]).valeurs)).toEqual({
-      capital: 150000, duree_mois: 180, capital_restant_du: 130000, date_premiere_echeance: "2025-01-05",
+      capital: 150000,
+      duree_mois: 180,
+      capital_restant_du: 130000,
+      date_premiere_echeance: "2025-01-05",
     });
   });
 
   it("conserve les valeurs confirmées lors du rechargement du formulaire monté", () => {
-    expect(fusionnerRecueilPret({ banque: "", capital: null, notes_contrat: "Saisie locale" },
-      { banque: "LCL", capital: 200000, taux_pret: 3.4 })).toEqual({
-      banque: "LCL", capital: 200000, taux_pret: 3.4, notes_contrat: "Saisie locale",
+    expect(
+      fusionnerRecueilPret(
+        { banque: "", capital: null, notes_contrat: "Saisie locale" },
+        { banque: "LCL", capital: 200000, taux_pret: 3.4 },
+      ),
+    ).toEqual({
+      banque: "LCL",
+      capital: 200000,
+      taux_pret: 3.4,
+      notes_contrat: "Saisie locale",
     });
   });
 
   it("une saisie locale et un taux zéro priment sur le rechargement", () => {
-    expect(fusionnerRecueilPret({ banque: "BNP", taux_pret: 0 }, { banque: "LCL", taux_pret: 3.4 }))
-      .toEqual({ banque: "BNP", taux_pret: 0 });
+    expect(
+      fusionnerRecueilPret({ banque: "BNP", taux_pret: 0 }, { banque: "LCL", taux_pret: 3.4 }),
+    ).toEqual({ banque: "BNP", taux_pret: 0 });
   });
 
   it("prépare une sauvegarde puis une réouverture JSON sans perdre les valeurs ni l'audit", () => {
-    const valeurs = { ...offre.valeurs, banque: "LCL", taux_nominal: 3.4, mensualite: 1125.25,
-      date_premiere_echeance: "2026-12-05", date_fin_pret: "2046-11-05" };
-    const payload = preparerConfirmationPret(dossierVide, valeurs, [{ ...offre, valeurs }], confirmation);
+    const valeurs = {
+      ...offre.valeurs,
+      banque: "LCL",
+      taux_nominal: 3.4,
+      mensualite: 1125.25,
+      date_premiere_echeance: "2026-12-05",
+      date_fin_pret: "2046-11-05",
+    };
+    const payload = preparerConfirmationPret(
+      dossierVide,
+      valeurs,
+      [{ ...offre, valeurs }],
+      confirmation,
+    );
     const relu = JSON.parse(JSON.stringify(payload)) as typeof payload;
     expect(relu.capital).toBe(200000);
     expect(relu.duree_mois).toBe(240);
-    expect(relu.recueil_besoins).toMatchObject({ banque: "LCL", taux_pret: 3.4,
-      date_premiere_echeance: "2026-12-05" });
+    expect(relu.recueil_besoins).toMatchObject({
+      banque: "LCL",
+      taux_pret: 3.4,
+      date_premiere_echeance: "2026-12-05",
+    });
     expect(relu.recueil_besoins).not.toHaveProperty("mensualite");
     expect(relu.recueil_besoins).not.toHaveProperty("date_fin_pret");
-    expect(relu.analyse_ia.imports_pret_verifies.at(-1)).toMatchObject({ valeurs: {
-      mensualite: 1125.25, date_fin_pret: "2046-11-05",
-    } });
+    expect(relu.analyse_ia.imports_pret_verifies.at(-1)).toMatchObject({
+      valeurs: {
+        mensualite: 1125.25,
+        date_fin_pret: "2046-11-05",
+      },
+    });
   });
 
   it("préserve les colonnes d'un dossier existant même si son recueil est vide", () => {
-    const payload = preparerConfirmationPret({ ...dossierVide, capital: 170000, duree_mois: 180 },
-      offre.valeurs, [offre], confirmation);
+    const payload = preparerConfirmationPret(
+      { ...dossierVide, capital: 170000, duree_mois: 180 },
+      offre.valeurs,
+      [offre],
+      confirmation,
+    );
     expect(payload.recueil_besoins).toMatchObject({ capital: 170000, duree_mois: 180 });
     expect(payload.capital).toBe(170000);
   });

@@ -56,6 +56,7 @@ export const confirmerPretDossier = createServerFn({ method: "POST" })
       .select("id")
       .maybeSingle();
     if (save) throw new Error(save.message);
-    if (!enregistre) throw new Error("Le dossier a changé. Rechargez-le avant de confirmer les valeurs.");
+    if (!enregistre)
+      throw new Error("Le dossier a changé. Rechargez-le avant de confirmer les valeurs.");
     return { ok: true };
   });

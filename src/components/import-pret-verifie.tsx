@@ -151,7 +151,9 @@ export function ImportPretVerifie({
                   }}
                 />
                 {!CORRESPONDANCES_PRET[cle] && (
-                  <span className="block">Conservé dans la lecture vérifiée ; aucun champ de dossier dédié.</span>
+                  <span className="block">
+                    Conservé dans la lecture vérifiée ; aucun champ de dossier dédié.
+                  </span>
                 )}
                 {(croisement.provenance[cle] ?? []).map((s) => (
                   <span key={s.source} className="block">

@@ -69,10 +69,13 @@ export function preparerConfirmationPret(
   const base = objet(dossier.recueil_besoins);
   // Les colonnes connues priment aussi lorsqu'un ancien recueil est vide.
   if (base["capital"] == null || base["capital"] === "") base["capital"] = dossier.capital;
-  if (base["duree_mois"] == null || base["duree_mois"] === "") base["duree_mois"] = dossier.duree_mois;
+  if (base["duree_mois"] == null || base["duree_mois"] === "")
+    base["duree_mois"] = dossier.duree_mois;
   const recueil = appliquerValeursPret(base, valeurs);
   const audit = objet(dossier.analyse_ia);
-  const precedents = Array.isArray(audit["imports_pret_verifies"]) ? audit["imports_pret_verifies"] : [];
+  const precedents = Array.isArray(audit["imports_pret_verifies"])
+    ? audit["imports_pret_verifies"]
+    : [];
   const nombre = (v: unknown) => {
     if (v == null || v === "") return null;
     const n = Number(v);
@@ -84,11 +87,14 @@ export function preparerConfirmationPret(
     duree_mois: dossier.duree_mois ?? nombre(recueil["duree_mois"]),
     analyse_ia: {
       ...audit,
-      imports_pret_verifies: [...precedents, {
-        ...confirmation,
-        valeurs: filtrerValeursPret(valeurs),
-        lectures: lectures.map((l) => ({ ...l, valeurs: filtrerValeursPret(l.valeurs) })),
-      }],
+      imports_pret_verifies: [
+        ...precedents,
+        {
+          ...confirmation,
+          valeurs: filtrerValeursPret(valeurs),
+          lectures: lectures.map((l) => ({ ...l, valeurs: filtrerValeursPret(l.valeurs) })),
+        },
+      ],
     },
   };
 }
