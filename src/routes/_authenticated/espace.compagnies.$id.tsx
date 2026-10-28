@@ -699,7 +699,9 @@ function ProduitsTab({
           description: produit.description,
           documentReference: null,
           existeDeja,
-          inclure: !existeDeja,
+          // Les produits déjà présents sont présélectionnés pour compléter leurs champs manquants.
+          // Les doublons répétés dans le PDF restent décochés.
+          inclure: dejaPresents.has(cle) && !vusDansLePdf.has(cle),
         };
       });
       setProduitsCatalogue(brouillons);
@@ -723,10 +725,7 @@ function ProduitsTab({
   }
 
   async function importerProduitsCatalogue() {
-    const selection = produitsCatalogue.filter(
-      (produit) =>
-        produit.inclure && (!produit.existeDeja || Boolean(produit.documentReference)),
-    );
+    const selection = produitsCatalogue.filter((produit) => produit.inclure);
     if (selection.length === 0) {
       toast.error("Sélectionnez un nouveau produit ou joignez un contrat à un produit existant.");
       return;
@@ -773,6 +772,7 @@ function ProduitsTab({
     try {
       const produitsTraites: { id: string; nom: string }[] = [];
       const nouveauxProduitsCrees: { id: string; nom: string }[] = [];
+      let fichesExistantesCompletees = 0;
       for (const [index, produit] of nouveauxProduits.entries()) {
         const { data, error } = await supabase
           .from("produits")
@@ -785,6 +785,31 @@ function ProduitsTab({
         const cree = data as { id: string; nom: string };
         nouveauxProduitsCrees.push(cree);
         produitsTraites.push(cree);
+      }
+
+      // Le catalogue PDF sert aussi de source pour compléter les fiches déjà existantes.
+      // On ne remplace jamais une information déjà renseignée par une valeur absente ou incertaine.
+      for (const produit of selection.filter((item) => item.existeDeja)) {
+        const existant = produits.find(
+          (item) => normaliserNomProduit(item.nom) === normaliserNomProduit(produit.nom),
+        );
+        if (!existant) continue; // doublon détecté dans le PDF, sans fiche CRM correspondante
+        const patch: { code_produit?: string; description?: string } = {};
+        if (!existant.code_produit?.trim() && produit.code_produit?.trim()) {
+          patch.code_produit = produit.code_produit.trim();
+        }
+        if (!existant.description?.trim() && produit.description?.trim()) {
+          patch.description = produit.description.trim();
+        }
+        if (Object.keys(patch).length === 0) continue;
+        const { error } = await supabase.from("produits").update(patch).eq("id", existant.id);
+        if (error) {
+          throw new Error(
+            `Impossible de compléter la fiche « ${existant.nom} » : ${error.message}`,
+          );
+        }
+        fichesExistantesCompletees++;
+        produitsTraites.push({ id: existant.id, nom: existant.nom });
       }
 
       let documentsAjoutes = 0;
@@ -853,9 +878,9 @@ function ProduitsTab({
       }
 
       toast.success(
-        `${nouveauxProduitsCrees.length} nouveau(x) produit(s) ajouté(s) au catalogue de ${compagnieNom}.` +
+        `${nouveauxProduitsCrees.length} nouveau(x) produit(s) créé(s), ${fichesExistantesCompletees} fiche(s) existante(s) complétée(s) depuis le PDF du catalogue.` +
           (documentsAjoutes
-            ? ` ${documentsAjoutes} document(s) enregistré(s) sur les fiches produit, ${analysesLancees} analyse(s) lancée(s).`
+            ? ` ${documentsAjoutes} document(s) enregistré(s), ${analysesLancees} analyse(s) des garanties lancée(s).`
             : ""),
       );
       if (erreursDocuments.length > 0) {
@@ -1086,8 +1111,8 @@ function ProduitsTab({
                   className="rounded-md bg-[#0A192F] px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {importCatalogueEnCours
-                    ? "Création des produits…"
-                    : "Importer les nouveaux produits / contrats"}
+                    ? "Import et mise à jour en cours…"
+                    : "Créer les produits et compléter les fiches"}
                 </button>
               </div>
               <div className="space-y-2">
@@ -1099,7 +1124,7 @@ function ProduitsTab({
                     <input
                       type="checkbox"
                       checked={produit.inclure}
-                      disabled={produit.existeDeja && !produit.documentReference}
+                      disabled={false}
                       aria-label={`Importer ${produit.nom}`}
                       onChange={(event) =>
                         setProduitsCatalogue((actuels) =>
@@ -1164,8 +1189,9 @@ function ProduitsTab({
                       )}
                       {produit.existeDeja && (
                         <p className="text-xs text-amber-700">
-                          Produit déjà présent : sélectionnez un PDF pour le rattacher à cette fiche
-                          et relancer l’analyse des garanties, sans créer de doublon.
+                          Produit déjà présent : les informations extraites du catalogue complèteront
+                          les champs vides de cette fiche, sans créer de doublon. Le PDF individuel
+                          est facultatif et sert à lancer l’analyse des garanties.
                         </p>
                       )}
                     </div>
@@ -1209,10 +1235,10 @@ function ProduitsTab({
                 ))}
               </div>
               <p className="text-xs text-ink-muted">
-                Vérifiez chaque produit détecté avant de confirmer. Les nouveaux produits seront
-                créés avec le statut Actif. Pour un produit déjà présent, vous pouvez joindre un
-                nouveau contrat : il sera ajouté à sa fiche existante et l’analyse des garanties
-                sera relancée, sans créer de doublon.
+                Vérifiez les informations extraites du PDF. Les nouveaux produits seront créés avec
+                les données détectées. Pour les produits déjà présents, le code produit et la
+                description extraits rempliront uniquement les champs encore vides. Vous pouvez
+                aussi joindre un PDF individuel pour l’ajouter à la fiche et lancer l’analyse des garanties.
               </p>
             </div>
           )}
