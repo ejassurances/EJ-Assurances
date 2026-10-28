@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { analyserGarantiesAutomatiquement } from "@/lib/produit-garanties.functions";
-import { analyserCatalogueProduitsCompagnie } from "@/lib/produit-catalogue.functions";
+import { analyserCatalogueProduitsCompagnie, completerInfosProduitDepuisDocument } from "@/lib/produit-catalogue.functions";
 import { CompagnieDocsTable, UploadCompagnieDocForm } from "./espace.conformite";
 import { ProduitGarantiesTab } from "@/components/produit-garanties-tab";
 import { ProduitFormulesTab } from "@/components/produit-formules-tab";
@@ -585,6 +585,7 @@ function ProduitsTab({
   onChange: () => void;
 }) {
   const analyserCatalogue = useServerFn(analyserCatalogueProduitsCompagnie);
+  const completerInfosProduit = useServerFn(completerInfosProduitDepuisDocument);
   const analyserGaranties = useServerFn(analyserGarantiesAutomatiquement);
   const { user } = useAuth();
   const [nom, setNom] = useState("");
@@ -848,7 +849,7 @@ function ProduitsTab({
             });
           if (depotError || !depot) throw new Error(depotError?.message ?? "Dépôt du PDF impossible.");
           storagePath = depot.path;
-          const { error: docError } = await supabase.from("produit_documents").insert({
+          const { data: documentCree, error: docError } = await supabase.from("produit_documents").insert({
             produit_id: produitCible.id,
             type: "conditions_generales",
             nom: fichier.name,
@@ -857,12 +858,22 @@ function ProduitsTab({
             interne: false,
             storage_path: storagePath,
             uploaded_by: user?.id ?? null,
-          });
-          if (docError) {
+          }).select("id").single();
+          if (docError || !documentCree) {
             await supabase.storage.from("produits-documents").remove([storagePath]);
             throw new Error(docError.message);
           }
           documentsAjoutes++;
+          try {
+            const resultatInfos = await completerInfosProduit({ data: { document_id: documentCree.id } });
+            if (resultatInfos.champs_completes.length > 0) {
+              toast.success(`${produitCible.nom} : ${resultatInfos.champs_completes.length} champ(s) complété(s) depuis le contrat PDF.`);
+            }
+          } catch (infosError) {
+            erreursDocuments.push(
+              `${produit.nom}: document conservé, extraction des informations non terminée (${infosError instanceof Error ? infosError.message : "erreur inconnue"}).`,
+            );
+          }
           try {
             await analyserGaranties({ data: { produit_id: produitCible.id } });
             analysesLancees++;
