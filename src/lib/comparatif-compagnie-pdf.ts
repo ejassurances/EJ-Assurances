@@ -285,7 +285,8 @@ function construireLignes(
             return liste
               .map((formule) => {
                 const fg = grilleParFormule.get(formule.id);
-                if (!estValidee(fg, grille.version)) return `${formule.nom} : grille à valider`;
+                if (!fg || !estValidee(fg, grille.version))
+                  return `${formule.nom} : grille à valider`;
                 return `${formule.nom} : ${valeurGarantie(fg.valeurs[garantie.code])}`;
               })
               .join("\n");

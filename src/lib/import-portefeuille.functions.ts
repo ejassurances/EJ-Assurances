@@ -126,3 +126,134 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
       type_couverture: champ("type_couverture", 160),
     };
   });
+
+const CODES_PIECES = ["attestation_assurance", "cni", "justificatif_domicile", "rib"] as const;
+const TAILLE_MAX_OCTETS = 8 * 1024 * 1024;
+
+const archivageSchema = z.object({
+  client_id: z.string().uuid(),
+  dossier_id: z.string().uuid(),
+  code: z.enum(CODES_PIECES),
+  file_name: z.string().trim().min(1).max(255),
+  mime_type: z.enum(["application/pdf", "image/jpeg", "image/png", "image/webp"]),
+  base64: z.string().min(1).max(11_200_000),
+});
+
+/**
+ * Archive UNE pièce de l'import portefeuille (appelée pièce par pièce pour que
+ * l'archivage partiel soit lisible). Le dépôt se fait côté serveur, après
+ * vérification du rôle et de l'accès au dossier, sous un chemin préfixé par
+ * l'identifiant client. Les lignes documents / client_kyc_documents et la
+ * liaison checklist passent par le client de l'utilisateur (règles d'accès
+ * existantes). Si l'insertion échoue, le fichier déposé est supprimé.
+ */
+export const archiverPieceImportPortefeuille = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => archivageSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    let autorise = false;
+    for (const role of ["admin", "mandataire", "prescripteur"] as const) {
+      const { data: aLeRole } = await context.supabase.rpc("has_role", {
+        _user_id: context.userId,
+        _role: role,
+      });
+      if (aLeRole === true) {
+        autorise = true;
+        break;
+      }
+    }
+    if (!autorise) throw new Error("Import de client non autorisé.");
+
+    const { data: acces } = await context.supabase.rpc("can_access_dossier", {
+      _dossier_id: data.dossier_id,
+    });
+    if (acces !== true) throw new Error("Accès au dossier refusé.");
+    const { data: dossier, error: dossierError } = await context.supabase
+      .from("dossiers")
+      .select("client_id")
+      .eq("id", data.dossier_id)
+      .maybeSingle();
+    if (dossierError || !dossier || dossier.client_id !== data.client_id)
+      throw new Error("Le dossier ne correspond pas à ce client.");
+
+    const binaire = atob(data.base64);
+    if (binaire.length === 0) throw new Error("Le fichier est vide.");
+    if (binaire.length > TAILLE_MAX_OCTETS)
+      throw new Error("Fichier trop volumineux (8 Mo maximum).");
+    const octets = new Uint8Array(binaire.length);
+    for (let i = 0; i < binaire.length; i++) octets[i] = binaire.charCodeAt(i);
+
+    const { normaliserNomFichierPourStockage } = await import("@/lib/storage-key");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const chemin = `${data.client_id}/import-portefeuille/${data.dossier_id}/${Date.now()}-${data.code}-${normaliserNomFichierPourStockage(data.file_name)}`;
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from("dossier-documents")
+      .upload(chemin, octets, { contentType: data.mime_type, upsert: false });
+    if (uploadError) throw new Error(`Envoi du fichier impossible : ${uploadError.message}`);
+
+    const nettoyer = async () => {
+      const { error } = await supabaseAdmin.storage.from("dossier-documents").remove([chemin]);
+      if (error) console.error("[import portefeuille] nettoyage impossible", chemin, error.message);
+    };
+    const maintenant = new Date().toISOString();
+
+    if (data.code === "attestation_assurance") {
+      const { data: doc, error } = await context.supabase
+        .from("documents")
+        .insert({
+          client_id: data.client_id,
+          dossier_id: data.dossier_id,
+          uploader_id: context.userId,
+          storage_path: chemin,
+          file_name: data.file_name,
+          file_size: octets.length,
+          mime_type: data.mime_type,
+          type_document: "attestation_assurance",
+          categorie: "contrat",
+          source: "import_portefeuille",
+        })
+        .select("id")
+        .single();
+      if (error || !doc) {
+        await nettoyer();
+        throw new Error(`Archivage de l'attestation impossible : ${error?.message ?? "inconnu"}`);
+      }
+      // L'attestation n'est pas toujours dans la checklist de la branche : liaison si présente.
+      const { error: liaisonError } = await context.supabase
+        .from("dossier_pieces_requises")
+        .update({ document_id: doc.id, statut: "recue", recue_le: maintenant })
+        .eq("dossier_id", data.dossier_id)
+        .eq("code", "attestation_assurance");
+      return { ok: true as const, checklist: !liaisonError };
+    }
+
+    const { data: kycDoc, error } = await context.supabase
+      .from("client_kyc_documents")
+      .insert({
+        client_id: data.client_id,
+        type: data.code,
+        nom: data.file_name,
+        storage_path: chemin,
+        uploaded_by: context.userId,
+        statut: "a_valider",
+      })
+      .select("id")
+      .single();
+    if (error || !kycDoc) {
+      await nettoyer();
+      throw new Error(`Archivage de la pièce impossible : ${error?.message ?? "inconnu"}`);
+    }
+    const { error: liaisonError } = await context.supabase
+      .from("dossier_pieces_requises")
+      .update({ kyc_document_id: kycDoc.id, statut: "recue", recue_le: maintenant })
+      .eq("dossier_id", data.dossier_id)
+      .eq("code", data.code);
+    if (liaisonError)
+      console.error(
+        "[import portefeuille] checklist non mise à jour",
+        data.code,
+        liaisonError.message,
+      );
+    return { ok: true as const, checklist: !liaisonError };
+  });
