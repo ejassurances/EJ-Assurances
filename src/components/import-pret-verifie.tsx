@@ -5,6 +5,7 @@ import { lirePiecesPret } from "@/lib/import-pret-verification.functions";
 import {
   appliquerValeursPret,
   CHAMPS_IMPORT_PRET,
+  CORRESPONDANCES_PRET,
   croiserLecturesPret,
   type ChampImportPret,
   type LecturePret,
@@ -33,6 +34,9 @@ export function ImportPretVerifie({
 
   async function analyser() {
     setBusy(true);
+    setConfirme(false);
+    setLectures([]);
+    setValeurs({});
     setMessage(null);
     try {
       const fichiers = await Promise.all(
@@ -59,6 +63,8 @@ export function ImportPretVerifie({
         setMessage("Une analyse n'a pas abouti. Vous pouvez continuer sans import.");
     } catch {
       setMessage("Analyse indisponible. Vous pouvez continuer sans ces documents.");
+      setAnalyseFaite(true);
+      setConfirme(false);
     } finally {
       setBusy(false);
     }
@@ -119,6 +125,7 @@ export function ImportPretVerifie({
             setPieces([]);
             setLectures([]);
             setValeurs({});
+            setConfirme(false);
             setAnalyseFaite(false);
             setMessage("Import ignoré ; saisie manuelle.");
           }}
@@ -146,6 +153,11 @@ export function ImportPretVerifie({
                     setValeurs((v) => ({ ...v, [cle]: e.target.value }));
                   }}
                 />
+                {!CORRESPONDANCES_PRET[cle] && (
+                  <span className="block">
+                    Conservé dans la lecture vérifiée ; aucun champ de dossier dédié.
+                  </span>
+                )}
                 {(croisement.provenance[cle] ?? []).map((s) => (
                   <span key={s.source} className="block">
                     {s.source} : {s.valeur} ({Math.round(s.confiance * 100)} %)

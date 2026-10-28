@@ -1,5 +1,8 @@
 # Roadmap
 
+- [ ] Correctif préremplissage emprunteur : synchronisation formulaire et protection confirmation réalisées ; tests purs passent ; test authentifié sauvegarde/réouverture et OCR bloqués par base en pause. Livraison sur main non vérifiable (branche gérée différente). Mensualité hors assurance sans champ admis par le recueil, conservée dans l’audit uniquement.
+- [ ] Devis client EJ : audit effectué et plan préparé ; implémentation en attente, après correctif emprunteur et validation du plan.
+
 - [x] Corriger les erreurs de compilation existantes sans changer les données — compilation OK et connexion affichée sans erreur.
 - [ ] Ajouter les certificats UGIP BELAYGUES / HAMMI — validation de création des fiches clients en attente.
 

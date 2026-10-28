@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { appliquerValeursPret, filtrerValeursPret } from "./import-pret-verification";
+import { preparerConfirmationPret } from "./import-pret-verification";
 
 export const confirmerPretDossier = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -39,59 +39,24 @@ export const confirmerPretDossier = createServerFn({ method: "POST" })
     if (!autorise) throw new Error("Modification non autorisée.");
     const { data: dossier, error } = await context.supabase
       .from("dossiers")
-      .select("recueil_besoins,analyse_ia,type_assurance,capital,duree_mois")
+      .select("recueil_besoins,analyse_ia,type_assurance,capital,duree_mois,updated_at")
       .eq("id", data.dossierId)
       .single();
     if (error || dossier.type_assurance !== "emprunteur")
       throw new Error("Dossier emprunteur indisponible.");
-    const base =
-      dossier.recueil_besoins &&
-      typeof dossier.recueil_besoins === "object" &&
-      !Array.isArray(dossier.recueil_besoins)
-        ? dossier.recueil_besoins
-        : {};
-    const audit =
-      dossier.analyse_ia &&
-      typeof dossier.analyse_ia === "object" &&
-      !Array.isArray(dossier.analyse_ia)
-        ? dossier.analyse_ia
-        : {};
-    const precedent = Array.isArray(audit["imports_pret_verifies"])
-      ? audit["imports_pret_verifies"]
-      : [];
-    const valeurs = filtrerValeursPret(data.valeurs);
-    const recueil = appliquerValeursPret(base, valeurs);
-    const { error: save } = await context.supabase
+    const modification = preparerConfirmationPret(dossier, data.valeurs, data.lectures, {
+      confirme_par: context.userId,
+      confirme_le: new Date().toISOString(),
+    });
+    const { data: enregistre, error: save } = await context.supabase
       .from("dossiers")
-      .update({
-        recueil_besoins: recueil as never,
-        capital:
-          Number(recueil["capital"]) > 0
-            ? Number(recueil["capital"])
-            : dossier.capital,
-        duree_mois:
-          Number.isInteger(Number(recueil["duree_mois"])) &&
-          Number(recueil["duree_mois"]) > 0 &&
-          Number(recueil["duree_mois"]) <= 600
-            ? Number(recueil["duree_mois"])
-            : dossier.duree_mois,
-        analyse_ia: {
-          ...audit,
-          imports_pret_verifies: [
-            ...precedent,
-            {
-              confirme_par: context.userId,
-              confirme_le: new Date().toISOString(),
-              valeurs,
-              lectures: data.lectures.map((l) => ({
-                ...l,
-                valeurs: filtrerValeursPret(l.valeurs),
-              })),
-            },
-          ],
-        } as never,
-      })
-      .eq("id", data.dossierId);
+      .update(modification as never)
+      .eq("id", data.dossierId)
+      .eq("updated_at", dossier.updated_at)
+      .select("id")
+      .maybeSingle();
     if (save) throw new Error(save.message);
+    if (!enregistre)
+      throw new Error("Le dossier a changé. Rechargez-le avant de confirmer les valeurs.");
     return { ok: true };
   });

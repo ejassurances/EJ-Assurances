@@ -144,24 +144,9 @@ export const analyserDocumentRecueil = createServerFn({ method: "POST" })
     const manquants = base.manquants;
 
     if (ajouts.length > 0) {
-      const capitalExtrait = Number(recueil["capital"]);
-      const dureeExtraite = Number(recueil["duree_mois"]);
-      const miseAJourDossier: Record<string, unknown> = {
-        recueil_besoins: recueil,
-      };
-      // Le recueil est la source métier détaillée, mais les champs de synthèse
-      // du dossier doivent aussi être renseignés pour les vues/listes du CRM.
-      // Le document importé fait foi : ses valeurs extraites synchronisent ces
-      // champs de synthèse, sans inventer de valeur si l'extraction est absente.
-      if (Number.isFinite(capitalExtrait) && capitalExtrait > 0) {
-        miseAJourDossier["capital"] = capitalExtrait;
-      }
-      if (Number.isInteger(dureeExtraite) && dureeExtraite > 0 && dureeExtraite <= 600) {
-        miseAJourDossier["duree_mois"] = dureeExtraite;
-      }
       const { error } = await supabaseAdmin
         .from("dossiers")
-        .update(miseAJourDossier as never)
+        .update({ recueil_besoins: recueil as never })
         .eq("id", data.dossier_id);
       if (error) throw new Error(error.message);
       await supabaseAdmin.from("dossier_etapes_historique").insert({
