@@ -67,7 +67,6 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
               mime_type: data.mime_type,
             },
           ],
-          response_format: { type: "text" },
         }),
       });
     } catch (error) {
@@ -87,7 +86,7 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
       } catch {
         diagnostic = detail;
       }
-      diagnostic = diagnostic.replace(/https?:\\/\\/\\S+/g, "[lien]").slice(0, 240);
+      diagnostic = diagnostic.replace(/https?:\/\/\S+/g, "[lien]").slice(0, 240);
       console.error(
         "[import portefeuille] extraction IA indisponible",
         response.status,
@@ -117,7 +116,7 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
             .filter((part) => part.type === "text" && typeof part.text === "string")
             .map((part) => part.text as string);
         })
-        .join("\\n") ??
+        .join("\n") ??
       "";
     const json = texte.match(/\\{[\\s\\S]*\\}/)?.[0];
     if (!json) {
