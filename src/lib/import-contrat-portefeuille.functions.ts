@@ -45,7 +45,7 @@ export const enregistrerContratImportPortefeuille = createServerFn({ method: "PO
     if (!autorise) throw new Error("Import de contrat non autorisé.");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { trouverClientExistant } = await import("@/lib/client-dedoublonnage.server");
+    const { normaliserIdentite, trouverClientExistant } = await import("@/lib/client-dedoublonnage.server");
     let clientId = data.client_id ?? null;
     if (!clientId) {
       const match = await trouverClientExistant(supabaseAdmin, {
@@ -55,6 +55,48 @@ export const enregistrerContratImportPortefeuille = createServerFn({ method: "PO
       });
       clientId = match?.client_id ?? null;
     }
+
+    // Sur une attestation de second contrat, la date de naissance et les contacts
+    // peuvent être absents. Dans ce cas, rattacher uniquement si le couple
+    // nom/prénom normalisé correspond à UNE seule fiche. En cas d'homonymie,
+    // bloquer plutôt que créer silencieusement une fiche client en double.
+    if (!clientId && !data.client.date_naissance?.trim() && data.client.nom.trim() && data.client.prenom?.trim()) {
+      const valeursRecherche = [...new Set([data.client.nom.trim(), data.client.prenom.trim()])];
+      const recherches = await Promise.all(
+        valeursRecherche.map((valeur) =>
+          supabaseAdmin
+            .from("clients")
+            .select("id, nom, prenom")
+            .ilike("nom", valeur)
+            .limit(100),
+        ),
+      );
+      const identiteNom = normaliserIdentite(data.client.nom);
+      const identitePrenom = normaliserIdentite(data.client.prenom);
+      const correspondants = [
+        ...new Map(
+          recherches
+            .flatMap(({ data: lignes }) => lignes ?? [])
+            .filter((client) => {
+              const nom = normaliserIdentite(client.nom);
+              const prenom = normaliserIdentite(client.prenom);
+              return (
+                (nom === identiteNom && prenom === identitePrenom) ||
+                (nom === identitePrenom && prenom === identiteNom)
+              );
+            })
+            .map((client) => [client.id, client]),
+        ).values(),
+      ];
+      if (correspondants.length === 1) {
+        clientId = correspondants[0]!.id;
+      } else if (correspondants.length > 1) {
+        throw new Error(
+          "Plusieurs fiches correspondent à ce nom et prénom. Sélectionnez la fiche client existante avant d'importer le contrat ; aucune nouvelle fiche n'a été créée.",
+        );
+      }
+    }
+
     if (!clientId) {
       // L'import de portefeuille est une action explicite : si aucun client fiable
       // n'est retrouvé, créer sa fiche permet de conserver le contrat et son attestation.
