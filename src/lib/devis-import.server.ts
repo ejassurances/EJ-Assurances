@@ -181,7 +181,7 @@ export async function lireDevisDocument(admin: Admin, documentId: string): Promi
     cotisation_max: nombre(brut["cotisation_max"]),
     quotite_pct: quotite !== null && quotite > 0 && quotite <= 100 ? quotite : null,
     garanties_resume: texte(brut["garanties_resume"], 1000),
-    date_effet: /^\\d{4}-\\d{2}-\\d{2}$/.test(String(brut["date_effet"] ?? "")) ? String(brut["date_effet"]) : null,
+    date_effet: /^\d{4}-\d{2}-\d{2}$/.test(String(brut["date_effet"] ?? "")) ? String(brut["date_effet"]) : null,
     confidence: Number.isFinite(conf) ? Math.min(1, Math.max(0, conf)) : 0,
   };
   const { error: sauvegardeErreur } = await admin.from("devis_import_lectures").upsert(
