@@ -70,8 +70,10 @@ export function DocumentsPretPanel({
   filtre = "pret",
   typeDocument = "offre_pret",
   onAnalyse,
+  analyseAutorisee = true,
 }: {
   dossierId: string;
+  analyseAutorisee?: boolean;
   /** Intitulé du bloc. */
   titre?: string;
   /**
@@ -156,7 +158,7 @@ export function DocumentsPretPanel({
       const path = `${dossierId}/${Date.now()}-${safeName}`;
       const { error: upErr } = await supabase.storage
         .from("dossier-documents")
-        .upload(path, file, { upsert: true });
+        .upload(path, file, { upsert: false });
       if (upErr) throw upErr;
 
       const { data: auth } = await supabase.auth.getUser();
@@ -178,7 +180,11 @@ export function DocumentsPretPanel({
         })
         .select("id")
         .maybeSingle();
-      if (insErr) throw insErr;
+      if (insErr) {
+        const cleanup = await supabase.storage.from("dossier-documents").remove([path]);
+        if (cleanup.error) throw new Error("Insertion échouée ; nettoyage du fichier à vérifier.");
+        throw insErr;
+      }
 
       // Marque la pièce requise « Offre de prêt / tableau d'amortissement ».
       const docId = (inserted as { id: string } | null)?.id ?? null;
@@ -187,12 +193,12 @@ export function DocumentsPretPanel({
           .from("dossier_pieces_requises")
           .update({ statut: "recue", recue_le: new Date().toISOString(), document_id: docId })
           .eq("dossier_id", dossierId)
-          .in("code", ["offre_pret", "tableau_amortissement"]);
+          .eq("code", nature);
       }
 
       // Analyse IA du document : les données du prêt sont reportées dans le
       // recueil pour renseigner les étapes suivantes.
-      if (docId) {
+      if (docId && analyseAutorisee) {
         try {
           setAnalyse("Analyse du document par l'IA…");
           const res = await analyser({ data: { dossier_id: dossierId, document_id: docId } });
@@ -275,7 +281,7 @@ export function DocumentsPretPanel({
               </select>
             </label>
           )}
-          {docs.length > 0 && (
+          {docs.length > 0 && analyseAutorisee && (
             <button
               type="button"
               onClick={() => void analyserExistants()}
