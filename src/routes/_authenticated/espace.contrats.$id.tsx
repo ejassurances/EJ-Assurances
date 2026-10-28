@@ -1,3 +1,4 @@
+import { calculerFraisDistribution } from "@/lib/remuneration-contrat";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
@@ -492,6 +493,30 @@ function ContratDetail() {
             primeNetteAnnuelle={c.prime_nette_annuelle}
             economieRealisee={c.economie_realisee}
           />
+
+          {(() => {
+            const f = calculerFraisDistribution({
+              isEmprunteur: c.is_emprunteur,
+              dureeMois: c.duree_mois,
+              economieRealisee: c.economie_realisee,
+              coutGroupeTotal: c.economie_cout_groupe,
+              coutDelegueTotal: c.economie_cout_delegue,
+            });
+            return (
+              <section className="crm-card space-y-1 p-5">
+                <p className="crm-eyebrow">Frais de distribution (distincts de la commission)</p>
+                {f.statut === "calcule" ? (
+                  <>
+                    <p className="text-lg font-medium text-ink">{formatEuro(f.montant)}</p>
+                    <p className="text-sm text-muted-foreground">{f.detail}</p>
+                  </>
+                ) : (
+                  <p className="text-sm font-medium text-destructive">À vérifier : {f.motif}</p>
+                )}
+              </section>
+            );
+          })()}
+
         </div>
       )}
 
