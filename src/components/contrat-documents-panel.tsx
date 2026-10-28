@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProduitDocumentsLink } from "@/components/produit-documents-link";
+import { normaliserNomFichierPourStockage } from "@/lib/storage-key";
 
 type Doc = {
   id: string;
@@ -87,32 +88,50 @@ export function ContratDocumentsPanel({
     if (!file) return;
     setUploading(true);
     setError(null);
-    // Le 1er segment doit être l'identifiant du client : les règles d'accès du
-    // stockage s'appuient sur lui (et le client retrouve la pièce dans son espace).
-    const path = `${clientId}/contrats/${contratId}/${Date.now()}-${file.name}`;
-    const { error: upErr } = await supabase.storage.from("dossier-documents").upload(path, file);
-    if (upErr) {
-      setError(upErr.message);
+
+    // Le premier segment reste l'identifiant du client : les règles RLS du
+    // stockage s'appuient sur lui. Le nom utilisé dans la clé est normalisé
+    // pour éviter qu'un nom local (slash, antislash, caractères de contrôle…)
+    // produise une clé Supabase invalide. Le nom original reste en métadonnée.
+    const safeName = normaliserNomFichierPourStockage(file.name);
+    const path = `${clientId}/contrats/${contratId}/${Date.now()}-${safeName}`;
+    let fichierEnvoye = false;
+
+    try {
+      const { error: upErr } = await supabase.storage.from("dossier-documents").upload(path, file);
+      if (upErr) throw new Error(`Échec de l'envoi du fichier : ${upErr.message}`);
+      fichierEnvoye = true;
+
+      const { error: dbErr } = await supabase.from("documents").insert({
+        contrat_id: contratId,
+        client_id: clientId,
+        uploader_id: userId,
+        storage_path: path,
+        file_name: file.name,
+        file_size: file.size,
+        mime_type: file.type || null,
+        type_document: type,
+      });
+
+      if (dbErr) {
+        // Évite de laisser un fichier orphelin si l'archivage des métadonnées échoue.
+        const { error: cleanupErr } = await supabase.storage.from("dossier-documents").remove([path]);
+        fichierEnvoye = Boolean(cleanupErr);
+        throw new Error(
+          cleanupErr
+            ? `Le fichier a été envoyé, mais son archivage a échoué (${dbErr.message}). Le nettoyage automatique a aussi échoué (${cleanupErr.message}).`
+            : `L'archivage du document a échoué : ${dbErr.message}. Le fichier envoyé a été nettoyé.`,
+        );
+      }
+
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Une erreur inattendue est survenue pendant l'envoi.");
+    } finally {
       setUploading(false);
-      return;
+      // Permet de sélectionner à nouveau le même fichier après un échec.
+      if (fileRef.current) fileRef.current.value = "";
     }
-    const { error: dbErr } = await supabase.from("documents").insert({
-      contrat_id: contratId,
-      client_id: clientId,
-      uploader_id: userId,
-      storage_path: path,
-      file_name: file.name,
-      file_size: file.size,
-      mime_type: file.type,
-      type_document: type,
-    });
-    setUploading(false);
-    if (dbErr) {
-      setError(dbErr.message);
-      return;
-    }
-    if (fileRef.current) fileRef.current.value = "";
-    load();
   };
 
   const download = async (path: string, name: string) => {
@@ -168,7 +187,7 @@ export function ContratDocumentsPanel({
             {uploading ? "Envoi…" : "Ajouter un document"}
             <input ref={fileRef} type="file" onChange={onUpload} className="hidden" disabled={uploading} />
           </label>
-          {error && <span className="text-xs text-destructive">{error}</span>}
+          {error && <span role="alert" className="text-xs text-destructive">{error}</span>}
         </div>
       )}
 
