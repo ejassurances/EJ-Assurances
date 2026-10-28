@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { messageComplet, rattacherCopiesBrevoClient } from "@/lib/emails.functions";
+import { boiteReception, messageComplet, rattacherCopiesBrevoClient } from "@/lib/emails.functions";
 import { lireTriageAffichage, type TriageAffichage } from "@/lib/email-triage-affichage";
 
 export interface EmailLiens {
@@ -84,6 +84,7 @@ export function EmailsLiesPanel({
   const [emails, setEmails] = useState<EmailAffiche[]>([]);
   const [loading, setLoading] = useState(true);
   const syncBrevo = useServerFn(rattacherCopiesBrevoClient);
+  const syncInbox = useServerFn(boiteReception);
 
   useEffect(() => {
     const load = async () => {
@@ -93,6 +94,19 @@ export function EmailsLiesPanel({
           await syncBrevo({ data: { client_id: liens.client_id } });
         } catch (error) {
           console.error("[email] récupération des anciens envois Brevo impossible:", error);
+        }
+        try {
+          const { data: client } = await supabase
+            .from("clients")
+            .select("email")
+            .eq("id", liens.client_id)
+            .maybeSingle();
+          const emailClient = (client?.email ?? "").trim();
+          if (emailClient) {
+            await syncInbox({ data: { recherche: emailClient } });
+          }
+        } catch (error) {
+          console.error("[email] synchronisation des réponses reçues impossible:", error);
         }
       }
       let query = supabase
