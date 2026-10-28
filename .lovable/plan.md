@@ -1,36 +1,61 @@
-# Frais de distribution et barèmes de commission compagnie
+# Devis client EJ à partir d’un devis partenaire
 
-Audit lecture seule fait. Rien n'a été modifié. Ce plan attend votre accord.
+## Proposition après audit lecture seule
 
-## Ce qui existe déjà
-- `commission_bareme` : un barème par branche ou par branche + compagnie, fixe ou en %, base « prime » ou « économie réalisée ». Il ne gère ni le précompte, ni de dates d'effet, ni d'historique, et un seul barème est permis par compagnie et branche.
-- `contrats` contient déjà `mode_commissionnement` (precompte / lineaire / degressif), `duree_mois`, `economie_realisee`, `economie_cout_groupe` et `economie_cout_delegue`.
-- `commission_previsions` : une ligne par dossier. Elle est mise à jour au fil des commissions versées (la table `commissions`).
-- `finance_revenus` distingue déjà les types `commission` et `frais_distribution`.
-- Risque repéré : aujourd'hui, la règle « 5 % des économies » peut être saisie comme une commission (base « économie réalisée »). Cela mélange les frais de distribution et la commission, ce que vous voulez éviter.
-- Écrans : `commission-bareme-config.tsx`, `compagnie-taux-commission.tsx` (fiche compagnie), `commission-contrat-card.tsx`.
+**DOMAINE :** D4 — Souscription & distribution, lié à D1 — Relation client & dossiers.
+**MODULE :** CRM / parcours de souscription.
+**SOUS-MODULE :** Devis du dossier.
+**OBJECTIF :** importer un devis partenaire, contrôler ses données puis produire une version client EJ fidèle, traçable et validée humainement, sans envoi automatique.
 
-## Ce que je propose
-1. **Règle de calcul unique** dans `src/lib/remuneration-contrat.ts`, partagée par les tests et les écrans :
-   - emprunteur : frais = économie totale sur toute la durée × 5 %. Si l'économie ou la durée manque, ou si les chiffres se contredisent, le statut est « à vérifier » et aucun montant n'est affiché ;
-   - assurance vie : 0 € ;
-   - autres contrats : 20 €.
-   - commission linéaire : même taux appliqué à la prime de chaque année ;
-   - commission en précompte : un taux pour l'année 1 et un autre pour les années suivantes ;
-   - sans barème applicable : « non calculable — barème à configurer ».
-2. **Migration versionnée, sans rien supprimer** :
-   - ajout dans `commission_bareme` de `mode` (lineaire / precompte), `taux_annee_1`, `taux_renouvellement`, `date_effet`, `date_fin` et `produit_id` (facultatif) ;
-   - remplacement des index uniques actuels par une règle « pas de périodes qui se chevauchent » pour la même compagnie, branche et produit. On garde ainsi l'historique des barèmes ;
-   - nouvelle table `contrat_remuneration_previsionnelle` : une ligne par contrat, par type (frais / commission) et par année. Elle garde une trace du barème utilisé et de sa version, avec une clé unique qui empêche les doublons ;
-   - fonction `recalculer_remuneration_contrat(contrat_id)`. Elle remplace seulement les lignes prévisionnelles et ne touche jamais `commissions`, les paiements ou `finance_revenus` ;
-   - recalcul automatique quand on crée ou modifie un contrat, et quand on modifie un barème (pour les contrats concernés).
-3. **Interface** :
-   - fiche compagnie : formulaire de barème avec le mode, la base de calcul, les taux de l'année 1 et des années suivantes, la périodicité, les dates d'effet et l'historique. Aucun taux n'est pré-rempli ;
-   - fiche contrat : deux blocs séparés, « Frais de distribution » et « Commission compagnie (prévisionnelle / versée) ».
-   - les barèmes déjà saisis sur la base « économie réalisée » ne sont pas modifiés. Ils seront signalés « à revoir : relève des frais de distribution ».
-4. **Tests** (vitest) : emprunteur sur 120, 180 et 240 mois ; 20 € ; 0 € ; linéaire ; précompte ; sans barème ; changement de barème ; changement de durée ; recalcul répété sans doublon.
+## État actuel vérifié
 
-## Points à confirmer
-- Assiette « économie totale » : je prends `economie_realisee` si elle est remplie, sinon (coût groupe − coût délégué). Si les deux existent et ne concordent pas, le statut est « à vérifier ». Est-ce correct ?
-- La base de données était en pause lors du dernier contrôle. Elle doit être relancée pour appliquer la migration.
-- D'après la règle « un chantier à la fois », d'autres chantiers sont encore ouverts (contrats UGIP, nomenclatures, import portefeuille). Je les laisse en attente pendant celui-ci.
+- `DossierDevisPanel` propose déjà import PDF/photo et préremplissage éditable ; `lireDevisImporte` et `lireDevisDocument` réalisent la lecture documentaire.
+- Cette extraction ne couvre pas intégralement taxes, franchises, exclusions, conditions et mentions réglementaires ; elle résume les garanties. Elle ne suffit pas à reconstruire fidèlement le contrat partenaire.
+- Le contrôle d’accès existant autorise le dossier mais ne vérifie pas le rattachement du document lu avant sa lecture privilégiée : à corriger dans ce parcours.
+- `pdf-lib`, le logo `public/logo-ej-partners.png` et les coordonnées/mentions communes de `pdf-entete-pied.ts` existent.
+- `documents` conserve les originaux et `dossier_devis.document_id` leur référence, mais aucun historique dédié de versions client avec validation du contenu exact n’existe.
+- Lovable Cloud **en pause**, confirmé lors de cet audit ; politiques réelles et schéma actif non vérifiables. Les migrations du dépôt prévoient un chemin Storage préfixé par **dossierId**.
+- La passerelle nommée `geminiFetch` redirige vers Anthropic ; son identifiant n’est pas disponible dans l’environnement de vérification. Aucune extraction réelle testée, aucun changement de fournisseur proposé.
+- Régressions exécutées : **37/37 tests passent** (rémunérations 23, import emprunteur 7, commission depuis devis 7). Aucun nouveau parcours UI testé.
+
+## Modification proposée
+
+1. Ajouter un sous-parcours indépendant dans « Devis » du dossier, sans réécrire les calculs de rémunération ni l’import emprunteur.
+2. Importer PDF, JPG, PNG et WEBP avec validation serveur des signatures, types et taille, chemins privés immuables et nettoyage du seul nouvel objet si son insertion échoue.
+3. Étendre la lecture documentaire dédiée : partenaire, porteur du risque, client, références, produit, garanties, tarifs, taxes, franchises, exclusions, conditions, validité et mentions réglementaires. Restituer les textes contractuels verbatim, les champs absents et contradictions ; aucune donnée médicale et aucune écriture des suggestions IA avant confirmation.
+4. Présenter original et champs éditables ; permettre de continuer manuellement après échec OCR. Toute correction invalide la validation précédente. Vérifier explicitement les contradictions avant génération.
+5. Générer une **présentation EJ + le devis partenaire intégral en annexe**, plutôt que remplacer le document contractuel par un résumé IA. Les pages PDF originales restent inchangées ; les images acceptées restent intégralement visibles en annexe. Les mentions du partenaire prévalent. Une reconstruction intégrale sans annexe n’est pas proposée : elle risquerait d’omettre des clauses.
+6. Conserver chaque version client séparément avec original, empreintes, contenu contrôlé, auteur/date de validation et état de génération. Prévisualisation et téléchargement privés ; aucune action d’envoi automatique ou modification de statut d’offre retenue.
+7. Enregistrer la nouvelle demande dans le suivi des travaux, conserver les chantiers précédents et leurs blocages ; fournir un rapport exact des changements et vérifications.
+
+## Dépendances et impact
+
+- Aucun paiement, contrat réel ou document existant modifié/supprimé ; aucune publication, changement de secret ou politique active.
+- Pas de migration appliquée à l’instance partagée aperçu/production. Préparer une migration versionnée indépendante des rémunérations pour les versions client, avec permissions et accès au dossier. Garder les types non appliqués dans l’adaptateur dédié conformément aux conventions du projet.
+- Sans schéma actif, permettre contrôle et génération locale de prévisualisation ; afficher clairement que l’archivage durable n’est pas activé. Ne pas prétendre qu’une sauvegarde a réussi.
+- OCR indisponible : saisie manuelle accessible ; pas de modèle de substitution, pas de nouvelle configuration.
+- Reprise séquentielle : le travail rémunérations/import prêt réalisable en code est conservé ; ses vérifications sur données réelles restent bloquées par la base. Ce nouveau parcours reste isolé.
+
+## Détails techniques
+
+- Nouveaux modules ciblés : `devis-client.ts`, tests, `devis-client-review.tsx`, fonctions serveur authentifiées, génération PDF et archivage.
+- Un seul point d’intégration dans `dossier-devis-panel.tsx` ; contrôle document→dossier ajouté avant extraction dans `devis-import.functions.ts`.
+- Autorisation par client utilisateur/RLS et `can_access_dossier` ; toute lecture privilégiée nécessite d’abord la vérification du document source dans le dossier autorisé.
+- Versions avec référence explicite à l’original, instantané humain validé, empreintes et clé idempotente. Un échec d’archivage affiche un état partiel, sans effacer l’original.
+- Aucune modification des types générés, du fournisseur OCR commun, des calculs rémunération, des migrations précédentes ou des paiements.
+
+## Tests et vérifications
+
+- Champs manquants sans invention, préservation exacte montants/garanties/conditions, rejet données médicales, échec OCR avec saisie manuelle.
+- Génération refusée sans confirmation ; correction après validation nécessitant une nouvelle confirmation ; contradictions non résolues signalées.
+- PDF avec original intégral, logo, mentions, pagination et contenu long ; fichiers invalides/trop grands ; accès croisé à un autre dossier refusé ; nettoyage nouvel upload après échec DB.
+- Réexécuter les 37 tests des travaux protégés, puis tests du nouveau parcours, Prettier et lint ciblé. Lire les résultats de compilation automatiques de l’aperçu, sans build/typecheck manuel.
+- Tester au navigateur uniquement ce qui est réellement accessible ; création/archivage/auth et extraction réelle restent non vérifiés tant que leurs dépendances sont indisponibles.
+
+## Valeur produite et livraison
+
+Un devis présenté au branding EJ, sans perdre les clauses du partenaire, contrôlé humainement et relié à son original. Le rapport distinguera code terminé, préparations non activées et tests réellement effectués.
+
+Référence du projet observée : `bb81eaba` (aucun commit créé par l’agent). Aperçu : https://id-preview--858511e9-52da-414d-be08-3727111ac35d.lovable.app
+
+Ce plan attend la validation requise par votre règle permanente audit → proposition → validation → exécution. **Aucun fichier applicatif, donnée, migration ou configuration n’a été modifié durant l’audit.**
