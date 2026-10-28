@@ -32,6 +32,7 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
     if (!autorise) throw new Error("Import de client non autorisé.");
 
     const cle = process.env["ANTHROPIC_API_KEY"];
+    const workspaceId = process.env["ANTHROPIC_WORKSPACE_ID"];
     if (!cle) {
       throw new Error(
         "La configuration serveur ANTHROPIC_API_KEY est absente du Worker Cloudflare utilisé par le CRM.",
@@ -77,6 +78,7 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
           "Content-Type": "application/json",
           "x-api-key": cle,
           "anthropic-version": "2023-06-01",
+          ...(workspaceId ? { "anthropic-workspace-id": workspaceId } : {}),
         },
         body: JSON.stringify({
           model: "claude-sonnet-5-5",
