@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { BRANCHES_CREATION } from "@/lib/recueil-besoins-schemas";
 
 const schema = z.object({
   file_name: z.string().trim().min(1).max(255),
@@ -52,7 +53,9 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
                 {
                   type: "text",
                   text:
-                    "Extrais ces champs si présents : civilite (M., Mme ou Autre), prenom, nom, date_naissance, email, mobile, telephone, adresse, code_postal, ville, assureur, numero_contrat, date_effet, date_echeance, type_couverture. Réponds avec les clés exactes et null si la valeur n’est pas visible. Le nom du fichier est " +
+                    "Extrais ces champs si présents : civilite (M., Mme ou Autre), prenom, nom, date_naissance, email, mobile, telephone, adresse, code_postal, ville, assureur, numero_contrat, date_effet, date_echeance, type_couverture et type_assurance. Pour type_assurance, choisis uniquement une valeur parmi ces branches CRM : " +
+                    BRANCHES_CREATION.map((b) => `${b.value} (${b.label})`).join(", ") +
+                    ". Si la branche ne peut pas être déterminée avec certitude depuis l’attestation, retourne null. Réponds avec les clés exactes et null si la valeur n’est pas visible. Le nom du fichier est " +
                     data.file_name,
                 },
                 {
@@ -124,6 +127,9 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
       date_effet: date("date_effet"),
       date_echeance: date("date_echeance"),
       type_couverture: champ("type_couverture", 160),
+      type_assurance: BRANCHES_CREATION.some((b) => b.value === champ("type_assurance", 80))
+        ? champ("type_assurance", 80)
+        : null,
     };
   });
 
