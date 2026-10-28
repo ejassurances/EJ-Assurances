@@ -586,6 +586,7 @@ function ProduitsTab({
 }) {
   const analyserCatalogue = useServerFn(analyserCatalogueProduitsCompagnie);
   const analyserGaranties = useServerFn(analyserGarantiesAutomatiquement);
+  const { user } = useAuth();
   const [nom, setNom] = useState("");
   const [familleId, setFamilleId] = useState(familles[0]?.id ?? "");
   const [creating, setCreating] = useState(false);
