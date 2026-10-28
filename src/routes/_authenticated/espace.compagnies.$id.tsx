@@ -838,10 +838,14 @@ function ProduitsTab({
 
       toast.success(
         `${produitsCrees.length} produit(s) ajouté(s) au catalogue de ${compagnieNom}.` +
-          (documentsAjoutes ? ` ${documentsAjoutes} document(s) de référence enregistré(s), ${analysesLancees} analyse(s) lancée(s).` : ""),
+          (documentsAjoutes
+            ? ` ${documentsAjoutes} document(s) de référence enregistré(s), ${analysesLancees} analyse(s) lancée(s).`
+            : ""),
       );
       if (erreursDocuments.length > 0) {
-        toast.error(`Import produits terminé avec des documents à vérifier : ${erreursDocuments.join(" · ")}`);
+        toast.error(
+          `Import produits terminé avec des documents à vérifier : ${erreursDocuments.join(" · ")}`,
+        );
       }
       setProduitsCatalogue([]);
       setFichierCatalogue(null);
@@ -1134,7 +1138,10 @@ function ProduitsTab({
                         />
                       </label>
                       {produit.documentReference && (
-                        <p className="text-xs text-ink-muted">Sera conservé dans la fiche produit et proposé à l’analyse des garanties après création.</p>
+                        <p className="text-xs text-ink-muted">
+                          Sera conservé dans la fiche produit et proposé à l’analyse des garanties
+                          après création.
+                        </p>
                       )}
                       {produit.existeDeja && (
                         <p className="text-xs text-amber-700">
@@ -1183,9 +1190,10 @@ function ProduitsTab({
               </div>
               <p className="text-xs text-ink-muted">
                 Vérifiez chaque produit détecté par l’IA avant l’import. Les produits créés auront
-                le statut Actif ; aucun produit n’est ajouté tant que vous ne confirmez pas. Vous pouvez
-                aussi joindre les conditions générales ou le contrat de chaque produit : le PDF sera
-                conservé sur sa fiche et l’analyse des garanties sera lancée après la création.
+                le statut Actif ; aucun produit n’est ajouté tant que vous ne confirmez pas. Vous
+                pouvez aussi joindre les conditions générales ou le contrat de chaque produit : le
+                PDF sera conservé sur sa fiche et l’analyse des garanties sera lancée après la
+                création.
               </p>
             </div>
           )}
