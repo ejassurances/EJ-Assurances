@@ -83,6 +83,16 @@ function PartenariatsTab({
 }
 
 export const Route = createFileRoute("/_authenticated/espace/compagnies/$id")({
+  head: () => ({
+    meta: [
+      { title: "Compagnie et barèmes — EJ Assurances" },
+      { name: "description", content: "Produits et barèmes datés de commission compagnie." },
+      { property: "og:title", content: "Compagnie et barèmes — EJ Assurances" },
+      { property: "og:description", content: "Produits et barèmes datés de commission compagnie." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: CompagnieDetail,
 });
 

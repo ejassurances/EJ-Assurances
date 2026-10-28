@@ -41,7 +41,7 @@ export function tauxDefautDevis(
   return {
     taux: Number(regle.taux_pourcentage ?? 0),
     montant_fixe: null,
-    base: regle.base_calcul === "economie_realisee" ? "economie_realisee" : "prime",
+    base: "prime",
     source,
   };
 }

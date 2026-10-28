@@ -40,6 +40,22 @@ import {
 } from "@tabler/icons-react";
 
 export const Route = createFileRoute("/_authenticated/espace/dossiers/")({
+  head: () => ({
+    meta: [
+      { title: "Dossiers — EJ Assurances" },
+      {
+        name: "description",
+        content: "Dossiers de souscription et import vérifié des documents du prêt.",
+      },
+      { property: "og:title", content: "Dossiers — EJ Assurances" },
+      {
+        property: "og:description",
+        content: "Dossiers de souscription et import vérifié des documents du prêt.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: DossiersList,
 });
 
@@ -371,19 +387,17 @@ export function NewDossierForm({
         }
         const lecture = lecturesPret.find((l) => l.nature === offreNatures[index]);
         if (lecture) {
-          const audit = await supabase
-            .from("doc_extractions")
-            .insert({
-              document_id: doc.id,
-              type_document: lecture.nature,
-              statut: "valide_humain",
-              confidence_score: lecture.confiance,
-              extracted_data: {
-                valeurs_lues: lecture.valeurs,
-                valeurs_confirmees: valeursPret,
-                source: lecture.source,
-              } as never,
-            });
+          const audit = await supabase.from("doc_extractions").insert({
+            document_id: doc.id,
+            type_document: lecture.nature,
+            statut: "valide_humain",
+            confidence_score: lecture.confiance,
+            extracted_data: {
+              valeurs_lues: lecture.valeurs,
+              valeurs_confirmees: valeursPret,
+              source: lecture.source,
+            } as never,
+          });
           if (audit.error)
             toast.error("Document archivé, provenance non enregistrée : à vérifier.");
         }

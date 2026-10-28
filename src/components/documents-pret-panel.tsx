@@ -75,7 +75,7 @@ export function DocumentsPretPanel({
   filtre = "pret",
   typeDocument = "offre_pret",
   onAnalyse,
-  analyseAutorisee = true,
+  analyseAutorisee = false,
 }: {
   dossierId: string;
   analyseAutorisee?: boolean;
@@ -156,7 +156,7 @@ export function DocumentsPretPanel({
     setBusy(true);
     setError(null);
     try {
-      const safeName = file.name.replace(/[^\w.\-]+/g, "_").slice(0, 120);
+      const safeName = file.name.replace(/[^\w.-]+/g, "_").slice(0, 120);
       // Ce document appartient au dossier : la RLS Storage attend dossierId en premier segment.
       const path = `${dossierId}/${Date.now()}-${safeName}`;
       const { error: upErr } = await supabase.storage

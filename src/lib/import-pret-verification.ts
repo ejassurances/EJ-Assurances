@@ -28,17 +28,33 @@ export type LecturePret = {
 
 export function filtrerValeursPret(brut: Record<string, unknown>): LecturePret["valeurs"] {
   const valeurs: LecturePret["valeurs"] = {};
-  const nombres = new Set(["montant_capital", "duree_mois", "taux_nominal", "mensualite", "taux_assurance", "cotisation_assurance_mensuelle", "cout_assurance_total", "capital_restant_du", "cout_total_pret"]);
+  const nombres = new Set([
+    "montant_capital",
+    "duree_mois",
+    "taux_nominal",
+    "mensualite",
+    "taux_assurance",
+    "cotisation_assurance_mensuelle",
+    "cout_assurance_total",
+    "capital_restant_du",
+    "cout_total_pret",
+  ]);
   for (const cle of Object.keys(CHAMPS_IMPORT_PRET) as ChampImportPret[]) {
     const v = brut[cle];
     if (nombres.has(cle)) {
       if (v == null || v === "") continue;
       const n = typeof v === "number" ? v : Number(String(v).replace(/\s/g, "").replace(",", "."));
-      if (Number.isFinite(n) && n >= 0 && (cle !== "duree_mois" || Number.isInteger(n))) valeurs[cle] = n;
+      if (Number.isFinite(n) && n >= 0 && (cle !== "duree_mois" || Number.isInteger(n)))
+        valeurs[cle] = n;
     } else if (typeof v === "string" && v.trim()) {
       const s = v.trim();
       if (cle.startsWith("date_")) {
-        if (/^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s)) && new Date(s).toISOString().slice(0, 10) === s) valeurs[cle] = s;
+        if (
+          /^\d{4}-\d{2}-\d{2}$/.test(s) &&
+          !Number.isNaN(Date.parse(s)) &&
+          new Date(s).toISOString().slice(0, 10) === s
+        )
+          valeurs[cle] = s;
       } else valeurs[cle] = s.slice(0, 200);
     }
   }

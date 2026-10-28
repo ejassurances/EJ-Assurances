@@ -92,12 +92,7 @@ export function calculerCommission(
       : null;
   if (regle.taux_pourcentage == null || !Number.isFinite(Number(regle.taux_pourcentage)))
     return null;
-  const assiette =
-    regle.base_calcul === "economie_realisee"
-      ? bases.economie
-      : regle.assiette_mensuelle
-        ? (bases.primeMensuelle ?? null)
-        : bases.prime;
+  const assiette = regle.assiette_mensuelle ? (bases.primeMensuelle ?? null) : bases.prime;
   if (assiette == null || !Number.isFinite(Number(assiette))) return null;
   return (Number(assiette) * Number(regle.taux_pourcentage ?? 0)) / 100;
 }
