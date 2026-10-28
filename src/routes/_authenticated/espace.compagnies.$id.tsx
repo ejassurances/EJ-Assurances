@@ -1108,11 +1108,7 @@ function ProduitsTab({
                   onClick={importerProduitsCatalogue}
                   disabled={
                     importCatalogueEnCours ||
-                    !produitsCatalogue.some(
-                      (produit) =>
-                        produit.inclure &&
-                        (!produit.existeDeja || Boolean(produit.documentReference)),
-                    ) ||
+                    !produitsCatalogue.some((produit) => produit.inclure) ||
                     produitsCatalogue.some(
                       (produit) =>
                         produit.inclure &&
@@ -1201,9 +1197,10 @@ function ProduitsTab({
                       )}
                       {produit.existeDeja && (
                         <p className="text-xs text-amber-700">
-                          Produit déjà présent : les informations extraites du catalogue complèteront
-                          les champs vides de cette fiche, sans créer de doublon. Le PDF individuel
-                          est facultatif et sert à lancer l’analyse des garanties.
+                          Produit déjà présent : cochez-le puis cliquez sur « Créer les produits et compléter les fiches »
+                          pour remplir ses champs vides depuis le catalogue, sans créer de doublon.
+                          Le PDF individuel est facultatif ; s’il est ajouté, il servira aussi à extraire
+                          les informations du contrat et à analyser les garanties.
                         </p>
                       )}
                     </div>
