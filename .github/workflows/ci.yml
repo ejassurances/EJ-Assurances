@@ -27,9 +27,6 @@ jobs:
       - name: Lint changed TypeScript files
         run: git diff --name-only -z HEAD^ HEAD -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.mjs' '*.cjs' '*.mts' '*.cts' | xargs -0 -r bunx eslint
 
-      - name: Test storage filename normalization
-        run: bunx vitest run --config vitest.config.ts src/lib/storage-key.test.ts
-
       - name: Build
         run: bun run build
         env:

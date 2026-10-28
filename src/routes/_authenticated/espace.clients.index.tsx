@@ -20,6 +20,7 @@ import { useScoresValeur } from "@/hooks/use-scores-valeur";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { IconUsers, IconUserCheck, IconShieldCheck, IconUserPlus } from "@tabler/icons-react";
+import { ImportPortefeuilleForm } from "@/components/import-portefeuille-form";
 
 
 
@@ -74,6 +75,7 @@ function ClientsList() {
   const [statutFilter, setStatutFilter] = useState<string>("");
   const [marqueFilter, setMarqueFilter] = useState<string>("");
   const [showForm, setShowForm] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const canCreate = role === "admin" || role === "mandataire" || role === "prescripteur";
   const canDelete = role === "admin";
 
@@ -123,7 +125,21 @@ function ClientsList() {
         {canCreate && <LcbRattrapageButton onDone={load} />}
         {canCreate && (
           <button
-            onClick={() => setShowForm((v) => !v)}
+            onClick={() => {
+              setShowImport((v) => !v);
+              setShowForm(false);
+            }}
+            className="rounded-full border border-[#D4AF37] px-4 py-2 text-sm font-semibold transition hover:brightness-95"
+          >
+            {showImport ? "Annuler" : "Client déjà en portefeuille"}
+          </button>
+        )}
+        {canCreate && (
+          <button
+            onClick={() => {
+              setShowForm((v) => !v);
+              setShowImport(false);
+            }}
             className="rounded-full bg-[#D4AF37] px-4 py-2 text-sm font-semibold text-[#0A192F] transition hover:brightness-95"
           >
             {showForm ? "Annuler" : "Nouveau client"}
@@ -137,6 +153,15 @@ function ClientsList() {
         <StatCard label="Prospects" value={prospects} icon={IconUserPlus} />
         <StatCard label="LCB-FT évalués" value={evalues} icon={IconShieldCheck} />
       </div>
+
+      {showImport && canCreate && (
+        <ImportPortefeuilleForm
+          onDone={(id) => {
+            setShowImport(false);
+            navigate({ to: "/espace/clients/$id", params: { id } });
+          }}
+        />
+      )}
 
       {showForm && canCreate && (
         <NewClientForm
@@ -312,11 +337,6 @@ function NewClientForm({
 }) {
   const creerClient = useServerFn(creerClientManuel);
   const [saving, setSaving] = useState(false);
-  const [mode, setMode] = useState<"choix" | "nouveau" | "existant">("choix");
-  const [rechercheClient, setRechercheClient] = useState("");
-  const [clientsExistants, setClientsExistants] = useState<ClientRow[]>([]);
-  const [rechercheEnCours, setRechercheEnCours] = useState(false);
-  const [rechercheEffectuee, setRechercheEffectuee] = useState(false);
   const [candidatDoublon, setCandidatDoublon] = useState<ClientCandidatCreationManuelle | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -335,31 +355,6 @@ function NewClientForm({
     setForm((courant) => ({ ...courant, ...patch }));
     setCandidatDoublon(null);
     setErreur(null);
-  };
-
-  const rechercherClientExistant = async () => {
-    const terme = rechercheClient.trim();
-    if (terme.length < 2 || rechercheEnCours) return;
-    setRechercheEnCours(true);
-    setRechercheEffectuee(false);
-    setErreur(null);
-    try {
-      const motif = `%${terme.replace(/[,%()]/g, " ")}%`;
-      const { data, error: erreurRecherche } = await supabase
-        .from("clients")
-        .select("id,reference,civilite,prenom,nom,email,mobile,ville,statut,origine,marque,besoins,conformite_score,conformite_niveau,created_at,client_risque_lcbft(score_risque,niveau_vigilance)")
-        .not("etiquettes", "cs", '{"non-client"}')
-        .or(`nom.ilike.${motif},prenom.ilike.${motif},email.ilike.${motif},mobile.ilike.${motif},reference.ilike.${motif}`)
-        .order("created_at", { ascending: false })
-        .limit(20);
-      if (erreurRecherche) throw erreurRecherche;
-      setClientsExistants((data ?? []) as ClientRow[]);
-      setRechercheEffectuee(true);
-    } catch (err) {
-      setErreur(err instanceof Error ? err.message : "Recherche des clients impossible.");
-    } finally {
-      setRechercheEnCours(false);
-    }
   };
 
   const submit = async (e?: React.FormEvent, confirmerDoublonId: string | null = null) => {
@@ -403,94 +398,7 @@ function NewClientForm({
 
 
   return (
-    <form
-      onSubmit={(e) => {
-        if (mode !== "nouveau") {
-          e.preventDefault();
-          return;
-        }
-        void submit(e);
-      }}
-      className="mt-6 grid gap-3 rounded-2xl border border-line bg-surface-elevated p-5 sm:grid-cols-3"
-    >
-      {mode === "choix" && (
-        <section className="sm:col-span-3">
-          <h2 className="text-lg font-semibold text-ink">Quel type de client souhaitez-vous ouvrir ?</h2>
-          <p className="mt-1 text-sm text-ink-muted">Choisissez si vous créez une nouvelle fiche ou si le client figure déjà dans le portefeuille.</p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <button
-              type="button"
-              onClick={() => setMode("nouveau")}
-              className="rounded-xl border border-line p-4 text-left transition hover:border-[#D4AF37] hover:bg-background"
-            >
-              <span className="block font-semibold text-ink">Nouveau client</span>
-              <span className="mt-1 block text-sm text-ink-muted">Créer une fiche client dans le CRM.</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode("existant")}
-              className="rounded-xl border border-line p-4 text-left transition hover:border-[#D4AF37] hover:bg-background"
-            >
-              <span className="block font-semibold text-ink">Client déjà en portefeuille</span>
-              <span className="mt-1 block text-sm text-ink-muted">Rechercher une fiche existante et l’ouvrir sans créer de doublon.</span>
-            </button>
-          </div>
-        </section>
-      )}
-
-      {mode === "existant" && (
-        <section className="sm:col-span-3 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-lg font-semibold text-ink">Rechercher un client du portefeuille</h2>
-            <button type="button" onClick={() => setMode("choix")} className="text-sm text-ink-muted underline">Retour au choix</button>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <input
-              value={rechercheClient}
-              onChange={(e) => setRechercheClient(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void rechercherClientExistant(); } }}
-              placeholder="Nom, prénom, email, téléphone ou référence"
-              className="min-w-0 flex-1 rounded-md border border-line bg-background px-3 py-2 text-sm"
-            />
-            <button
-              type="button"
-              onClick={() => void rechercherClientExistant()}
-              disabled={rechercheEnCours || rechercheClient.trim().length < 2}
-              className="rounded-full bg-[#0A192F] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-            >
-              {rechercheEnCours ? "Recherche…" : "Rechercher"}
-            </button>
-          </div>
-          {rechercheEffectuee && clientsExistants.length === 0 && (
-            <p className="rounded-lg border border-line p-3 text-sm text-ink-muted">Aucun client trouvé. Vérifiez la recherche ou choisissez « Nouveau client » si aucune fiche n’existe.</p>
-          )}
-          {clientsExistants.length > 0 && (
-            <div className="divide-y divide-line rounded-xl border border-line">
-              {clientsExistants.map((client) => (
-                <button
-                  key={client.id}
-                  type="button"
-                  onClick={() => onOpenExisting(client.id)}
-                  className="flex w-full flex-col gap-1 p-3 text-left transition hover:bg-background sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <span>
-                    <span className="block font-medium text-ink">{[client.civilite, client.prenom, client.nom].filter(Boolean).join(" ")}</span>
-                    <span className="block text-xs text-ink-muted">{[client.reference, client.email, client.mobile, client.ville].filter(Boolean).join(" · ")}</span>
-                  </span>
-                  <span className="text-xs font-semibold text-ink-soft">Ouvrir la fiche →</span>
-                </button>
-              ))}
-            </div>
-          )}
-          {erreur && <p role="alert" className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900">{erreur}</p>}
-        </section>
-      )}
-
-      {mode === "nouveau" && (
-        <>
-      <div className="sm:col-span-3 flex justify-end">
-        <button type="button" onClick={() => setMode("choix")} className="text-sm text-ink-muted underline">Retour au choix</button>
-      </div>
+    <form onSubmit={submit} className="mt-6 grid gap-3 rounded-2xl border border-line bg-surface-elevated p-5 sm:grid-cols-3">
       <select
         value={form.civilite}
         onChange={(e) => modifierFormulaire({ civilite: e.target.value })}
@@ -616,8 +524,6 @@ function NewClientForm({
             {saving ? "Création…" : "Créer la fiche"}
           </button>
         </div>
-      )}
-        </>
       )}
     </form>
   );
