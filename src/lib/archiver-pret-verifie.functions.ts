@@ -65,8 +65,16 @@ export const confirmerPretDossier = createServerFn({ method: "POST" })
       .from("dossiers")
       .update({
         recueil_besoins: recueil as never,
-        capital: dossier.capital ?? (Number(recueil["capital"]) || null),
-        duree_mois: dossier.duree_mois ?? (Number(recueil["duree_mois"]) || null),
+        capital:
+          Number(recueil["capital"]) > 0
+            ? Number(recueil["capital"])
+            : dossier.capital,
+        duree_mois:
+          Number.isInteger(Number(recueil["duree_mois"])) &&
+          Number(recueil["duree_mois"]) > 0 &&
+          Number(recueil["duree_mois"]) <= 600
+            ? Number(recueil["duree_mois"])
+            : dossier.duree_mois,
         analyse_ia: {
           ...audit,
           imports_pret_verifies: [
