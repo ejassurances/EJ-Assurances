@@ -33,7 +33,9 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
 
     const cle = process.env["GEMINI_API_KEY"];
     if (!cle) {
-      throw new Error("La configuration serveur GEMINI_API_KEY est absente du Worker Cloudflare utilisé par le CRM.");
+      throw new Error(
+        "La configuration serveur GEMINI_API_KEY est absente du Worker Cloudflare utilisé par le CRM.",
+      );
     }
 
     const consigne =
@@ -71,7 +73,9 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
       });
     } catch (error) {
       console.error("[import portefeuille] échec réseau Gemini", error);
-      throw new Error("Le service IA n'a pas répondu. Réessayez dans quelques instants avec la même attestation.");
+      throw new Error(
+        "Le service IA n'a pas répondu. Réessayez dans quelques instants avec la même attestation.",
+      );
     }
 
     if (!response.ok) {
@@ -93,7 +97,9 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
         diagnostic,
       );
       if (response.status === 524 || response.status === 503 || response.status === 504) {
-        throw new Error("L'analyse de l'attestation a dépassé le délai du service IA. Réessayez dans quelques instants ; aucune fiche client n'a été créée par cette étape.");
+        throw new Error(
+          "L'analyse de l'attestation a dépassé le délai du service IA. Réessayez dans quelques instants ; aucune fiche client n'a été créée par cette étape.",
+        );
       }
       throw new Error(
         diagnostic
@@ -103,7 +109,11 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
     }
 
     const payload = (await response.json()) as {
-      outputs?: Array<{ type?: string; text?: string; content?: Array<{ type?: string; text?: string }> }>;
+      outputs?: Array<{
+        type?: string;
+        text?: string;
+        content?: Array<{ type?: string; text?: string }>;
+      }>;
       output_text?: string;
       status?: string;
     };
@@ -120,8 +130,13 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
       "";
     const json = texte.match(/\\{[\\s\\S]*\\}/)?.[0];
     if (!json) {
-      console.error("[import portefeuille] réponse Gemini sans JSON exploitable", payload.status ?? "statut inconnu");
-      throw new Error("L'attestation n'a pas pu être lue automatiquement. Vous pouvez saisir les informations manuellement.");
+      console.error(
+        "[import portefeuille] réponse Gemini sans JSON exploitable",
+        payload.status ?? "statut inconnu",
+      );
+      throw new Error(
+        "L'attestation n'a pas pu être lue automatiquement. Vous pouvez saisir les informations manuellement.",
+      );
     }
 
     const brut = JSON.parse(json) as Record<string, unknown>;
