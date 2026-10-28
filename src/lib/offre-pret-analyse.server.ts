@@ -53,10 +53,16 @@ const CHAMPS_PRET = [
     "date_edition_document",
     "date d'édition / d'établissement du document (offre de prêt, tableau d'amortissement) AAAA-MM-JJ",
   ],
+  ["capital_restant_du", "capital restant dû explicitement écrit, en euros"],
+  ["date_capital_restant_du", "date associée au capital restant dû, AAAA-MM-JJ"],
+  ["date_fin_pret", "date de fin du prêt écrite, AAAA-MM-JJ"],
+  ["cout_total_pret", "coût total du prêt explicitement écrit, euros"],
   ["objet_pret", "objet du financement tel qu'écrit (résidence principale, locatif…)"],
 ] as const;
 
 const NOMBRES = new Set([
+  "capital_restant_du",
+  "cout_total_pret",
   "montant_capital",
   "taux_nominal",
   "duree_mois",
@@ -83,7 +89,7 @@ function prompt(): string {
     "",
     "Emprunteurs : pour chaque personne empruntrice nommée dans le document, relève",
     "prenom, nom, date_naissance (AAAA-MM-JJ), quotite_pct (quotité assurée en %, nombre),",
-    "csp (profession écrite), fumeur (true/false seulement si écrit, sinon null),",
+    "csp (profession écrite), fumeur toujours null : ne pas extraire de données de santé ou tabagisme,",
     "email, telephone. Toute valeur non écrite vaut null.",
     "",
     "Où chercher ces informations (parcours TOUTES les pages, y compris les annexes) :",
@@ -167,7 +173,7 @@ function normaliserEmprunteurs(brut: unknown): EmprunteurDetecte[] {
       date_naissance: dateIsoOuNull(o["date_naissance"]) ?? "",
       quotite_pct: nombreOuNull(o["quotite_pct"]),
       csp: csp && !NON_CSP.test(csp) ? csp : "",
-      fumeur: typeof o["fumeur"] === "boolean" ? (o["fumeur"] as boolean) : null,
+      fumeur: null,
       email: texteOuNull(o["email"]),
       telephone: texteOuNull(o["telephone"]),
     });
@@ -234,7 +240,7 @@ export async function analyserOffrePretFichier(fichier: {
       }
       const s = texteOuNull(v);
       if (!s) continue;
-      if (nom === "date_premiere_echeance" || nom === "date_edition_document") {
+      if (nom.startsWith("date_")) {
         const iso = dateIsoOuNull(s);
         if (iso) pret[nom] = iso;
         continue;

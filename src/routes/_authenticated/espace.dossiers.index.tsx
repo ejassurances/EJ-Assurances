@@ -4,11 +4,14 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { declencherLettreMissionAuto } from "@/lib/lettres-mission.functions";
 import {
-  analyserOffrePretCreation,
   creerFichesEmprunteurs,
   type EmprunteurPropose,
 } from "@/lib/offre-pret-creation.functions";
 
+import { ImportPretVerifie } from "@/components/import-pret-verifie";
+import { normaliserNomFichierPourStockage } from "@/lib/storage-key";
+import type { LecturePret } from "@/lib/import-pret-verification";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { estimerEconomie } from "@/lib/insurance-rates";
 import { CompagnieProduitPicker } from "@/components/compagnie-produit-picker";
@@ -253,12 +256,12 @@ export function NewDossierForm({
   const [offreFiles, setOffreFiles] = useState<File[]>([]);
   /** Destinataire de chaque document déposé : index de l'emprunteur, -1 = prêt commun. */
   const [offreCibles, setOffreCibles] = useState<number[]>([]);
-  const [analyseEtat, setAnalyseEtat] = useState<string | null>(null);
-  const [analysing, setAnalysing] = useState(false);
+  const [offreNatures, setOffreNatures] = useState<LecturePret["nature"][]>([]);
+  const [lecturesPret, setLecturesPret] = useState<LecturePret[]>([]);
+  const [valeursPret, setValeursPret] = useState<LecturePret["valeurs"]>({});
   const [emprunteurs, setEmprunteurs] = useState<EmprunteurPropose[]>([]);
 
   const lancerLettreMission = useServerFn(declencherLettreMissionAuto);
-  const analyserOffre = useServerFn(analyserOffrePretCreation);
   const creerFiches = useServerFn(creerFichesEmprunteurs);
 
 
@@ -296,91 +299,6 @@ export function NewDossierForm({
 
   const branche = type ? getBranche(type) : undefined;
 
-  /** Lit un fichier en base64 (sans le préfixe data:). */
-  const enBase64 = (file: File) =>
-    new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const s = String(reader.result ?? "");
-        resolve(s.includes(",") ? s.slice(s.indexOf(",") + 1) : s);
-      };
-      reader.onerror = () => reject(new Error("Lecture du fichier impossible"));
-      reader.readAsDataURL(file);
-    });
-
-  /**
-   * Analyse IA de l'offre de prêt / du tableau d'amortissement déposé avant
-   * création : les données du prêt et les emprunteurs sont reportés dans le
-   * formulaire, sans jamais écraser une valeur déjà saisie.
-   */
-  const analyserOffreDeposee = async (files: File[]) => {
-    setOffreFiles((prev) => [...prev, ...files]);
-    setOffreCibles((prev) => [...prev, ...files.map(() => -1)]);
-    if (files.length === 0) return;
-
-    setAnalysing(true);
-    setAnalyseEtat("Lecture du document par l'IA…");
-    try {
-      const fichiers = await Promise.all(
-        files.map(async (f) => ({
-          nom: f.name.slice(0, 200),
-          mime: f.type || "application/pdf",
-          contenu_base64: await enBase64(f),
-        })),
-      );
-      const res = await analyserOffre({ data: { fichiers } });
-      const extrait = JSON.parse(res.recueil_json) as Record<string, unknown>;
-      setRecueil((r) => {
-        const fusion: Record<string, unknown> = { ...r };
-        for (const [k, v] of Object.entries(extrait)) {
-          const actuel = fusion[k];
-          const vide = actuel === undefined || actuel === null || actuel === "" || (Array.isArray(actuel) && actuel.length === 0);
-          if (vide) fusion[k] = v;
-        }
-        return fusion;
-      });
-      // Les documents importés font foi : ils complètent et corrigent la saisie
-      // manuelle, sans supprimer un emprunteur ajouté à la main.
-      setEmprunteurs((prev) => {
-        const cle = (x: { nom: string; prenom: string }) => `${x.nom} ${x.prenom}`.trim().toLowerCase();
-        const out = prev.filter((e) => e.nom.trim() !== "");
-        for (const e of res.emprunteurs) {
-          const i = out.findIndex((x) => cle(x) === cle(e));
-          const existant = out[i];
-          if (existant) out[i] = { ...existant, ...e, client_id: e.client_id ?? existant.client_id };
-          else out.push(e);
-        }
-        return out;
-      });
-
-      const principal = res.emprunteurs[0];
-      if (principal) {
-        if (!clientId) {
-          if (principal.client_id) setClientId(principal.client_id);
-          setClientNom([principal.prenom, principal.nom].filter(Boolean).join(" ").trim());
-          if (principal.email) setClientEmail(principal.email);
-          if (principal.telephone) setClientPhone(principal.telephone);
-        }
-      }
-      const nouveaux = res.emprunteurs.filter((e) => !e.client_id).length;
-      setAnalyseEtat(
-        [
-          res.ajouts.length > 0 ? `Données du prêt reportées : ${res.ajouts.join(", ")}.` : "Aucune donnée de prêt exploitable détectée.",
-          res.emprunteurs.length > 0
-            ? `${res.emprunteurs.length} emprunteur(s) détecté(s)${nouveaux > 0 ? `, dont ${nouveaux} sans fiche client (créée à l'enregistrement)` : ", tous rapprochés d'une fiche existante"}.`
-            : "Aucun emprunteur nommé détecté : saisie manuelle.",
-          res.manquants.length > 0 ? `À compléter : ${res.manquants.join(", ")}.` : "",
-          res.erreurs.length > 0 ? `Documents non exploités : ${res.erreurs.join(" ; ")}` : "",
-        ]
-          .filter(Boolean)
-          .join(" "),
-      );
-    } catch (e) {
-      setAnalyseEtat(`Analyse IA indisponible : ${e instanceof Error ? e.message : "erreur"} — saisie manuelle.`);
-    }
-    setAnalysing(false);
-  };
-
   /**
    * Archive les documents déposés sur le dossier créé et coche la pièce requise.
    * `idsAssures` donne la fiche client de chaque emprunteur : un document affecté
@@ -395,13 +313,13 @@ export function NewDossierForm({
       const cible = offreCibles[index] ?? -1;
       const clientDoc = (cible >= 0 ? idsAssures[cible] : null) ?? clientDossierId;
       try {
-        const safeName = file.name.replace(/[^\w.-]+/g, "_").slice(0, 120);
-        const path = `${clientDoc ?? dossierId}/${Date.now()}-${safeName}`;
+        const safeName = normaliserNomFichierPourStockage(file.name);
+        const path = `${dossierId}/pret/${crypto.randomUUID()}-${safeName}`;
         const { error: upErr } = await supabase.storage
           .from("dossier-documents")
-          .upload(path, file, { upsert: true });
+          .upload(path, file, { upsert: false });
         if (upErr) throw upErr;
-        const { data: doc } = await supabase
+        const { data: doc, error: docError } = await supabase
           .from("documents")
           .insert({
             dossier_id: dossierId,
@@ -413,19 +331,29 @@ export function NewDossierForm({
             file_size: file.size,
             mime_type: file.type || null,
             categorie: "dossier",
-            type_document: "offre_pret",
+            type_document: offreNatures[index] ?? "offre_pret",
           })
           .select("id")
           .maybeSingle();
+        if (docError || !doc) {
+          const cleanup = await supabase.storage.from("dossier-documents").remove([path]);
+          if (cleanup.error) toast.error("Archivage échoué ; nettoyage du fichier à vérifier.");
+          throw new Error(docError?.message ?? "Document non enregistré");
+        }
+        const lecture = lecturesPret.find(l => l.nature === offreNatures[index]);
+        if (lecture) {
+          const audit = await supabase.from("doc_extractions").insert({ document_id: doc.id, type_document: lecture.nature, statut: "valide_humain", confidence_score: lecture.confiance, extracted_data: { valeurs_lues: lecture.valeurs, valeurs_confirmees: valeursPret, source: lecture.source } as never });
+          if (audit.error) toast.error("Document archivé, provenance non enregistrée : à vérifier.");
+        }
         if (doc?.id) {
           await supabase
             .from("dossier_pieces_requises")
             .update({ statut: "recue", recue_le: new Date().toISOString(), document_id: doc.id })
             .eq("dossier_id", dossierId)
-            .in("code", ["offre_pret", "tableau_amortissement"]);
+            .eq("code", offreNatures[index] ?? "offre_pret");
         }
       } catch (e) {
-        console.error("[offre de prêt] archivage impossible", e);
+        toast.error(`Dossier créé, archivage partiel : ${file.name}. ${e instanceof Error ? e.message : "Erreur"}`);
       }
     }
   };
@@ -513,7 +441,7 @@ export function NewDossierForm({
         if (assures.length > 0) {
           recueilFinal = {
             ...recueilFinal,
-            assures: assures.map((a, i) => (ids[i] ? { ...a, client_id: ids[i]!.client_id } : a)),
+            assures: assures.map((a, i) => (ids[i] ? { ...a, client_id: ids[i]?.client_id } : a)),
           };
         }
       } catch (e) {
@@ -615,6 +543,13 @@ export function NewDossierForm({
 
         {type === "emprunteur" ? (
           <>
+            <ImportPretVerifie onConfirm={(appliquer, pieces, lectures, valeurs) => {
+              setRecueil(appliquer);
+              setOffreFiles(pieces.map(p => p.file));
+              setOffreNatures(pieces.map(p => p.nature));
+              setOffreCibles(pieces.map(() => -1));
+              setLecturesPret(lectures); setValeursPret(valeurs);
+            }} />
             {/* Un dossier = un prêt : Monsieur et Madame figurent dans le même dossier. */}
             <div className="mt-6 rounded-2xl border border-line bg-background/40 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -712,62 +647,7 @@ export function NewDossierForm({
               )}
             </div>
 
-            <div className="mt-4 rounded-2xl border border-line bg-background/40 p-4">
-              <p className="text-sm font-medium text-ink">Offre de prêt ou tableau d'amortissement (facultatif)</p>
-              <p className="mt-1 text-xs text-ink-muted">
-                Déposez le document : les caractéristiques du prêt et les emprunteurs sont relevés automatiquement. Les
-                informations lues dans le document font foi et corrigent la saisie.
-              </p>
-              <input
-                type="file"
-                multiple
-                accept="application/pdf,image/*"
-                disabled={analysing}
-                onChange={(e) => {
-                  const files = Array.from(e.target.files ?? []);
-                  if (files.length > 0) void analyserOffreDeposee(files);
-                  e.target.value = "";
-                }}
-                className="mt-3 block w-full text-sm"
-              />
-              {offreFiles.length > 0 ? (
-                <ul className="mt-3 space-y-2 text-xs text-ink">
-                  {offreFiles.map((f, i) => (
-                    <li key={`${f.name}-${i}`} className="flex flex-wrap items-center gap-2">
-                      <span className="flex-1 truncate">{f.name}</span>
-                      <label className="flex items-center gap-1 text-ink-muted">
-                        Concerne
-                        <select
-                          value={String(offreCibles[i] ?? -1)}
-                          onChange={(ev) =>
-                            setOffreCibles((prev) => prev.map((c, j) => (j === i ? Number(ev.target.value) : c)))
-                          }
-                          className="rounded-md border border-line bg-background px-2 py-1 text-xs"
-                        >
-                          <option value="-1">Le prêt (commun)</option>
-                          {emprunteurs.map((e, j) => (
-                            <option key={`cible-${j}`} value={String(j)}>
-                              {[e.prenom, e.nom].filter(Boolean).join(" ") || `Emprunteur ${j + 1}`}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setOffreFiles((prev) => prev.filter((_, j) => j !== i));
-                          setOffreCibles((prev) => prev.filter((_, j) => j !== i));
-                        }}
-                        className="text-destructive hover:underline"
-                      >
-                        Retirer
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-              {analyseEtat ? <p className="mt-3 text-xs text-ink">{analyseEtat}</p> : null}
-            </div>
+
           </>
         ) : null}
 
