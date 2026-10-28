@@ -201,7 +201,7 @@ const verificationSchema = z.object({
 const normaliserComparaison = (value: unknown): string =>
   String(value ?? "")
     .normalize("NFD")
-    .replace(/[\\u0300-\\u036f]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
@@ -257,7 +257,7 @@ export const verifierContratImportPortefeuille = createServerFn({ method: "POST"
       const { data: parNumero, error } = await supabaseAdmin
         .from("contrats")
         .select(selection)
-        .ilike("numero", numero)
+        .eq("numero", numero)
         .limit(10);
       if (error) throw new Error(`Recherche du numéro de contrat impossible : ${error.message}`);
       candidats = (parNumero ?? []) as unknown as LigneContrat[];
@@ -287,9 +287,7 @@ export const verifierContratImportPortefeuille = createServerFn({ method: "POST"
           const assureurCorrespond =
             !assureurImport ||
             normaliserComparaison(contrat.assureur) === assureurImport;
-          const dateEffetCorrespond =
-            !data.date_effet || !contrat.date_effet || contrat.date_effet === data.date_effet;
-          return assureurCorrespond && dateEffetCorrespond;
+          return assureurCorrespond;
         });
       }
     }
@@ -298,7 +296,7 @@ export const verifierContratImportPortefeuille = createServerFn({ method: "POST"
       found: candidats.length > 0,
       criterion: critere,
       matches: candidats.slice(0, 5).map((contrat) => {
-        const differences: typeof champs = [];
+        const differences: Array<{ key: string; label: string; imported: string; existing: string }> = [];
         const addDifference = (key: string, label: string, imported: string | null | undefined, existing: string | null | undefined) => {
           if (!imported?.trim() || !existing?.trim()) return;
           if (normaliserComparaison(imported) !== normaliserComparaison(existing)) {
