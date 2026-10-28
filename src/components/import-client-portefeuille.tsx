@@ -5,6 +5,7 @@ import { creerClientDossierRapide } from "@/lib/creation-rapide-client-dossier.f
 import {
   archiverPieceImportPortefeuille,
   extraireAttestationPortefeuille,
+  verifierContratImportPortefeuille,
 } from "@/lib/import-portefeuille.functions";
 import { BRANCHES_CREATION } from "@/lib/recueil-besoins-schemas";
 import { piecesRequisesPour } from "@/lib/pieces-requises";
@@ -52,6 +53,7 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
   const creerDossier = useServerFn(creerClientDossierRapide);
   const extraire = useServerFn(extraireAttestationPortefeuille);
   const archiverPiece = useServerFn(archiverPieceImportPortefeuille);
+  const verifierContrat = useServerFn(verifierContratImportPortefeuille);
   const [attestation, setAttestation] = useState<File | null>(null);
   const [donnees, setDonnees] = useState<Donnees>(VIDE);
   const [typeAssurance, setTypeAssurance] = useState("");
@@ -65,6 +67,7 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
   const [erreur, setErreur] = useState("");
   const [message, setMessage] = useState("");
   const [dossierCree, setDossierCree] = useState<string | null>(null);
+  const [contratsExistants, setContratsExistants] = useState<any[] | null>(null);
   const [doublon, setDoublon] = useState<{
     client_id: string;
     nom: string;
@@ -118,8 +121,8 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
       const brancheExtraite = resultat.type_assurance ?? "";
       setTypeAssurance(brancheExtraite);
       if (donneesExtraites.nom.trim() && brancheExtraite) {
-        setMessage("Attestation lue. Création automatique du client et du dossier…");
-        await lancerCreation(null, donneesExtraites, brancheExtraite, file);
+        setMessage("Attestation lue. Vérification du contrat dans le CRM…");
+        await preparerCreation(donneesExtraites, brancheExtraite, file);
       } else {
         setMessage(
           "Lecture terminée. Le logiciel n’a pas pu identifier avec certitude le nom ou le type d’assurance. Complétez uniquement les informations manquantes puis lancez la création.",
@@ -193,6 +196,42 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
     return null;
   };
 
+  const preparerCreation = async (
+    donneesSource: Donnees = donnees,
+    typeSource: string = typeAssurance,
+    attestationSource: File | null = attestation,
+  ) => {
+    if (envoi || lecture) return;
+    if (!attestationSource || !donneesSource.nom.trim() || !typeSource) {
+      setErreur("L'attestation, le nom et le type d'assurance sont obligatoires.");
+      return;
+    }
+    setEnvoi(true);
+    setErreur("");
+    setContratsExistants(null);
+    try {
+      const verification = await verifierContrat({ data: {
+        nom: donneesSource.nom, prenom: donneesSource.prenom || null,
+        date_naissance: donneesSource.date_naissance || null, email: donneesSource.email || null,
+        mobile: donneesSource.mobile || null, telephone: donneesSource.telephone || null,
+        assureur: donneesSource.assureur || null, numero_contrat: donneesSource.numero_contrat || null,
+        date_effet: donneesSource.date_effet || null, date_echeance: donneesSource.date_echeance || null,
+        type_couverture: donneesSource.type_couverture || null,
+      }});
+      if (verification.found) {
+        setContratsExistants(verification.matches);
+        setDoublon(null);
+        setMessage("Un contrat correspondant a été trouvé dans le CRM. Vérifiez les différences avant de continuer.");
+        return;
+      }
+      setMessage("Aucun contrat correspondant trouvé. Création du client et du dossier…");
+      await lancerCreation(null, donneesSource, typeSource, attestationSource);
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : "Vérification du contrat impossible.");
+    } finally {
+      setEnvoi(false);
+    }
+  };
   const lancerCreation = async (
     confirmerClientId: string | null = null,
     donneesSource: Donnees = donnees,
@@ -457,6 +496,30 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
           {erreur}
         </p>
       )}
+      {contratsExistants && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
+          <h3 className="font-semibold">Contrat déjà présent ou correspondance probable</h3>
+          <p className="mt-1 text-sm">Le CRM a trouvé un ou plusieurs contrats correspondants. Aucun champ existant n’a été modifié. Comparez les valeurs avant de décider.</p>
+          <div className="mt-3 space-y-3">
+            {contratsExistants.map((contrat: any) => (
+              <div key={contrat.contrat_id} className="rounded-lg border border-amber-800/20 bg-white/70 p-3">
+                <p className="font-medium">{contrat.client_nom || "Client sans nom"} · {contrat.numero || "Sans numéro"}</p>
+                <p className="mt-1 text-sm">{contrat.assureur} · {contrat.produit}{contrat.date_effet ? " · Effet : " + contrat.date_effet : ""}{contrat.date_echeance ? " · Échéance : " + contrat.date_echeance : ""}</p>
+                {contrat.differences.length ? (
+                  <div className="mt-2"><p className="text-sm font-semibold">Différences détectées</p><ul className="mt-1 space-y-1 text-sm">
+                    {contrat.differences.map((difference: any) => <li key={difference.key}><span className="font-medium">{difference.label} :</span> CRM = {difference.existing} · Attestation = {difference.imported}</li>)}
+                  </ul></div>
+                ) : <p className="mt-2 text-sm">Aucune différence sur les champs comparables renseignés.</p>}
+                <button type="button" onClick={() => onCreated(contrat.client_id)} className="mt-3 rounded-full border border-amber-800/30 px-3 py-1.5 text-sm font-medium">Ouvrir la fiche client</button>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button type="button" disabled={envoi} onClick={() => { setContratsExistants(null); void lancerCreation(null); }} className="rounded-full bg-[#0A192F] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Continuer malgré le contrat existant</button>
+            <button type="button" disabled={envoi} onClick={() => setContratsExistants(null)} className="rounded-full border border-amber-800/30 px-4 py-2 text-sm font-medium">Annuler la création</button>
+          </div>
+        </div>
+      )}
       {doublon && (
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
           <h3 className="font-semibold">Une fiche client correspond peut-être déjà</h3>
@@ -503,7 +566,7 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
         <button
           type="button"
           disabled={envoi || lecture}
-          onClick={() => void lancerCreation()}
+          onClick={() => void preparerCreation()}
           className="rounded-full bg-[#0A192F] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
           {envoi
