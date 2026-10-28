@@ -63,3 +63,39 @@ export const lireDevisImporte = createServerFn({ method: "POST" })
 
     return { ...lu, compagnie_id: compagnieId, produit_id: produitId };
   });
+
+
+/** Marque comme référence la lecture du document après validation humaine du devis. */
+export const validerDevisImporte = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ dossier_id: z.string().uuid(), document_id: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: acces } = await context.supabase.rpc("can_access_dossier", {
+      _dossier_id: data.dossier_id,
+    });
+    if (acces !== true) throw new Error("Accès au dossier refusé.");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: lecture, error: lectureError } = await supabaseAdmin
+      .from("devis_import_lectures")
+      .select("id")
+      .eq("dossier_id", data.dossier_id)
+      .eq("document_id", data.document_id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (lectureError || !lecture) throw new Error("Lecture de référence introuvable pour ce document.");
+
+    const { error } = await supabaseAdmin
+      .from("devis_import_lectures")
+      .update({
+        statut: "validee",
+        validee_le: new Date().toISOString(),
+        validee_par: context.userId,
+      })
+      .eq("id", lecture.id);
+    if (error) throw new Error("Impossible de valider la lecture de référence.");
+    return { ok: true };
+  });
