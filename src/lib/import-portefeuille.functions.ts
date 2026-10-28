@@ -74,13 +74,26 @@ export const extraireAttestationPortefeuille = createServerFn({ method: "POST" }
 
     if (!response.ok) {
       const detail = await response.text().catch(() => "");
+      let diagnostic = "";
+      try {
+        const parsed = JSON.parse(detail) as {
+          error?: { message?: string };
+          message?: string;
+        };
+        diagnostic = parsed.error?.message ?? parsed.message ?? "";
+      } catch {
+        diagnostic = detail;
+      }
+      diagnostic = diagnostic.replace(/https?:\/\/\S+/g, "[lien]").slice(0, 240);
       console.error(
         "[import portefeuille] extraction IA indisponible",
         response.status,
-        detail.slice(0, 500),
+        diagnostic,
       );
       throw new Error(
-        "Lecture automatique impossible. Vous pouvez saisir les informations manuellement.",
+        diagnostic
+          ? `Le service de lecture du document a refusé l’attestation (HTTP ${response.status}) : ${diagnostic}`
+          : `Le service de lecture du document est indisponible (HTTP ${response.status}). Réessayez avec un PDF ou une image plus légère.`,
       );
     }
 
