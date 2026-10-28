@@ -196,7 +196,7 @@ export async function sendTemplateEmail(
             dossier_id: liens.dossier_id ?? null,
             contrat_id: liens.contrat_id ?? null,
             compagnie_id: liens.compagnie_id ?? null,
-            sujet,
+            sujet: subject,
             expediteur_nom: SITE_NAME,
             expediteur_email: FROM_EMAIL,
             notes: `Envoi automatique via Brevo — modèle ${templateName}${messageId ? ` — messageId Brevo ${messageId}` : ''}`,

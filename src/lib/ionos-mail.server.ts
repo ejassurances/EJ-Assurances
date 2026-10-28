@@ -4,6 +4,7 @@ import {
   createSocketsTransport,
   type FetchMessageObject,
   type MailboxObject,
+  type ListResponse,
   type SearchObject,
 } from "imapflow";
 import PostalMime from "postal-mime";
@@ -247,17 +248,17 @@ function dateIso(value: Date | string | undefined): string | null {
   return Number.isFinite(ts) ? new Date(ts).toISOString() : null;
 }
 
-async function boites(client: ImapFlow): Promise<MailboxObject[]> {
+async function boites(client: ImapFlow): Promise<ListResponse[]> {
   return (await client.list()).filter(
     (mailbox) => ![...mailbox.flags].some((flag) => flag.toLowerCase() === "\\noselect"),
   );
 }
 
 function boiteSpeciale(
-  mailboxes: MailboxObject[],
+  mailboxes: ListResponse[],
   specialUse: string,
   fallbackNames: string[],
-): MailboxObject | undefined {
+): ListResponse | undefined {
   const wanted = specialUse.toLowerCase();
   return (
     mailboxes.find((m) => m.specialUse?.toLowerCase() === wanted) ??
@@ -267,7 +268,7 @@ function boiteSpeciale(
   );
 }
 
-function boiteInbox(mailboxes: MailboxObject[]): MailboxObject {
+function boiteInbox(mailboxes: ListResponse[]): ListResponse {
   const inbox = boiteSpeciale(mailboxes, "\\inbox", ["inbox"]);
   if (!inbox) throw new Error("Boîte de réception IONOS introuvable.");
   return inbox;
@@ -276,7 +277,7 @@ function boiteInbox(mailboxes: MailboxObject[]): MailboxObject {
 function critereMessageIds(ids: string[]): SearchObject {
   const criteria = ids.map((id) => ({ header: { "Message-ID": id } }) satisfies SearchObject);
   if (criteria.length === 1) return criteria[0]!;
-  return { or: [criteria[0]!, critereMessageIds(criteria.slice(1))] };
+  return { or: [criteria[0]!, critereMessageIds(ids.slice(1))] };
 }
 
 const queryMetadata = {
@@ -300,7 +301,7 @@ async function fetchIds(client: ImapFlow, ids: string[]): Promise<MailboxMessage
     ) {
       try {
         await client.mailboxOpen(item.decoded.path, { readOnly: true });
-        if (String(client.mailbox?.uidValidity) === item.decoded.uidValidity) {
+        if (String(client.mailbox ? client.mailbox.uidValidity : undefined) === item.decoded.uidValidity) {
           const found = await client.fetchOne(
             item.decoded.uid,
             { ...queryMetadata },
@@ -370,7 +371,7 @@ function dateNumber(value: Date | string | undefined): number {
 }
 
 function uidValidityCourant(client: ImapFlow): bigint {
-  return client.mailbox?.uidValidity ?? 0n;
+  return client.mailbox ? client.mailbox.uidValidity : 0n;
 }
 
 async function resumePourIds(client: ImapFlow, ids: string[]): Promise<EmailResume[]> {
@@ -415,7 +416,7 @@ async function listeInbox(params: {
       total = uids.length;
       uids = uids.slice(offset, offset + limit);
     } else {
-      total = client.mailbox?.exists ?? 0;
+      total = client.mailbox ? client.mailbox.exists : 0;
       const end = total - offset;
       const start = Math.max(1, end - limit + 1);
       uids =
@@ -514,7 +515,7 @@ export async function lireMessage(id: string): Promise<EmailDetail> {
       { uid: true, source: true, flags: true, internalDate: true, envelope: true },
       { uid: true },
     );
-    if (!full?.source) throw new Error("Contenu du message indisponible dans IONOS.");
+    if (!full || !full.source) throw new Error("Contenu du message indisponible dans IONOS.");
     const parsed = await PostalMime.parse(new Uint8Array(full.source), {
       attachmentEncoding: "base64",
     });
@@ -661,7 +662,7 @@ export async function telechargerPieceJointe(
     if (!found[0]) throw new Error("Message introuvable dans les boîtes IONOS.");
     await client.mailboxOpen(found[0].mailboxPath, { readOnly: true });
     const message = await client.fetchOne(found[0].uid, { uid: true, source: true }, { uid: true });
-    if (!message?.source) throw new Error("Pièce jointe indisponible dans IONOS.");
+    if (!message || !message.source) throw new Error("Pièce jointe indisponible dans IONOS.");
     return new Uint8Array(message.source);
   });
   const parsed = await PostalMime.parse(source, { attachmentEncoding: "base64" });
@@ -796,7 +797,7 @@ async function envoyerSmtp(raw: string, from: string, recipients: string[]): Pro
           (resolve, reject) => {
             const timer = setTimeout(() => reject(new Error("Délai SMTP dépassé.")), 15_000);
             reader.read().then(
-              (value) => {
+              (value: ReadableStreamReadResult<Uint8Array>) => {
                 clearTimeout(timer);
                 resolve(value);
               },
