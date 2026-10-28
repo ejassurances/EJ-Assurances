@@ -22,6 +22,8 @@ describe("normaliserNomFichierPourStockage", () => {
   });
 
   it("limits the generated filename length", () => {
-    expect(normaliserNomFichierPourStockage(`${"a".repeat(200)}.pdf`).length).toBeLessThanOrEqual(160);
+    expect(normaliserNomFichierPourStockage(`${"a".repeat(200)}.pdf`).length).toBeLessThanOrEqual(
+      160,
+    );
   });
 });
