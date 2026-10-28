@@ -1005,7 +1005,7 @@ export async function deposerCopieEnvoyee(params: {
 async function assurerBoite(
   client: ImapFlow,
   role: "sent" | "drafts" | "archive" | "trash",
-): Promise<MailboxObject> {
+): Promise<ListResponse> {
   const aliases = {
     sent: {
       use: "\\sent",
