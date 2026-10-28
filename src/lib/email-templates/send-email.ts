@@ -14,13 +14,13 @@ export type SendTemplateEmailResult =
   | { sent: false; reason: "recipient_suppressed" };
 
 export interface SendTemplateEmailOptions {
-  templateData?: Record<string, any>;
+  templateData?: Record<string, unknown>;
   /**
    * Variables transmises à Brevo (`params`) avec les noms canoniques en
    * majuscules : PRENOM, LIEN_ACTION, TYPE_ASSURANCE, NOM_COMPAGNIE,
    * NOM_COMPAGNIE_RECOMMANDEE, NOM_PRODUIT, PIECES_MANQUANTES.
    */
-  brevoParams?: Record<string, any>;
+  brevoParams?: Record<string, unknown>;
   /** Conservé pour compatibilité des appels existants (dédoublonnage applicatif). */
   idempotencyKey?: string;
   replyTo?: string;
@@ -194,7 +194,7 @@ export async function sendTemplateEmail(
             dossier_id: liens.dossier_id ?? null,
             contrat_id: liens.contrat_id ?? null,
             compagnie_id: liens.compagnie_id ?? null,
-            sujet,
+            sujet: subject,
             expediteur_nom: SITE_NAME,
             expediteur_email: FROM_EMAIL,
             notes: `Envoi automatique via Brevo — modèle ${templateName}${messageId ? ` — messageId Brevo ${messageId}` : ""}`,

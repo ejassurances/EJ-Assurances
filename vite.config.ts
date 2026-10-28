@@ -26,7 +26,7 @@ export default defineConfig({
     "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(supabasePublishableKey),
   },
   plugins: [
-    cloudflare({ viteEnvironment: { name: "ssr" } }),
+    cloudflare({ viteEnvironment: { name: "ssr" }, remoteBindings: false }),
     tanstackStart({ server: { entry: "server" } }),
     viteReact(),
     tailwindcss(),
