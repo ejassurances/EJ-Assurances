@@ -314,10 +314,6 @@ function NewClientForm({
   const creerClient = useServerFn(creerClientManuel);
   const [saving, setSaving] = useState(false);
   const [mode, setMode] = useState<"choix" | "nouveau" | "existant">("choix");
-  const [rechercheClient, setRechercheClient] = useState("");
-  const [clientsExistants, setClientsExistants] = useState<ClientRow[]>([]);
-  const [rechercheEnCours, setRechercheEnCours] = useState(false);
-  const [rechercheEffectuee, setRechercheEffectuee] = useState(false);
   const [candidatDoublon, setCandidatDoublon] = useState<ClientCandidatCreationManuelle | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [form, setForm] = useState({
