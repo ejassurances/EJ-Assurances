@@ -1382,8 +1382,10 @@ function ProduitEditor({
   onDelete: () => void;
 }) {
   const [p, setP] = useState<Produit>(produit);
+  const completerInfosProduit = useServerFn(completerInfosProduitDepuisDocument);
   const [saving, setSaving] = useState(false);
   const [docs, setDocs] = useState<ProduitDoc[]>([]);
+  const [documentAnalyseEnCours, setDocumentAnalyseEnCours] = useState<string | null>(null);
   const [garantiesRefreshKey, setGarantiesRefreshKey] = useState(0);
   useEffect(() => setP(produit), [produit]);
 
@@ -1401,6 +1403,27 @@ function ProduitEditor({
     loadDocs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [produit.id]);
+
+  async function remplirDepuisDocument(document: ProduitDoc) {
+    if (!isAdmin) return;
+    setDocumentAnalyseEnCours(document.id);
+    try {
+      const resultat = await completerInfosProduit({ data: { document_id: document.id } });
+      if (resultat.champs_completes.length === 0) {
+        toast.info("Aucun champ vide n’a pu être complété à partir de ce PDF. Vérifiez son contenu ou les informations déjà renseignées.");
+      } else {
+        toast.success("Fiche complétée depuis le PDF : " + resultat.champs_completes.join(", ") + ".");
+        const { data, error } = await supabase.from("produits").select("*").eq("id", produit.id).single();
+        if (error) throw new Error(error.message);
+        setP(data as Produit);
+        onChange();
+      }
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : "Impossible d’extraire les informations du PDF.");
+    } finally {
+      setDocumentAnalyseEnCours(null);
+    }
+  }
 
   async function save() {
     setSaving(true);
@@ -2080,7 +2103,17 @@ function DocumentsBlock({
                   {new Date(d.created_at).toLocaleDateString("fr-FR")}
                 </div>
               </div>
-              <div className="flex gap-3 text-xs">
+              <div className="flex flex-wrap items-center justify-end gap-3 text-xs">
+                {isAdmin && d.storage_path && ["conditions_generales", "ipid", "fiche_produit", "tableau_garanties", "ccsf"].includes(d.type) && (
+                  <button
+                    type="button"
+                    onClick={() => remplirDepuisDocument(d)}
+                    disabled={documentAnalyseEnCours !== null}
+                    className="font-medium text-[#0A192F] underline underline-offset-4 disabled:opacity-50"
+                  >
+                    {documentAnalyseEnCours === d.id ? "Lecture du PDF…" : "Remplir la fiche depuis ce PDF"}
+                  </button>
+                )}
                 <button
                   onClick={() => download(d)}
                   className="text-ink underline underline-offset-4"
