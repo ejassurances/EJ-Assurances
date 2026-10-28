@@ -818,7 +818,9 @@ function ProduitsTab({
       let analysesLancees = 0;
       const erreursDocuments: string[] = [];
       for (const produit of selection) {
-        const fichier = produit.documentReference;
+        // Le catalogue PDF est la source par défaut pour chaque produit sélectionné.
+        // Un PDF individuel, s’il est fourni, est prioritaire pour ce produit.
+        const fichier = produit.documentReference ?? fichierCatalogue;
         if (!fichier) continue;
         const produitCible = produit.existeDeja
           ? produits.find(
