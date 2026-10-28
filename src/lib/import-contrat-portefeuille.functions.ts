@@ -119,7 +119,7 @@ export const enregistrerContratImportPortefeuille = createServerFn({ method: "PO
       if (uploadError) throw new Error("Archivage de " + piece.file_name + " impossible : " + uploadError.message);
       const { error } = kyc
         ? await supabaseAdmin.from("client_kyc_documents").insert({
-            client_id: clientId, type: piece.code, nom: piece.file_name, storage_path: path,
+            client_id: clientId, type: piece.code as "cni" | "justificatif_domicile" | "rib", nom: piece.file_name, storage_path: path,
             uploaded_by: context.userId, statut: "a_valider",
           })
         : await supabaseAdmin.from("documents").insert({
