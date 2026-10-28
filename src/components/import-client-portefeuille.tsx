@@ -395,9 +395,8 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
         <div className="mt-3">
           <h3 className="font-semibold text-ink">Documents KYC (ajout possible plus tard)</h3>
           <p className="mt-1 text-sm text-ink-muted">
-            Vous pouvez ajouter les documents disponibles maintenant ou les déposer plus tard
-            depuis la fiche client. Les pièces absentes resteront à fournir dans la checklist du
-            dossier.
+            Vous pouvez ajouter les documents disponibles maintenant ou les déposer plus tard depuis
+            la fiche client. Les pièces absentes resteront à fournir dans la checklist du dossier.
           </p>
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             {(
