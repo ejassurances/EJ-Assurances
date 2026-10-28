@@ -97,7 +97,9 @@ export function ContratDocumentsPanel({
     const path = `${clientId}/contrats/${contratId}/${Date.now()}-${safeName}`;
 
     try {
-      const { error: upErr } = await supabase.storage.from("dossier-documents").upload(path, file);
+      const { error: upErr } = await supabase
+        .storage.from("dossier-documents")
+        .upload(path, file);
       if (upErr) throw new Error(`Échec de l'envoi du fichier : ${upErr.message}`);
 
       const { error: dbErr } = await supabase.from("documents").insert({
@@ -113,7 +115,9 @@ export function ContratDocumentsPanel({
 
       if (dbErr) {
         // Évite de laisser un fichier orphelin si l'archivage des métadonnées échoue.
-        const { error: cleanupErr } = await supabase.storage.from("dossier-documents").remove([path]);
+        const { error: cleanupErr } = await supabase
+          .storage.from("dossier-documents")
+          .remove([path]);
         throw new Error(
           cleanupErr
             ? `Le fichier a été envoyé, mais son archivage a échoué (${dbErr.message}). Le nettoyage automatique a aussi échoué (${cleanupErr.message}).`
@@ -123,7 +127,9 @@ export function ContratDocumentsPanel({
 
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Une erreur inattendue est survenue pendant l'envoi.");
+      setError(
+        err instanceof Error ? err.message : "Une erreur inattendue est survenue pendant l'envoi.",
+      );
     } finally {
       setUploading(false);
       // Permet de sélectionner à nouveau le même fichier après un échec.
@@ -144,13 +150,19 @@ export function ContratDocumentsPanel({
 
   /** Traçabilité ACPR : le document est archivé (masqué), jamais supprimé. */
   const remove = async (doc: Doc) => {
-    await supabase.from("documents").update({ archive_le: new Date().toISOString() }).eq("id", doc.id);
+    await supabase
+      .from("documents")
+      .update({ archive_le: new Date().toISOString() })
+      .eq("id", doc.id);
     load();
   };
 
   /** Rattache au contrat une pièce déjà déposée au niveau du client. */
   const rattacher = async (doc: Doc) => {
-    const { error: e } = await supabase.from("documents").update({ contrat_id: contratId }).eq("id", doc.id);
+    const { error: e } = await supabase
+      .from("documents")
+      .update({ contrat_id: contratId })
+      .eq("id", doc.id);
     if (e) return setError(e.message);
     load();
   };
@@ -160,8 +172,8 @@ export function ContratDocumentsPanel({
       <div>
         <h3 className="font-serif text-lg">Documents du contrat</h3>
         <p className="text-xs text-ink-muted">
-          Conditions générales et IPID du produit, puis pièces contractuelles archivées (police d'assurance, avis
-          d'échéance, conditions particulières…), indépendamment du parcours DDA.
+          Conditions générales et IPID du produit, puis pièces contractuelles archivées (police d'assurance,
+          avis d'échéance, conditions particulières…), indépendamment du parcours DDA.
         </p>
       </div>
 
@@ -182,14 +194,26 @@ export function ContratDocumentsPanel({
           </select>
           <label className="cursor-pointer rounded-full bg-[#D4AF37] px-4 py-2 text-sm font-semibold text-[#0A192F] hover:brightness-95">
             {uploading ? "Envoi…" : "Ajouter un document"}
-            <input ref={fileRef} type="file" onChange={onUpload} className="hidden" disabled={uploading} />
+            <input
+              ref={fileRef}
+              type="file"
+              onChange={onUpload}
+              className="hidden"
+              disabled={uploading}
+            />
           </label>
-          {error && <span role="alert" className="text-xs text-destructive">{error}</span>}
+          {error && (
+            <span role="alert" className="text-xs text-destructive">
+              {error}
+            </span>
+          )}
         </div>
       )}
 
       <ul className="space-y-2">
-        {docs.length === 0 && <li className="text-sm text-ink-muted">Aucun document rattaché à ce contrat.</li>}
+        {docs.length === 0 && (
+          <li className="text-sm text-ink-muted">Aucun document rattaché à ce contrat.</li>
+        )}
         {docs.map((d) => (
           <li
             key={d.id}
