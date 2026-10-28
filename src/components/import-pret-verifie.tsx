@@ -34,6 +34,9 @@ export function ImportPretVerifie({
 
   async function analyser() {
     setBusy(true);
+    setConfirme(false);
+    setLectures([]);
+    setValeurs({});
     setMessage(null);
     try {
       const fichiers = await Promise.all(

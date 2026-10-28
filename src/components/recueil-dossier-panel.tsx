@@ -473,7 +473,6 @@ export function RecueilDossierPanel({
         return { ...prev, assures: maj };
       });
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId, typeAssurance]);
 
   useEffect(() => {
@@ -494,7 +493,8 @@ export function RecueilDossierPanel({
         if (sequence === saveSequence.current) setSaving(false);
         return;
       }
-      if (sequence === saveSequence.current) dirtyRef.current = false;
+      if (sequence === saveSequence.current &&
+        JSON.stringify(aEnregistrer) === JSON.stringify(valuesRef.current)) dirtyRef.current = false;
       let complement = "";
       if (synchroniser) {
         try {
@@ -528,7 +528,7 @@ export function RecueilDossierPanel({
     dirtyRef.current = true;
     setMessage("Enregistrement automatique…");
     const timer = window.setTimeout(() => {
-      void enregistrerValeurs(values);
+      void enregistrerValeurs(valuesRef.current);
     }, 650);
     return () => window.clearTimeout(timer);
   }, [canEdit, enregistrerValeurs, values]);
