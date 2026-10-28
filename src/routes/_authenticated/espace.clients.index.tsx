@@ -1,10 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { STATUTS_CLIENT } from "@/lib/referentiels";
 import { useServerFn } from "@tanstack/react-start";
-import {
-  creerClientManuel,
-  type ClientCandidatCreationManuelle,
-} from "@/lib/clients.functions";
+import { creerClientManuel, type ClientCandidatCreationManuelle } from "@/lib/clients.functions";
 import { lancerLcbClientsManquants } from "@/lib/lcb-ft.functions";
 import { toast } from "sonner";
 import { useEffect, useMemo, useState } from "react";
@@ -21,8 +18,6 @@ import { useScoresValeur } from "@/hooks/use-scores-valeur";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { IconUsers, IconUserCheck, IconShieldCheck, IconUserPlus } from "@tabler/icons-react";
-
-
 
 export const Route = createFileRoute("/_authenticated/espace/clients/")({
   component: ClientsList,
@@ -49,7 +44,6 @@ type ClientRow = {
     niveau_vigilance: "simplifiee" | "standard" | "renforcee";
   } | null;
 };
-
 
 const STATUTS = STATUTS_CLIENT;
 
@@ -103,11 +97,11 @@ function ClientsList() {
       if (statutFilter && c.statut !== statutFilter) return false;
       if (marqueFilter && c.marque !== marqueFilter) return false;
       if (!term) return true;
-      const hay = `${c.reference} ${c.prenom ?? ""} ${c.nom} ${c.email ?? ""} ${c.mobile ?? ""} ${c.ville ?? ""}`.toLowerCase();
+      const hay =
+        `${c.reference} ${c.prenom ?? ""} ${c.nom} ${c.email ?? ""} ${c.mobile ?? ""} ${c.ville ?? ""}`.toLowerCase();
       return hay.includes(term);
     });
   }, [items, q, statutFilter, marqueFilter]);
-
 
   const actifs = items.filter((c) => c.statut === "actif").length;
   const prospects = items.filter((c) => c.statut === "prospect").length;
@@ -178,7 +172,9 @@ function ClientsList() {
           onClick={() => setMarqueFilter("")}
           className={
             "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors " +
-            (marqueFilter === "" ? "border-transparent bg-[#0A192F] text-white" : "border-line text-ink-soft hover:bg-surface")
+            (marqueFilter === ""
+              ? "border-transparent bg-[#0A192F] text-white"
+              : "border-line text-ink-soft hover:bg-surface")
           }
         >
           Toutes les marques ({items.length})
@@ -192,7 +188,9 @@ function ClientsList() {
               onClick={() => setMarqueFilter(active ? "" : k)}
               className={
                 "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors " +
-                (active ? "border-transparent bg-[#D4AF37]/20 text-[#0A192F] ring-1 ring-[#D4AF37]" : "border-line text-ink-soft hover:bg-surface")
+                (active
+                  ? "border-transparent bg-[#D4AF37]/20 text-[#0A192F] ring-1 ring-[#D4AF37]"
+                  : "border-line text-ink-soft hover:bg-surface")
               }
             >
               <span className={`size-1.5 rounded-full ${MARQUES[k].dot}`} />
@@ -209,94 +207,112 @@ function ClientsList() {
           <p className="p-6 text-sm text-ink-muted">Aucun client.</p>
         ) : (
           <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-sm">
-            <thead className="border-b border-line bg-background/50 text-left text-xs uppercase tracking-wide text-ink-muted">
-              <tr>
-                <th className="px-4 py-3">Référence</th>
-                <th className="px-4 py-3">Nom</th>
-                <th className="px-4 py-3">Marque</th>
-                <th className="px-4 py-3">Besoins</th>
-                <th className="px-4 py-3">Contact</th>
-                <th className="px-4 py-3">Scores</th>
-                <th className="px-4 py-3">Statut</th>
+            <table className="w-full min-w-[640px] text-sm">
+              <thead className="border-b border-line bg-background/50 text-left text-xs uppercase tracking-wide text-ink-muted">
+                <tr>
+                  <th className="px-4 py-3">Référence</th>
+                  <th className="px-4 py-3">Nom</th>
+                  <th className="px-4 py-3">Marque</th>
+                  <th className="px-4 py-3">Besoins</th>
+                  <th className="px-4 py-3">Contact</th>
+                  <th className="px-4 py-3">Scores</th>
+                  <th className="px-4 py-3">Statut</th>
 
-                {canDelete && <th className="px-4 py-3 text-right">Actions</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((c) => {
-                const m = marque(c.marque);
-                return (
-                <tr key={c.id} className="border-b border-line last:border-0 hover:bg-background/40">
-                  <td className="px-4 py-3 font-mono text-xs">
-                    <Link to="/espace/clients/$id" params={{ id: c.id }} className="text-ink hover:underline">
-                      {c.reference}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Link to="/espace/clients/$id" params={{ id: c.id }} className="font-medium text-ink hover:underline">
-                      {[c.civilite, c.prenom, c.nom].filter(Boolean).join(" ")}
-                    </Link>
-                    <div className="text-xs text-ink-muted">{c.ville ?? ""}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${m.badge}`}>
-                      <span className={`size-1.5 rounded-full ${m.dot}`} />
-                      {m.short}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1">
-                      {(c.besoins ?? []).length === 0 ? (
-                        <span className="text-xs text-ink-muted">—</span>
-                      ) : (
-                        (c.besoins ?? []).slice(0, 3).map((b) => (
-                          <span key={b} className="rounded-full border border-line bg-surface px-2 py-0.5 text-[11px] text-ink-soft">
-                            {besoinLabel(b)}
-                          </span>
-                        ))
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-ink-soft">
-                    <div>{c.email ?? "—"}</div>
-                    <div className="text-xs text-ink-muted">{c.mobile ?? ""}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <ScoreRings size={48} valeur={scoresValeur[c.id] ?? 0} />
-                      {c.client_risque_lcbft ? (
-                        <span
-                          className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase ${NIVEAU_STYLE[c.client_risque_lcbft.niveau_vigilance]}`}
-                        >
-                          {c.client_risque_lcbft.score_risque}/100 · {NIVEAU_LABEL[c.client_risque_lcbft.niveau_vigilance]}
-                        </span>
-                      ) : (
-                        <span className="rounded-full border border-line bg-surface px-2.5 py-1 text-[11px] font-medium text-ink-muted">
-                          Non évalué
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-
-                    <span className="rounded-full border border-line bg-background px-2 py-0.5 text-xs">{c.statut}</span>
-                  </td>
-                  {canDelete && (
-                    <td className="px-4 py-3 text-right">
-                      <DeleteClientButton
-                        variant="icon"
-                        clientId={c.id}
-                        clientLabel={[c.prenom, c.nom].filter(Boolean).join(" ")}
-                        onDeleted={() => setItems((prev) => prev.filter((x) => x.id !== c.id))}
-                      />
-                    </td>
-                  )}
+                  {canDelete && <th className="px-4 py-3 text-right">Actions</th>}
                 </tr>
-                );
-              })}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.map((c) => {
+                  const m = marque(c.marque);
+                  return (
+                    <tr
+                      key={c.id}
+                      className="border-b border-line last:border-0 hover:bg-background/40"
+                    >
+                      <td className="px-4 py-3 font-mono text-xs">
+                        <Link
+                          to="/espace/clients/$id"
+                          params={{ id: c.id }}
+                          className="text-ink hover:underline"
+                        >
+                          {c.reference}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Link
+                          to="/espace/clients/$id"
+                          params={{ id: c.id }}
+                          className="font-medium text-ink hover:underline"
+                        >
+                          {[c.civilite, c.prenom, c.nom].filter(Boolean).join(" ")}
+                        </Link>
+                        <div className="text-xs text-ink-muted">{c.ville ?? ""}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${m.badge}`}
+                        >
+                          <span className={`size-1.5 rounded-full ${m.dot}`} />
+                          {m.short}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-1">
+                          {(c.besoins ?? []).length === 0 ? (
+                            <span className="text-xs text-ink-muted">—</span>
+                          ) : (
+                            (c.besoins ?? []).slice(0, 3).map((b) => (
+                              <span
+                                key={b}
+                                className="rounded-full border border-line bg-surface px-2 py-0.5 text-[11px] text-ink-soft"
+                              >
+                                {besoinLabel(b)}
+                              </span>
+                            ))
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-ink-soft">
+                        <div>{c.email ?? "—"}</div>
+                        <div className="text-xs text-ink-muted">{c.mobile ?? ""}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <ScoreRings size={48} valeur={scoresValeur[c.id] ?? 0} />
+                          {c.client_risque_lcbft ? (
+                            <span
+                              className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase ${NIVEAU_STYLE[c.client_risque_lcbft.niveau_vigilance]}`}
+                            >
+                              {c.client_risque_lcbft.score_risque}/100 ·{" "}
+                              {NIVEAU_LABEL[c.client_risque_lcbft.niveau_vigilance]}
+                            </span>
+                          ) : (
+                            <span className="rounded-full border border-line bg-surface px-2.5 py-1 text-[11px] font-medium text-ink-muted">
+                              Non évalué
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="rounded-full border border-line bg-background px-2 py-0.5 text-xs">
+                          {c.statut}
+                        </span>
+                      </td>
+                      {canDelete && (
+                        <td className="px-4 py-3 text-right">
+                          <DeleteClientButton
+                            variant="icon"
+                            clientId={c.id}
+                            clientLabel={[c.prenom, c.nom].filter(Boolean).join(" ")}
+                            onDeleted={() => setItems((prev) => prev.filter((x) => x.id !== c.id))}
+                          />
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
@@ -314,7 +330,9 @@ function NewClientForm({
   const creerClient = useServerFn(creerClientManuel);
   const [saving, setSaving] = useState(false);
   const [mode, setMode] = useState<"choix" | "nouveau" | "existant">("choix");
-  const [candidatDoublon, setCandidatDoublon] = useState<ClientCandidatCreationManuelle | null>(null);
+  const [candidatDoublon, setCandidatDoublon] = useState<ClientCandidatCreationManuelle | null>(
+    null,
+  );
   const [erreur, setErreur] = useState<string | null>(null);
   const [form, setForm] = useState({
     civilite: "M.",
@@ -362,7 +380,9 @@ function NewClientForm({
       }
       if (res.status === "invalid_confirmation") {
         setCandidatDoublon(null);
-        setErreur("La fiche proposée a changé ou n’existe plus. Vérifiez les informations avant de réessayer.");
+        setErreur(
+          "La fiche proposée a changé ou n’existe plus. Vérifiez les informations avant de réessayer.",
+        );
         return;
       }
       onCreated(res.id);
@@ -372,7 +392,6 @@ function NewClientForm({
       setSaving(false);
     }
   };
-
 
   return (
     <form
@@ -387,8 +406,13 @@ function NewClientForm({
     >
       {mode === "choix" && (
         <section className="sm:col-span-3">
-          <h2 className="text-lg font-semibold text-ink">Quel type de client souhaitez-vous ouvrir ?</h2>
-          <p className="mt-1 text-sm text-ink-muted">Choisissez si vous créez une nouvelle fiche ou si le client figure déjà dans le portefeuille.</p>
+          <h2 className="text-lg font-semibold text-ink">
+            Quel type de client souhaitez-vous ouvrir ?
+          </h2>
+          <p className="mt-1 text-sm text-ink-muted">
+            Choisissez si vous créez une nouvelle fiche ou si le client figure déjà dans le
+            portefeuille.
+          </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <button
               type="button"
@@ -396,7 +420,9 @@ function NewClientForm({
               className="rounded-xl border border-line p-4 text-left transition hover:border-[#D4AF37] hover:bg-background"
             >
               <span className="block font-semibold text-ink">Nouveau client</span>
-              <span className="mt-1 block text-sm text-ink-muted">Créer une fiche client dans le CRM.</span>
+              <span className="mt-1 block text-sm text-ink-muted">
+                Créer une fiche client dans le CRM.
+              </span>
             </button>
             <button
               type="button"
@@ -404,7 +430,9 @@ function NewClientForm({
               className="rounded-xl border border-line p-4 text-left transition hover:border-[#D4AF37] hover:bg-background"
             >
               <span className="block font-semibold text-ink">Client déjà en portefeuille</span>
-              <span className="mt-1 block text-sm text-ink-muted">Rechercher une fiche existante et l’ouvrir sans créer de doublon.</span>
+              <span className="mt-1 block text-sm text-ink-muted">
+                Importer un client assuré absent du CRM à partir de son attestation.
+              </span>
             </button>
           </div>
         </section>
@@ -412,144 +440,154 @@ function NewClientForm({
 
       {mode === "existant" && (
         <div className="sm:col-span-3">
-          <ImportClientPortefeuille
-            onCreated={onCreated}
-            onCancel={() => setMode("choix")}
-          />
+          <ImportClientPortefeuille onCreated={onCreated} onCancel={() => setMode("choix")} />
         </div>
       )}
 
       {mode === "nouveau" && (
         <>
-      <div className="sm:col-span-3 flex justify-end">
-        <button type="button" onClick={() => setMode("choix")} className="text-sm text-ink-muted underline">Retour au choix</button>
-      </div>
-      <select
-        value={form.civilite}
-        onChange={(e) => modifierFormulaire({ civilite: e.target.value })}
-        className="rounded-md border border-line bg-background px-3 py-2 text-sm"
-      >
-        <option>M.</option>
-        <option>Mme</option>
-        <option>Autre</option>
-      </select>
-      <input
-        placeholder="Prénom"
-        value={form.prenom}
-        onChange={(e) => modifierFormulaire({ prenom: e.target.value })}
-        className="rounded-md border border-line bg-background px-3 py-2 text-sm"
-      />
-      <input
-        required
-        placeholder="Nom *"
-        value={form.nom}
-        onChange={(e) => modifierFormulaire({ nom: e.target.value })}
-        className="rounded-md border border-line bg-background px-3 py-2 text-sm"
-      />
-      <input
-        type="email"
-        placeholder="Email"
-        value={form.email}
-        onChange={(e) => modifierFormulaire({ email: e.target.value })}
-        className="rounded-md border border-line bg-background px-3 py-2 text-sm"
-      />
-      <input
-        placeholder="Mobile"
-        value={form.mobile}
-        onChange={(e) => modifierFormulaire({ mobile: e.target.value })}
-        className="rounded-md border border-line bg-background px-3 py-2 text-sm"
-      />
-      <input
-        placeholder="Ville"
-        value={form.ville}
-        onChange={(e) => modifierFormulaire({ ville: e.target.value })}
-        className="rounded-md border border-line bg-background px-3 py-2 text-sm"
-      />
-      <select
-        value={form.origine}
-        onChange={(e) => modifierFormulaire({ origine: e.target.value as OrigineKey })}
-        className="rounded-md border border-line bg-background px-3 py-2 text-sm"
-      >
-        {ORIGINES.map((o) => (
-          <option key={o.key} value={o.key}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-      {origineAvecClientSource(form.origine) && (
-        <div className="sm:col-span-3">
-          <ClientOriginePicker
-            value={form.client_origine_id}
-            onChange={(id) => setForm({ ...form, client_origine_id: id })}
-          />
-        </div>
-      )}
-
-      <select
-        value={form.marque}
-        onChange={(e) => modifierFormulaire({ marque: e.target.value })}
-        className="rounded-md border border-line bg-background px-3 py-2 text-sm sm:col-span-2"
-      >
-        {MARQUE_KEYS.map((k) => (
-          <option key={k} value={k}>
-            {MARQUES[k].label}
-          </option>
-        ))}
-      </select>
-      {erreur && (
-        <p role="alert" className="sm:col-span-3 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900">
-          {erreur}
-        </p>
-      )}
-      {candidatDoublon ? (
-        <section role="alert" className="sm:col-span-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
-          <h3 className="font-semibold">Une fiche client correspond peut-être déjà</h3>
-          <p className="mt-1 text-sm">
-            Correspondance détectée par {candidatDoublon.via === "email"
-              ? "adresse e-mail"
-              : candidatDoublon.via === "telephone"
-                ? "numéro de téléphone"
-                : "nom et prénom, y compris s’ils sont inversés"}.
-            Vérifiez cette fiche avant d’en créer une autre.
-          </p>
-          <p className="mt-2 text-sm font-medium">
-            {candidatDoublon.prenom ? `${candidatDoublon.prenom} ` : ""}
-            {candidatDoublon.nom} · {candidatDoublon.reference}
-            {candidatDoublon.email ? ` · ${candidatDoublon.email}` : ""}
-            {candidatDoublon.mobile || candidatDoublon.telephone
-              ? ` · ${candidatDoublon.mobile ?? candidatDoublon.telephone}`
-              : ""}
-          </p>
-          <div className="mt-4 flex flex-wrap gap-3">
+          <div className="sm:col-span-3 flex justify-end">
             <button
               type="button"
-              onClick={() => onOpenExisting(candidatDoublon.client_id)}
-              disabled={saving}
-              className="rounded-full border border-amber-800/30 px-4 py-2 text-sm font-medium disabled:opacity-60"
+              onClick={() => setMode("choix")}
+              className="text-sm text-ink-muted underline"
             >
-              Ouvrir la fiche existante
-            </button>
-            <button
-              type="button"
-              onClick={() => void submit(undefined, candidatDoublon.client_id)}
-              disabled={saving}
-              className="rounded-full bg-[#0A192F] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-            >
-              {saving ? "Création…" : "Créer une nouvelle fiche quand même"}
+              Retour au choix
             </button>
           </div>
-        </section>
-      ) : (
-        <div className="sm:col-span-3">
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded-full bg-[#0A192F] px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          <select
+            value={form.civilite}
+            onChange={(e) => modifierFormulaire({ civilite: e.target.value })}
+            className="rounded-md border border-line bg-background px-3 py-2 text-sm"
           >
-            {saving ? "Création…" : "Créer la fiche"}
-          </button>
-        </div>
-      )}
+            <option>M.</option>
+            <option>Mme</option>
+            <option>Autre</option>
+          </select>
+          <input
+            placeholder="Prénom"
+            value={form.prenom}
+            onChange={(e) => modifierFormulaire({ prenom: e.target.value })}
+            className="rounded-md border border-line bg-background px-3 py-2 text-sm"
+          />
+          <input
+            required
+            placeholder="Nom *"
+            value={form.nom}
+            onChange={(e) => modifierFormulaire({ nom: e.target.value })}
+            className="rounded-md border border-line bg-background px-3 py-2 text-sm"
+          />
+          <input
+            type="email"
+            placeholder="Email"
+            value={form.email}
+            onChange={(e) => modifierFormulaire({ email: e.target.value })}
+            className="rounded-md border border-line bg-background px-3 py-2 text-sm"
+          />
+          <input
+            placeholder="Mobile"
+            value={form.mobile}
+            onChange={(e) => modifierFormulaire({ mobile: e.target.value })}
+            className="rounded-md border border-line bg-background px-3 py-2 text-sm"
+          />
+          <input
+            placeholder="Ville"
+            value={form.ville}
+            onChange={(e) => modifierFormulaire({ ville: e.target.value })}
+            className="rounded-md border border-line bg-background px-3 py-2 text-sm"
+          />
+          <select
+            value={form.origine}
+            onChange={(e) => modifierFormulaire({ origine: e.target.value as OrigineKey })}
+            className="rounded-md border border-line bg-background px-3 py-2 text-sm"
+          >
+            {ORIGINES.map((o) => (
+              <option key={o.key} value={o.key}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          {origineAvecClientSource(form.origine) && (
+            <div className="sm:col-span-3">
+              <ClientOriginePicker
+                value={form.client_origine_id}
+                onChange={(id) => setForm({ ...form, client_origine_id: id })}
+              />
+            </div>
+          )}
+
+          <select
+            value={form.marque}
+            onChange={(e) => modifierFormulaire({ marque: e.target.value })}
+            className="rounded-md border border-line bg-background px-3 py-2 text-sm sm:col-span-2"
+          >
+            {MARQUE_KEYS.map((k) => (
+              <option key={k} value={k}>
+                {MARQUES[k].label}
+              </option>
+            ))}
+          </select>
+          {erreur && (
+            <p
+              role="alert"
+              className="sm:col-span-3 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900"
+            >
+              {erreur}
+            </p>
+          )}
+          {candidatDoublon ? (
+            <section
+              role="alert"
+              className="sm:col-span-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950"
+            >
+              <h3 className="font-semibold">Une fiche client correspond peut-être déjà</h3>
+              <p className="mt-1 text-sm">
+                Correspondance détectée par{" "}
+                {candidatDoublon.via === "email"
+                  ? "adresse e-mail"
+                  : candidatDoublon.via === "telephone"
+                    ? "numéro de téléphone"
+                    : "nom et prénom, y compris s’ils sont inversés"}
+                . Vérifiez cette fiche avant d’en créer une autre.
+              </p>
+              <p className="mt-2 text-sm font-medium">
+                {candidatDoublon.prenom ? `${candidatDoublon.prenom} ` : ""}
+                {candidatDoublon.nom} · {candidatDoublon.reference}
+                {candidatDoublon.email ? ` · ${candidatDoublon.email}` : ""}
+                {candidatDoublon.mobile || candidatDoublon.telephone
+                  ? ` · ${candidatDoublon.mobile ?? candidatDoublon.telephone}`
+                  : ""}
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => onOpenExisting(candidatDoublon.client_id)}
+                  disabled={saving}
+                  className="rounded-full border border-amber-800/30 px-4 py-2 text-sm font-medium disabled:opacity-60"
+                >
+                  Ouvrir la fiche existante
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void submit(undefined, candidatDoublon.client_id)}
+                  disabled={saving}
+                  className="rounded-full bg-[#0A192F] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                >
+                  {saving ? "Création…" : "Créer une nouvelle fiche quand même"}
+                </button>
+              </div>
+            </section>
+          ) : (
+            <div className="sm:col-span-3">
+              <button
+                type="submit"
+                disabled={saving}
+                className="rounded-full bg-[#0A192F] px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+              >
+                {saving ? "Création…" : "Créer la fiche"}
+              </button>
+            </div>
+          )}
         </>
       )}
     </form>

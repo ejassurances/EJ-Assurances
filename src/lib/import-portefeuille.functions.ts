@@ -178,7 +178,8 @@ export const archiverPieceImportPortefeuille = createServerFn({ method: "POST" }
 
     const binaire = atob(data.base64);
     if (binaire.length === 0) throw new Error("Le fichier est vide.");
-    if (binaire.length > TAILLE_MAX_OCTETS) throw new Error("Fichier trop volumineux (8 Mo maximum).");
+    if (binaire.length > TAILLE_MAX_OCTETS)
+      throw new Error("Fichier trop volumineux (8 Mo maximum).");
     const octets = new Uint8Array(binaire.length);
     for (let i = 0; i < binaire.length; i++) octets[i] = binaire.charCodeAt(i);
 
@@ -193,8 +194,7 @@ export const archiverPieceImportPortefeuille = createServerFn({ method: "POST" }
 
     const nettoyer = async () => {
       const { error } = await supabaseAdmin.storage.from("dossier-documents").remove([chemin]);
-      if (error)
-        console.error("[import portefeuille] nettoyage impossible", chemin, error.message);
+      if (error) console.error("[import portefeuille] nettoyage impossible", chemin, error.message);
     };
     const maintenant = new Date().toISOString();
 
@@ -250,6 +250,10 @@ export const archiverPieceImportPortefeuille = createServerFn({ method: "POST" }
       .eq("dossier_id", data.dossier_id)
       .eq("code", data.code);
     if (liaisonError)
-      console.error("[import portefeuille] checklist non mise à jour", data.code, liaisonError.message);
+      console.error(
+        "[import portefeuille] checklist non mise à jour",
+        data.code,
+        liaisonError.message,
+      );
     return { ok: true as const, checklist: !liaisonError };
   });
