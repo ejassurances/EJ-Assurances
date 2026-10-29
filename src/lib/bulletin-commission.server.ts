@@ -26,12 +26,13 @@ export type BulletinLu = {
 };
 
 const PROMPT = [
+  "Examine visuellement tout le document, notamment logo, en-tête, dates, période de règlement et mentions de l’émetteur. La compagnie et la période doivent être extraites du document, pas supposées à partir du nom de fichier ni de la date du jour.",
   "Tu lis un BULLETIN (ou bordereau) DE COMMISSIONS émis par une compagnie d'assurance française à destination d'un cabinet de courtage.",
   "Objectif : extraire l'en-tête et TOUTES les lignes de commission, sans jamais inventer de données (null si absent).",
   "",
   "Règles :",
-  "- assureur : nom de la compagnie émettrice du bulletin.",
-  "- periode : période de règlement telle qu'indiquée (ex. « 2026-07 » ou « Juillet 2026 »).",
+  "- assureur : nom exact de la compagnie/assureur qui a émis le bulletin, à relever dans le logo, l’en-tête, le pied de page ou les mentions légales ; ne confonds pas avec le cabinet destinataire ou un courtier gestionnaire. Retourne null si impossible à déterminer.",
+  "- periode : mois de commission/règlement couvert par le bulletin, pas la date d’édition ni la date du jour. Cherche dans l’en-tête, le titre, les périodes de règlement et les dates des tableaux. Si un mois et une année sont identifiables, retourne toujours au format strict « AAAA-MM » (ex. juillet 2026 = « 2026-07 »). Si plusieurs périodes figurent, choisis la période principale du bulletin ; si aucune période ne peut être établie, retourne null.",
   "- montant_total : total net de commissions du bulletin (nombre décimal, point décimal).",
   "- lignes : une entrée par ligne de commission du tableau.",
   "  - client_nom : nom (et prénom si présent) de l'assuré/souscripteur de la ligne.",
