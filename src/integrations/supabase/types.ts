@@ -2517,6 +2517,7 @@ export type Database = {
           mode_commissionnement?: string
           notes?: string | null
           numero?: string | null
+          numero_reference?: string | null
           prescripteur_id?: string | null
           prime_annuelle?: number | null
           prime_ht_annuelle?: number | null
