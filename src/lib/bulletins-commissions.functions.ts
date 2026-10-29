@@ -183,13 +183,15 @@ export const rattacherLigneBulletin = createServerFn({ method: "POST" })
     let client_id = data.client_id ?? null;
     let dossier_id: string | null = null;
     if (data.contrat_id) {
-      const { data: contrat } = await supabaseAdmin
+      const { data: contrat, error: contratError } = await supabaseAdmin
         .from("contrats")
         .select("client_id,dossier_id")
         .eq("id", data.contrat_id)
         .maybeSingle();
-      client_id = client_id ?? contrat?.client_id ?? null;
-      dossier_id = contrat?.dossier_id ?? null;
+      if (contratError || !contrat) throw new Error("Le contrat sélectionné est introuvable.");
+      // Le contrat est la référence canonique pour le client et le dossier.
+      client_id = contrat.client_id ?? client_id;
+      dossier_id = contrat.dossier_id ?? null;
     }
 
     const statut = data.ignorer ? "ignoree" : data.contrat_id ? "rapprochee" : "a_rapprocher";
