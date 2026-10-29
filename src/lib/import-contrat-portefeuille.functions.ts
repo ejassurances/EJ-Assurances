@@ -20,6 +20,7 @@ const schema = z.object({
   contrat: z.object({
     assureur: z.string().trim().min(1).max(160),
     numero: z.string().trim().max(120).optional().nullable(),
+    numero_reference: z.string().trim().max(120).optional().nullable(),
     produit: z.string().trim().min(1).max(160),
     type_assurance: z.string().trim().max(80).optional().nullable(),
     date_effet: z.string().max(10).optional().nullable(),
@@ -99,7 +100,7 @@ export const enregistrerContratImportPortefeuille = createServerFn({ method: "PO
               : data.contrat.prime_montant) * 100) / 100
           : null;
       const { error: updateError } = await supabaseAdmin.from("contrats").update({
-        numero: data.contrat.numero || undefined, assureur: data.contrat.assureur, produit: data.contrat.produit,
+        numero: data.contrat.numero || undefined, numero_reference: data.contrat.numero_reference || undefined, assureur: data.contrat.assureur, produit: data.contrat.produit,
         date_effet: data.contrat.date_effet || undefined, date_echeance: data.contrat.date_echeance || undefined,
         ...(primeAnnuelle !== null ? {
           prime_annuelle: primeAnnuelle,
@@ -118,7 +119,7 @@ export const enregistrerContratImportPortefeuille = createServerFn({ method: "PO
               : data.contrat.prime_montant) * 100) / 100
           : null;
       const { data: created, error } = await supabaseAdmin.from("contrats").insert({
-        client_id: clientId, numero: data.contrat.numero || null, assureur: data.contrat.assureur,
+        client_id: clientId, numero: data.contrat.numero || null, numero_reference: data.contrat.numero_reference || null, assureur: data.contrat.assureur,
         produit: data.contrat.produit, date_effet: data.contrat.date_effet || null,
         date_echeance: data.contrat.date_echeance || null,
         ...(primeAnnuelle !== null ? {
