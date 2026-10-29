@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { enregistrerContratImportPortefeuille } from "@/lib/import-contrat-portefeuille.functions";
@@ -29,6 +30,7 @@ type Donnees = {
   prime_montant: string;
   prime_periodicite: string;
   duree_mois: string;
+  commission_taux: string;
 };
 const VIDE: Donnees = {
   civilite: "M.",
@@ -50,6 +52,7 @@ const VIDE: Donnees = {
   prime_montant: "",
   prime_periodicite: "",
   duree_mois: "",
+  commission_taux: "",
 };
 const FORMATS = ["application/pdf", "image/jpeg", "image/png", "image/webp"] as const;
 const TAILLE_MAX = 8 * 1024 * 1024;
@@ -74,6 +77,7 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
   const [attestation, setAttestation] = useState<File | null>(null);
   const [donnees, setDonnees] = useState<Donnees>(VIDE);
   const [typeAssurance, setTypeAssurance] = useState("");
+  const [commissionDefautInfo, setCommissionDefautInfo] = useState("Aucun barème trouvé : renseignez la commission de base.");
   const [kyc, setKyc] = useState<FichiersKyc>({
     cni: null,
     justificatif_domicile: null,
@@ -93,6 +97,49 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
     mobile: string | null;
     telephone: string | null;
   } | null>(null);
+
+  useEffect(() => {
+    let annule = false;
+    const chargerCommission = async () => {
+      if (!typeAssurance) {
+        setCommissionDefautInfo("Choisissez une branche pour rechercher le barème applicable.");
+        return;
+      }
+      const { data: compagnie } = donnees.assureur.trim()
+        ? await supabase.from("compagnies").select("id,nom").ilike("nom", donnees.assureur.trim()).limit(1).maybeSingle()
+        : { data: null };
+      const { data: regles, error } = await supabase
+        .from("commission_bareme")
+        .select("niveau,branche,compagnie_id,type,taux_pourcentage,montant_fixe,base_calcul")
+        .eq("branche", typeAssurance);
+      if (annule) return;
+      if (error) {
+        setCommissionDefautInfo("Lecture du barème impossible. Saisissez la commission de base manuellement.");
+        return;
+      }
+      const reglesListe = regles ?? [];
+      const regleCompagnie = compagnie
+        ? reglesListe.find((r) => r.niveau === "compagnie" && r.compagnie_id === compagnie.id)
+        : undefined;
+      const regleBranche = reglesListe.find((r) => r.niveau === "branche");
+      const regle = regleCompagnie ?? regleBranche;
+      if (!regle) {
+        setCommissionDefautInfo("Aucun barème trouvé : renseignez la commission de base.");
+        return;
+      }
+      if (regle.type === "pourcentage" && regle.taux_pourcentage != null) {
+        setDonnees((current) => ({
+          ...current,
+          commission_taux: current.commission_taux || String(regle.taux_pourcentage),
+        }));
+        setCommissionDefautInfo(`Taux prérempli depuis le barème ${regleCompagnie ? "de la compagnie" : "de la branche"} : ${regle.taux_pourcentage} %.`);
+      } else {
+        setCommissionDefautInfo("Le barème trouvé n’est pas un taux en pourcentage. Saisissez la commission de base souhaitée.");
+      }
+    };
+    void chargerCommission();
+    return () => { annule = true; };
+  }, [typeAssurance, donnees.assureur]);
 
   const lireBase64 = (file: File) =>
     new Promise<string>((resolve, reject) => {
@@ -283,6 +330,7 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
             prime_montant: donneesSource.prime_montant.trim() ? Number(donneesSource.prime_montant.replace(",", ".")) : null,
             prime_periodicite: donneesSource.prime_periodicite || null,
             duree_mois: donneesSource.duree_mois.trim() ? Number(donneesSource.duree_mois) : null,
+            commission_taux: donneesSource.commission_taux.trim() ? Number(donneesSource.commission_taux.replace(",", ".")) : null,
           },
           fichiers,
         },
@@ -393,7 +441,9 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
           {champ("numero_contrat", "Numéro de contrat")}
           {champ("date_effet", "Date d'effet", "date")}
           {champ("date_echeance", "Date d'échéance", "date")}
-          {champ("type_couverture", "Type de couverture")}
+          {champ("type_couverture", "Nom exact du produit / formule")}
+          {champ("commission_taux", "Commission de base (%)", "number")}
+          <p className="text-xs text-ink-muted sm:col-span-2">{commissionDefautInfo} La valeur reste modifiable avant l’import.</p>
           {champ("prime_montant", "Cotisation indiquée sur l’attestation (€)", "number")}
           <label className="block text-sm text-ink-soft">
             <span className="mb-1 block">Périodicité de la cotisation</span>
