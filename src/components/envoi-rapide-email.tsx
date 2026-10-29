@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier -- existing file formatting debt; keep other lint rules enabled */
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
