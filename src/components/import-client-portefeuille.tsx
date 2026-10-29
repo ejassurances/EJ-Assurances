@@ -272,6 +272,7 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
             assureur: donneesSource.assureur,
             numero: donneesSource.numero_contrat || null,
             produit: donneesSource.type_couverture || typeSource,
+            type_assurance: typeSource,
             date_effet: donneesSource.date_effet || null,
             date_echeance: donneesSource.date_echeance || null,
             prime_montant: donneesSource.prime_montant.trim() ? Number(donneesSource.prime_montant.replace(",", ".")) : null,
