@@ -191,6 +191,8 @@ function CommissionsPage() {
         icon={IconCoins}
       />
 
+      {role === "admin" && <div className="mt-6"><BulletinCommissionsPanel onCommissionsCreees={load} /></div>}
+
       {synthese && (
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
           <StatCard label={`Encaissé ${synthese.annee}`} value={`${synthese.encaisse.toLocaleString("fr-FR")} €`} accent />
@@ -374,7 +376,6 @@ function CommissionsPage() {
 
       {role !== "client" && <BordereauxPanel />}
 
-      {role === "admin" && <BulletinCommissionsPanel onCommissionsCreees={load} />}
       {role === "admin" && <AddCommissionForm onCreated={load} />}
       {role === "admin" && <CommissionBaremeConfig />}
     </div>
