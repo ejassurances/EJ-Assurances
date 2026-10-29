@@ -7,6 +7,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 const entree = (input: unknown) =>
   z
@@ -79,7 +80,7 @@ export const validerDevisImporte = createServerFn({ method: "POST" })
     if (acces !== true) throw new Error("Accès au dossier refusé.");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: lecture, error: lectureError } = await supabaseAdmin
+    const { data: lecture, error: lectureError } = await (supabaseAdmin as unknown as SupabaseClient)
       .from("devis_import_lectures")
       .select("id")
       .eq("dossier_id", data.dossier_id)
@@ -89,7 +90,7 @@ export const validerDevisImporte = createServerFn({ method: "POST" })
       .maybeSingle();
     if (lectureError || !lecture) throw new Error("Lecture de référence introuvable pour ce document.");
 
-    const { error } = await supabaseAdmin
+    const { error } = await (supabaseAdmin as unknown as SupabaseClient)
       .from("devis_import_lectures")
       .update({
         statut: "validee",

@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 /* eslint-disable prettier/prettier -- legacy file formatting debt; keep other lint rules enabled */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { LIBELLES_PROFILS, routeRecommandation } from "@/lib/emprunteur-notebook";
@@ -409,7 +410,7 @@ export function DossierDevisPanel({
         .maybeSingle(),
     ]);
     if (d.error) setErr(d.error.message);
-    setDevis((d.data as DossierDevis[]) ?? []);
+    setDevis((d.data as unknown as DossierDevis[]) ?? []);
     setCompagnies((c.data as Ref[]) ?? []);
     setProduits((p.data as ProduitRef[]) ?? []);
     setClassement((cl.data as Classement | null) ?? null);
@@ -646,7 +647,7 @@ export function DossierDevisPanel({
         : null;
     const noteMotif = `Saisie manuelle — ${LIBELLE_MOTIF[motifSaisie]}`;
     const resume = [form.garanties_resume.trim(), noteMotif].filter(Boolean).join("\n");
-    const { data: cree, error } = await supabase
+    const { data: cree, error } = await (supabase as unknown as SupabaseClient)
       .from("dossier_devis")
       .insert({
         dossier_id: dossierId,
