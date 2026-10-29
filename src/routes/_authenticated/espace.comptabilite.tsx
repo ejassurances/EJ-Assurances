@@ -22,6 +22,7 @@ import { LivreRecettesTab } from "@/components/livre-recettes-tab";
 import { LivreAchatsTab } from "@/components/livre-achats-tab";
 import { CommissionMoisCard } from "@/components/commission-mois-card";
 import { TresoreriePrevisionnelle } from "@/components/tresorerie-previsionnelle";
+import { PilotageFinancierCabinet } from "@/components/pilotage-financier-cabinet";
 
 export const Route = createFileRoute("/_authenticated/espace/comptabilite")({
   component: ComptabilitePage,
@@ -224,6 +225,7 @@ function Overview() {
 
   return (
     <div className="space-y-6">
+      <PilotageFinancierCabinet />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card label="Encaissé" value={fmt(stats.encaisse)} hint="Commissions payées" />
         <Card label="Émis" value={fmt(stats.emis)} hint="En attente de paiement" />
