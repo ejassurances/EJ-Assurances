@@ -22,6 +22,7 @@ type Donnees = {
   ville: string;
   assureur: string;
   numero_contrat: string;
+  numero_reference: string;
   date_effet: string;
   date_echeance: string;
   type_couverture: string;
@@ -42,6 +43,7 @@ const VIDE: Donnees = {
   ville: "",
   assureur: "",
   numero_contrat: "",
+  numero_reference: "",
   date_effet: "",
   date_echeance: "",
   type_couverture: "",
@@ -57,6 +59,7 @@ type ContratExistantImport = {
   client_id: string;
   client_nom: string;
   numero: string | null;
+  numero_reference: string | null;
   assureur: string;
   produit: string;
   date_effet: string | null;
@@ -189,6 +192,7 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
           telephone: donneesSource.telephone || null,
           assureur: donneesSource.assureur || null,
           numero_contrat: donneesSource.numero_contrat || null,
+          numero_reference: donneesSource.numero_reference || null,
           date_effet: donneesSource.date_effet || null,
           date_echeance: donneesSource.date_echeance || null,
           type_couverture: donneesSource.type_couverture || null,
@@ -271,6 +275,7 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
           contrat: {
             assureur: donneesSource.assureur,
             numero: donneesSource.numero_contrat || null,
+            numero_reference: donneesSource.numero_reference || null,
             produit: donneesSource.type_couverture || typeSource,
             type_assurance: typeSource,
             date_effet: donneesSource.date_effet || null,
@@ -384,6 +389,7 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
           {champ("code_postal", "Code postal")}
           {champ("ville", "Ville")}
           {champ("assureur", "Assureur")}
+          {champ("numero_reference", "Numéro de référence compagnie")}
           {champ("numero_contrat", "Numéro de contrat")}
           {champ("date_effet", "Date d'effet", "date")}
           {champ("date_echeance", "Date d'échéance", "date")}
@@ -476,7 +482,7 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
                 className="rounded-lg border border-amber-800/20 bg-white/70 p-3"
               >
                 <p className="font-medium">
-                  {contrat.client_nom || "Client sans nom"} · {contrat.numero || "Sans numéro"}
+                  {contrat.client_nom || "Client sans nom"} · Réf. {contrat.numero_reference || "—"} · Contrat {contrat.numero || "—"}
                 </p>
                 <p className="mt-1 text-sm">
                   {contrat.assureur} · {contrat.produit}
