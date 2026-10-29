@@ -189,7 +189,7 @@ export function ContratDocumentsPanel({
     try {
       const { data: contrat, error: contratError } = await supabase
         .from("contrats")
-        .select("prime_annuelle,statut")
+        .select("prime_annuelle,statut,fractionnement,produit")
         .eq("id", contratId)
         .maybeSingle();
       if (contratError || !contrat) throw new Error(contratError?.message ?? "Contrat introuvable.");
@@ -197,14 +197,15 @@ export function ContratDocumentsPanel({
         throw new Error("La prime annuelle est déjà renseignée. Pour préserver la saisie existante, aucune valeur n'a été écrasée.");
       }
       const montantAnnuel = Math.round((analyse.periodicite === "mensuelle" ? analyse.montant * 12 : analyse.montant) * 100) / 100;
+      const fractionnement = (contrat.produit ?? "").toLowerCase().includes("trottin") ? "annuel" : analyse.periodicite;
       const verrouille = ["actif", "contrat_actif", "contrat_valide"].includes(contrat.statut ?? "");
       const result = verrouille
         ? await supabase.rpc("corriger_contrat_actif", {
             _contrat_id: contratId,
             _motif: "Montant annuel extrait de l'attestation du contrat et confirmé par le conseiller",
-            _champs: { prime_annuelle: montantAnnuel },
+            _champs: { prime_annuelle: montantAnnuel, fractionnement },
           })
-        : await supabase.from("contrats").update({ prime_annuelle: montantAnnuel }).eq("id", contratId);
+        : await supabase.from("contrats").update({ prime_annuelle: montantAnnuel, fractionnement }).eq("id", contratId);
       if (result.error) throw new Error(result.error.message);
       setAnalyse(null);
       await load();
