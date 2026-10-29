@@ -21,6 +21,7 @@ const schema = z.object({
     assureur: z.string().trim().min(1).max(160),
     numero: z.string().trim().max(120).optional().nullable(),
     produit: z.string().trim().min(1).max(160),
+    type_assurance: z.string().trim().max(80).optional().nullable(),
     date_effet: z.string().max(10).optional().nullable(),
     date_echeance: z.string().max(10).optional().nullable(),
     prime_montant: z.number().positive().finite().optional().nullable(),
@@ -105,6 +106,7 @@ export const enregistrerContratImportPortefeuille = createServerFn({ method: "PO
           fractionnement: data.contrat.prime_periodicite === "mensuelle" ? "mensuel" : "annuel",
         } : {}),
         ...(data.contrat.duree_mois ? { duree_mois: data.contrat.duree_mois } : {}),
+        ...(data.contrat.type_assurance ? { is_emprunteur: data.contrat.type_assurance === "emprunteur" } : {}),
         updated_at: new Date().toISOString(),
       }).eq("id", contratId);
       if (updateError) throw new Error("Mise à jour du contrat impossible : " + updateError.message);
@@ -124,6 +126,7 @@ export const enregistrerContratImportPortefeuille = createServerFn({ method: "PO
           fractionnement: data.contrat.prime_periodicite === "mensuelle" ? "mensuel" : "annuel",
         } : {}),
         ...(data.contrat.duree_mois ? { duree_mois: data.contrat.duree_mois } : {}),
+        is_emprunteur: data.contrat.type_assurance === "emprunteur",
         statut: "en_cours", created_by: context.userId,
       }).select("id").single();
       if (error || !created) throw new Error("Création du contrat impossible : " + (error?.message ?? "erreur inconnue"));
