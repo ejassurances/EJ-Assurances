@@ -852,6 +852,63 @@ async function envoyerSmtp(raw: string, from: string, recipients: string[]): Pro
   }
 }
 
+
+/** Vérifie l'authentification SMTP sans envoyer de message. */
+async function verifierSmtp(): Promise<void> {
+  const cfg = configuration();
+  const socket = connect({ hostname: cfg.smtpHost, port: 465 }, { secureTransport: "on" });
+  await socket.opened;
+  const reader = socket.readable.getReader();
+  const writer = socket.writable.getWriter();
+  const decoder = new TextDecoder();
+  let pending = "";
+  const readResponse = async (): Promise<{ code: number; lines: string[] }> => {
+    const lines: string[] = [];
+    while (true) {
+      let end = pending.indexOf("\\r\\n");
+      while (end < 0) {
+        const result = await new Promise<ReadableStreamReadResult<Uint8Array>>((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Délai SMTP dépassé.")), 15000);
+          reader.read().then((value) => { clearTimeout(timer); resolve(value); }, (error) => { clearTimeout(timer); reject(error); });
+        });
+        if (result.done) throw new Error("Connexion SMTP interrompue.");
+        pending += decoder.decode(result.value, { stream: true });
+        end = pending.indexOf("\\r\\n");
+      }
+      const line = pending.slice(0, end);
+      pending = pending.slice(end + 2);
+      lines.push(line);
+      if (/^\\d{3} /.test(line)) return { code: Number(line.slice(0, 3)), lines };
+    }
+  };
+  const command = async (value: string, accepted: number[]) => {
+    await writer.write(new TextEncoder().encode(`${value}\\r\\n`));
+    const response = await readResponse();
+    if (!accepted.includes(response.code)) throw new Error(`SMTP refusé (${response.code}) : ${response.lines.at(-1)?.slice(4, 160) ?? "erreur serveur"}`);
+    return response;
+  };
+  try {
+    const greeting = await readResponse();
+    if (greeting.code !== 220) throw new Error(`Connexion SMTP refusée (${greeting.code}).`);
+    await command("EHLO crm.ej-assurances.fr", [250]);
+    await command("AUTH LOGIN", [334]);
+    await command(base64Utf8(cfg.email), [334]);
+    await command(base64Utf8(cfg.password), [235]);
+    await command("QUIT", [221]).catch(() => undefined);
+  } finally {
+    reader.releaseLock();
+    writer.releaseLock();
+    await socket.close().catch(() => undefined);
+  }
+}
+
+/** Teste la connexion et l'authentification IONOS, sans lire ni envoyer de mail. */
+export async function verifierConnexionMessagerie(): Promise<{ imap: true; smtp: true }> {
+  await avecImap(async (client) => { await client.list(); });
+  await verifierSmtp();
+  return { imap: true, smtp: true };
+}
+
 async function ajouterEtiquettes(id: string, labels: string[]): Promise<void> {
   const rows = [...new Set(labels)].map((label) => ({ message_id: id, label }));
   if (!rows.length) return;
