@@ -31,6 +31,7 @@ type Facture = {
   fichier_path: string | null;
   fichier_nom: string | null;
   ecriture_id: string | null;
+  abonnement_sans_fin?: boolean;
 };
 
 const fmt = (n: number) =>
@@ -246,6 +247,7 @@ export function FacturesAchatTab() {
               <TableHead className="text-right">TVA</TableHead>
               <TableHead className="text-right">TTC</TableHead>
               <TableHead>Échéance</TableHead>
+              <TableHead>Type</TableHead>
               <TableHead>Statut</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -265,6 +267,7 @@ export function FacturesAchatTab() {
                 <TableCell className="whitespace-nowrap text-xs text-ink-muted">
                   {f.date_echeance ? new Date(f.date_echeance).toLocaleDateString("fr-FR") : "—"}
                 </TableCell>
+                <TableCell className="text-xs">{f.abonnement_sans_fin ? "Abonnement mensuel" : "Ponctuelle"}</TableCell>
                 <TableCell>
                   <span className={"rounded-full px-2 py-0.5 text-xs " + statutClass(f.statut)}>
                     {STATUT_LABEL[f.statut]}
@@ -297,7 +300,7 @@ export function FacturesAchatTab() {
             ))}
             {!loading && affichees.length === 0 && (
               <TableRow>
-                <TableCell colSpan={10} className="py-8 text-center text-sm text-ink-muted">
+                <TableCell colSpan={11} className="py-8 text-center text-sm text-ink-muted">
                   Aucune facture enregistrée.
                 </TableCell>
               </TableRow>
@@ -431,6 +434,7 @@ function NouvelleFacture({
     compte_charge: "606800",
     moyen_paiement: "",
     notes: "",
+    abonnement_sans_fin: false,
   });
 
   const comptesCharge = comptes.filter((c) => c.classe === 6);
@@ -484,6 +488,7 @@ function NouvelleFacture({
         compte_charge: form.compte_charge,
         moyen_paiement: form.moyen_paiement || null,
         notes: form.notes || null,
+        abonnement_sans_fin: form.abonnement_sans_fin,
         fichier_path,
         fichier_nom: fichier?.name ?? null,
       })
@@ -541,6 +546,12 @@ function NouvelleFacture({
             value={form.date_echeance}
             onChange={(e) => setForm({ ...form, date_echeance: e.target.value })}
           />
+        </Field>
+        <Field label="Abonnement mensuel sans date de fin">
+          <label className="flex min-h-10 items-center gap-2 rounded-md border border-line px-3 text-sm">
+            <input type="checkbox" checked={form.abonnement_sans_fin} onChange={(e) => setForm({ ...form, abonnement_sans_fin: e.target.checked })} />
+            Répéter chaque mois dans le prévisionnel
+          </label>
         </Field>
         <Field label="Moyen de paiement">
           <Input
