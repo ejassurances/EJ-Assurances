@@ -41,6 +41,7 @@ export function ContratDocumentsPanel({
   canEdit = true,
   produitId = null,
   compagnieId = null,
+  onPrimeUpdated,
 }: {
   contratId: string;
   /** Client titulaire : le fichier est rangé dans son dossier pour l'espace client. */
@@ -50,6 +51,7 @@ export function ContratDocumentsPanel({
   /** Produit rattaché : ses CG/IPID sont affichés directement ici. */
   produitId?: string | null;
   compagnieId?: string | null;
+  onPrimeUpdated?: () => void | Promise<void>;
 }) {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [rattachables, setRattachables] = useState<Doc[]>([]);
@@ -206,6 +208,7 @@ export function ContratDocumentsPanel({
       if (result.error) throw new Error(result.error.message);
       setAnalyse(null);
       await load();
+      await onPrimeUpdated?.();
       setError(null);
       // Le déclencheur SQL du contrat recalcule les échéances et la fiscalité à partir de la prime enregistrée.
     } catch (e) {
