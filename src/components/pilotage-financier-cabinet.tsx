@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 type Echeance = { contrat_id: string; date_debut_periode: string; commission_cabinet_periode: number; statut: string };
 type Commission = { contrat_id: string | null; montant: number; statut: string; date_versement: string | null; created_at: string };
-type Facture = { montant_ttc: number; statut: string; date_facture: string; date_echeance: string | null; date_paiement: string | null };
+type Facture = { montant_ttc: number; statut: string; date_facture: string; date_echeance: string | null; date_paiement: string | null; abonnement_sans_fin?: boolean };
 type Charge = { montant: number; statut: string; periode: string | null; date_echeance: string | null; date_paiement: string | null; categorie: string };
 
 type MoisFinance = {
@@ -57,7 +57,7 @@ export function PilotageFinancierCabinet() {
       const [e, c, f, ch, p] = await Promise.all([
         supabase.from("contrat_echeances").select("contrat_id,date_debut_periode,commission_cabinet_periode,statut"),
         supabase.from("commissions").select("contrat_id,montant,statut,date_versement,created_at"),
-        supabase.from("factures_achat").select("montant_ttc,statut,date_facture,date_echeance,date_paiement"),
+        (supabase as any).from("factures_achat").select("montant_ttc,statut,date_facture,date_echeance,date_paiement,abonnement_sans_fin"),
         supabase.from("finance_charges").select("montant,statut,periode,date_echeance,date_paiement,categorie"),
         (supabase as any).from("finance_parametres").select("valeur").eq("cle", "taux_urssaf").maybeSingle(),
       ]);
@@ -115,6 +115,14 @@ export function PilotageFinancierCabinet() {
 
     for (const f of factures) {
       if (f.statut === "annulee") continue;
+      if (f.abonnement_sans_fin) {
+        const debut = moisCle(f.date_facture);
+        if (!debut) continue;
+        for (const [key, row] of resultats) {
+          if (key >= debut) row.charges += Number(f.montant_ttc) || 0;
+        }
+        continue;
+      }
       const date = f.statut === "payee" ? f.date_paiement || f.date_facture : f.date_echeance || f.date_facture;
       const key = moisCle(date);
       if (key && resultats.has(key)) resultats.get(key)!.charges += Number(f.montant_ttc) || 0;
