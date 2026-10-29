@@ -38,6 +38,7 @@ export function EnvoiRapideEmailDialog({
   const [sujet, setSujet] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [erreurEnvoi, setErreurEnvoi] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -68,7 +69,25 @@ export function EnvoiRapideEmailDialog({
 
   const soumettre = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!to) return toast.error("Sélectionnez au moins un destinataire.");
+    setErreurEnvoi(null);
+    if (!to) {
+      const erreur = "Sélectionnez au moins un destinataire ou saisissez une adresse e-mail valide.";
+      setErreurEnvoi(erreur);
+      toast.error(erreur);
+      return;
+    }
+    if (!sujet.trim()) {
+      const erreur = "Renseignez l’objet du message.";
+      setErreurEnvoi(erreur);
+      toast.error(erreur);
+      return;
+    }
+    if (!message.trim()) {
+      const erreur = "Renseignez le contenu du message.";
+      setErreurEnvoi(erreur);
+      toast.error(erreur);
+      return;
+    }
     setBusy(true);
     try {
       await envoyer({
@@ -84,12 +103,14 @@ export function EnvoiRapideEmailDialog({
           compagnie_id: null,
         },
       });
-      toast.success("Email envoyé depuis la boîte du cabinet.");
+      toast.success("E-mail envoyé depuis la boîte du cabinet.");
       setMessage("");
       onSent?.();
       onClose();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Envoi impossible.");
+      const detail = err instanceof Error ? err.message : "Envoi impossible.";
+      setErreurEnvoi(detail);
+      toast.error(detail);
     } finally {
       setBusy(false);
     }
@@ -177,12 +198,19 @@ export function EnvoiRapideEmailDialog({
           className="w-full rounded-md border border-line bg-background px-3 py-2 text-sm"
         />
         <textarea
+          required
           rows={8}
           placeholder="Votre message…"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           className="w-full rounded-md border border-line bg-background px-3 py-2 text-sm"
         />
+
+        {erreurEnvoi && (
+          <p role="alert" className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">
+            {erreurEnvoi}
+          </p>
+        )}
 
         <div className="flex flex-wrap items-center justify-end gap-2">
           <button type="button" onClick={onClose} className="rounded-full border border-line px-4 py-1.5 text-sm">
@@ -198,7 +226,7 @@ export function EnvoiRapideEmailDialog({
           </a>
           <button
             type="submit"
-            disabled={busy || !to || !message.trim()}
+            disabled={busy}
             className="rounded-full bg-[#0A192F] px-5 py-1.5 text-sm text-white hover:bg-[#0A192F]/90 disabled:opacity-60"
           >
             {busy ? "Envoi…" : "Envoyer"}
