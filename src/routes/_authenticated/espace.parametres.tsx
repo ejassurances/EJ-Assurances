@@ -127,6 +127,18 @@ function Parametres() {
         icon={IconSettings}
       />
 
+      {(role === "admin" || role === "mandataire") && (
+        <section className="crm-card flex flex-wrap items-center justify-between gap-4 p-5">
+          <div>
+            <h2 className="font-serif text-lg font-medium">Suivi conformité du cabinet</h2>
+            <p className="mt-1 max-w-xl text-sm text-ink-muted">Accéder au registre ACPR / DDA, aux obligations à vérifier, aux preuves attendues et aux actions correctives en cours.</p>
+          </div>
+          <Link to="/espace/conformite" className="inline-flex items-center rounded-md bg-[#0A192F] px-4 py-2 text-sm font-medium text-white hover:bg-[#0A192F]/90">
+            Ouvrir la conformité
+          </Link>
+        </section>
+      )}
+
       <form onSubmit={saveProfile} className="crm-card space-y-4 p-5">
         <h2 className="crm-eyebrow">Profil</h2>
         <div>
