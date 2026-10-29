@@ -124,7 +124,7 @@ export function BulletinCommissionsPanel({ onCommissionsCreees }: { onCommission
       if (res.avertissement) toast.warning(`Bulletin archivé mais non analysé : ${res.avertissement}`);
       else
         toast.success(
-          `${res.nb_lignes} ligne(s) détectée(s), ${res.nb_rapprochees} rattachée(s) automatiquement à un client.`,
+          `${res.nb_lignes} ligne(s) détectée(s), ${res.nb_rapprochees} rattachée(s) automatiquement à un contrat.`,
         );
       setAssureur("");
       setPeriode("");
@@ -278,7 +278,7 @@ export function BulletinCommissionsPanel({ onCommissionsCreees }: { onCommission
                           <td className="px-2 py-2">
                             <select
                               value={l.client_id ?? ""}
-                              onChange={(e) => majLigne(l, b.id, e.target.value, l.contrat_id ?? undefined)}
+                              onChange={(e) => majLigne(l, b.id, e.target.value)}
                               disabled={Boolean(l.commission_id)}
                               className="w-48 rounded-md border border-line bg-background px-2 py-1 text-xs"
                             >
