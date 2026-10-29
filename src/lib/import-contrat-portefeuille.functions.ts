@@ -28,6 +28,7 @@ const schema = z.object({
     prime_montant: z.number().positive().finite().optional().nullable(),
     prime_periodicite: z.enum(["mensuelle", "annuelle"]).optional().nullable(),
     duree_mois: z.number().int().positive().max(1200).optional().nullable(),
+    commission_taux: z.number().min(0).max(100).finite().optional().nullable(),
   }),
   fichiers: z.array(z.object({
     code: z.enum(["attestation_assurance", "cni", "justificatif_domicile", "rib"]),
@@ -107,6 +108,7 @@ export const enregistrerContratImportPortefeuille = createServerFn({ method: "PO
           fractionnement: data.contrat.prime_periodicite === "mensuelle" ? "mensuel" : "annuel",
         } : {}),
         ...(data.contrat.duree_mois ? { duree_mois: data.contrat.duree_mois } : {}),
+        ...(data.contrat.commission_taux != null ? { commission_cabinet_taux: Math.round((data.contrat.commission_taux / 100) * 10000) / 10000 } : {}),
         ...(data.contrat.type_assurance ? { is_emprunteur: data.contrat.type_assurance === "emprunteur" } : {}),
         updated_at: new Date().toISOString(),
       }).eq("id", contratId);
@@ -127,6 +129,7 @@ export const enregistrerContratImportPortefeuille = createServerFn({ method: "PO
           fractionnement: data.contrat.prime_periodicite === "mensuelle" ? "mensuel" : "annuel",
         } : {}),
         ...(data.contrat.duree_mois ? { duree_mois: data.contrat.duree_mois } : {}),
+        ...(data.contrat.commission_taux != null ? { commission_cabinet_taux: Math.round((data.contrat.commission_taux / 100) * 10000) / 10000 } : {}),
         is_emprunteur: data.contrat.type_assurance === "emprunteur",
         statut: "en_cours", created_by: context.userId,
       }).select("id").single();
