@@ -761,3 +761,14 @@ export const scannerBoiteCrm = createServerFn({ method: "POST" })
 
     return { analyses, rattachesClient, rattachesCompagnie, deja };
   });
+
+
+/** Vérifie les accès IMAP et SMTP IONOS sans envoyer de message. */
+export const testerConnexionEmailCrm = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({}).passthrough().parse(input ?? {}))
+  .handler(async ({ context }) => {
+    await exigerStaff(context.supabase, context.userId);
+    const { verifierConnexionMessagerie } = await import("@/lib/ionos-mail.server");
+    return await verifierConnexionMessagerie();
+  });
