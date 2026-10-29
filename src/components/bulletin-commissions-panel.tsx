@@ -36,6 +36,7 @@ type Ligne = {
 };
 
 type Client = { id: string; nom: string; prenom: string | null };
+type Contrat = { id: string; numero: string | null; produit: string | null; assureur: string | null; client_id: string | null };
 type Profil = { id: string; full_name: string | null; email: string | null };
 
 const lireBase64 = (file: File) =>
@@ -59,6 +60,7 @@ export function BulletinCommissionsPanel({ onCommissionsCreees }: { onCommission
   const [lignes, setLignes] = useState<Record<string, Ligne[]>>({});
   const [ouvert, setOuvert] = useState<string | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
+  const [contrats, setContrats] = useState<Contrat[]>([]);
   const [profils, setProfils] = useState<Profil[]>([]);
   const [beneficiaire, setBeneficiaire] = useState("");
   const [assureur, setAssureur] = useState("");
@@ -77,11 +79,13 @@ export function BulletinCommissionsPanel({ onCommissionsCreees }: { onCommission
   useEffect(() => {
     charger();
     (async () => {
-      const [c, p] = await Promise.all([
+      const [c, k, p] = await Promise.all([
         supabase.from("clients").select("id,nom,prenom").order("nom").limit(1000),
+        supabase.from("contrats").select("id,numero,produit,assureur,client_id").order("numero").limit(2000),
         supabase.from("profiles").select("id,full_name,email"),
       ]);
       setClients((c.data as Client[]) ?? []);
+      setContrats((k.data as Contrat[]) ?? []);
       setProfils((p.data as Profil[]) ?? []);
     })();
   }, []);
@@ -135,9 +139,9 @@ export function BulletinCommissionsPanel({ onCommissionsCreees }: { onCommission
     }
   };
 
-  const majLigne = async (ligne: Ligne, bulletinId: string, clientId: string) => {
+  const majLigne = async (ligne: Ligne, bulletinId: string, clientId: string, contratId?: string) => {
     try {
-      await rattacher({ data: { ligne_id: ligne.id, client_id: clientId || null } });
+      await rattacher({ data: { ligne_id: ligne.id, client_id: clientId || null, contrat_id: contratId || null } });
       await chargerLignes(bulletinId);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Rattachement impossible");
@@ -170,11 +174,15 @@ export function BulletinCommissionsPanel({ onCommissionsCreees }: { onCommission
 
   return (
     <section className="mt-8 crm-card p-6">
-      <h2 className="font-serif text-xl font-medium text-ink">Bulletins de commissions</h2>
-      <p className="mt-1 text-sm text-ink-muted">
-        Importez le bulletin reçu de la compagnie : l'IA lit les lignes et les rattache aux clients et contrats du CRM.
-        Chaque rattachement reste modifiable avant la création des commissions.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="font-serif text-xl font-medium text-ink">Importer un bulletin de commissions</h2>
+          <p className="mt-1 max-w-3xl text-sm text-ink-muted">
+            Déposez un PDF ou une image. L’IA extrait les commissions réelles, puis vous permet de vérifier le client et le contrat avant de les enregistrer. Les commissions prévisionnelles restent distinctes des montants réellement versés.
+          </p>
+        </div>
+        <span className="rounded-full border border-line px-3 py-1 text-xs text-ink-muted">PDF ou image · 15 Mo max</span>
+      </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <input
@@ -253,7 +261,8 @@ export function BulletinCommissionsPanel({ onCommissionsCreees }: { onCommission
                         <th className="px-2 py-2">Client détecté</th>
                         <th className="px-2 py-2">Contrat</th>
                         <th className="px-2 py-2">Montant</th>
-                        <th className="px-2 py-2">Rattachement</th>
+                        <th className="px-2 py-2">Client</th>
+                        <th className="px-2 py-2">Contrat associé</th>
                         <th className="px-2 py-2" />
                       </tr>
                     </thead>
@@ -269,14 +278,32 @@ export function BulletinCommissionsPanel({ onCommissionsCreees }: { onCommission
                           <td className="px-2 py-2">
                             <select
                               value={l.client_id ?? ""}
-                              onChange={(e) => majLigne(l, b.id, e.target.value)}
+                              onChange={(e) => majLigne(l, b.id, e.target.value, l.contrat_id ?? undefined)}
                               disabled={Boolean(l.commission_id)}
-                              className="w-56 rounded-md border border-line bg-background px-2 py-1 text-xs"
+                              className="w-48 rounded-md border border-line bg-background px-2 py-1 text-xs"
                             >
                               <option value="">Non rattaché…</option>
                               {clients.map((c) => (
                                 <option key={c.id} value={c.id}>
                                   {c.nom} {c.prenom ?? ""}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="px-2 py-2">
+                            <select
+                              value={l.contrat_id ?? ""}
+                              onChange={(e) => {
+                                const contrat = contrats.find((k) => k.id === e.target.value);
+                                majLigne(l, b.id, contrat?.client_id ?? l.client_id ?? "", e.target.value);
+                              }}
+                              disabled={Boolean(l.commission_id)}
+                              className="w-64 rounded-md border border-line bg-background px-2 py-1 text-xs"
+                            >
+                              <option value="">Choisir un contrat…</option>
+                              {contrats.filter((k) => !l.client_id || !k.client_id || k.client_id === l.client_id).map((k) => (
+                                <option key={k.id} value={k.id}>
+                                  {[k.numero || "Sans numéro", k.assureur, k.produit].filter(Boolean).join(" — ")}
                                 </option>
                               ))}
                             </select>
@@ -296,7 +323,7 @@ export function BulletinCommissionsPanel({ onCommissionsCreees }: { onCommission
                       ))}
                       {(lignes[b.id] ?? []).length === 0 && (
                         <tr>
-                          <td colSpan={5} className="px-2 py-3 text-sm text-ink-muted">
+                          <td colSpan={6} className="px-2 py-3 text-sm text-ink-muted">
                             Aucune ligne détectée dans ce bulletin.
                           </td>
                         </tr>
