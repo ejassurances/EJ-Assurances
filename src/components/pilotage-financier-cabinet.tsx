@@ -81,10 +81,8 @@ export function PilotageFinancierCabinet() {
   }, []);
 
   const lignes = useMemo(() => {
-    const debut = new Date();
-    const moisActuel = `${debut.getFullYear()}-${String(debut.getMonth() + 1).padStart(2, "0")}`;
-    // Année complète en cours + cinq exercices suivants.
-    const mois = genererMois(new Date(debut.getFullYear(), 0, 1), 72);
+    // Historique budgétaire conservé depuis le 1er janvier 2026, puis cinq ans de projection.
+    const mois = genererMois(new Date(2026, 0, 1), 72);
     const tauxNumerique = tauxConfigure ? Math.max(0, Math.min(100, Number(taux) || 0)) / 100 : 0;
     const resultats = new Map<string, MoisFinance>();
     for (const key of mois) resultats.set(key, {
@@ -102,7 +100,7 @@ export function PilotageFinancierCabinet() {
 
     for (const e of echeances) {
       const key = moisCle(e.date_debut_periode);
-      if (!key || !resultats.has(key) || key < moisActuel || ["annulee", "payee"].includes(e.statut)) continue;
+      if (!key || !resultats.has(key) || ["annulee", "payee"].includes(e.statut)) continue;
       if (encaisseParContratMois.has(`${e.contrat_id}:${key}`)) continue;
       resultats.get(key)!.commissionsPrevues += Number(e.commission_cabinet_periode) || 0;
     }
@@ -177,7 +175,7 @@ export function PilotageFinancierCabinet() {
         <div>
           <h3 className="font-serif text-xl font-medium text-ink">Rentabilité et trésorerie du cabinet</h3>
           <p className="mt-1 max-w-3xl text-sm text-ink-muted">
-            Vue mensuelle sur cinq ans : commissions encaissées et prévues, factures et charges saisies, estimation URSSAF et besoin de financement. Les projections dépendent des données enregistrées.
+            Vue mensuelle depuis le 1er janvier 2026, avec historique prévisionnel, commissions encaissées, factures et charges saisies, estimation URSSAF et besoin de financement. Les projections dépendent des données enregistrées.
           </p>
         </div>
         <div className="min-w-[240px] rounded-lg border border-line p-3">
@@ -210,7 +208,7 @@ export function PilotageFinancierCabinet() {
               <div className="overflow-x-auto border-t border-line">
                 <table className="w-full min-w-[850px] text-sm">
                   <thead className="bg-surface text-left text-xs uppercase tracking-wide text-ink-muted">
-                    <tr><th className="px-3 py-2">Mois</th><th className="px-3 py-2 text-right">Encaissé</th><th className="px-3 py-2 text-right">À venir</th><th className="px-3 py-2 text-right">Charges</th><th className="px-3 py-2 text-right">URSSAF estimée</th><th className="px-3 py-2 text-right">Solde</th><th className="px-3 py-2 text-right">Apport cumulé requis</th></tr>
+                    <tr><th className="px-3 py-2">Mois</th><th className="px-3 py-2 text-right">Encaissé</th><th className="px-3 py-2 text-right">Prévisionnel non encaissé</th><th className="px-3 py-2 text-right">Charges</th><th className="px-3 py-2 text-right">URSSAF estimée</th><th className="px-3 py-2 text-right">Solde</th><th className="px-3 py-2 text-right">Apport cumulé requis</th></tr>
                   </thead>
                   <tbody>
                     {rows.map((r) => (
@@ -232,7 +230,7 @@ export function PilotageFinancierCabinet() {
         ))}
       </div>
       <p className="mt-4 text-xs text-ink-muted">
-        Le besoin de financement cumulé est calculé à partir d’un solde supposé nul au 1er janvier de l’année en cours. Il ne tient pas compte d’un solde bancaire réel, d’impôts hors URSSAF, de TVA à reverser ni de charges qui ne sont pas encore saisies. Ce tableau est un outil de pilotage interne, pas un bilan comptable ou un calcul fiscal officiel.
+        Le besoin de financement cumulé est calculé à partir d’un solde supposé nul au 1er janvier 2026. Il ne tient pas compte d’un solde bancaire réel, d’impôts hors URSSAF, de TVA à reverser ni de charges qui ne sont pas encore saisies. Ce tableau est un outil de pilotage interne, pas un bilan comptable ou un calcul fiscal officiel.
       </p>
     </section>
   );
