@@ -25,6 +25,9 @@ type Donnees = {
   date_effet: string;
   date_echeance: string;
   type_couverture: string;
+  prime_montant: string;
+  prime_periodicite: string;
+  duree_mois: string;
 };
 const VIDE: Donnees = {
   civilite: "M.",
@@ -42,6 +45,9 @@ const VIDE: Donnees = {
   date_effet: "",
   date_echeance: "",
   type_couverture: "",
+  prime_montant: "",
+  prime_periodicite: "",
+  duree_mois: "",
 };
 const FORMATS = ["application/pdf", "image/jpeg", "image/png", "image/webp"] as const;
 const TAILLE_MAX = 8 * 1024 * 1024;
@@ -122,8 +128,8 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
       });
       const donneesExtraites = { ...VIDE };
       for (const [key, value] of Object.entries(resultat)) {
-        if (key in donneesExtraites && typeof value === "string" && value)
-          (donneesExtraites as Record<string, string>)[key] = value;
+        if (key in donneesExtraites && (typeof value === "string" || typeof value === "number") && String(value).trim())
+          (donneesExtraites as Record<string, string>)[key] = String(value);
       }
       setDonnees(donneesExtraites);
       const brancheExtraite = resultat.type_assurance ?? "";
@@ -268,6 +274,9 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
             produit: donneesSource.type_couverture || typeSource,
             date_effet: donneesSource.date_effet || null,
             date_echeance: donneesSource.date_echeance || null,
+            prime_montant: donneesSource.prime_montant.trim() ? Number(donneesSource.prime_montant.replace(",", ".")) : null,
+            prime_periodicite: donneesSource.prime_periodicite || null,
+            duree_mois: donneesSource.duree_mois.trim() ? Number(donneesSource.duree_mois) : null,
           },
           fichiers,
         },
@@ -378,6 +387,16 @@ export function ImportClientPortefeuille({ onCreated, onCancel }: Props) {
           {champ("date_effet", "Date d'effet", "date")}
           {champ("date_echeance", "Date d'échéance", "date")}
           {champ("type_couverture", "Type de couverture")}
+          {champ("prime_montant", "Cotisation indiquée sur l’attestation (€)", "number")}
+          <label className="block text-sm text-ink-soft">
+            <span className="mb-1 block">Périodicité de la cotisation</span>
+            <select value={donnees.prime_periodicite} onChange={(e) => setDonnees((current) => ({ ...current, prime_periodicite: e.target.value }))} className="w-full rounded-md border border-line bg-background px-3 py-2 text-sm text-ink">
+              <option value="">À confirmer</option>
+              <option value="mensuelle">Mensuelle</option>
+              <option value="annuelle">Annuelle</option>
+            </select>
+          </label>
+          {champ("duree_mois", "Durée du contrat (mois)", "number")}
         </div>
       </details>
       <details className="rounded-xl border border-line p-4">
