@@ -36,7 +36,8 @@ type Ligne = {
 };
 
 type Client = { id: string; nom: string; prenom: string | null };
-type Contrat = { id: string; numero: string | null; produit: string | null; assureur: string | null; client_id: string | null };
+type Contrat = { id: string; numero: string | null; produit: string | null; assureur: string | null; client_id: string | null; dossier_id: string | null };
+type Dossier = { id: string; reference: string | null };
 type Profil = { id: string; full_name: string | null; email: string | null };
 
 const lireBase64 = (file: File) =>
@@ -61,6 +62,7 @@ export function BulletinCommissionsPanel({ onCommissionsCreees }: { onCommission
   const [ouvert, setOuvert] = useState<string | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [contrats, setContrats] = useState<Contrat[]>([]);
+  const [references, setReferences] = useState<Record<string, string>>({});
   const [profils, setProfils] = useState<Profil[]>([]);
   const [beneficiaire, setBeneficiaire] = useState("");
   const [assureur, setAssureur] = useState("");
@@ -79,13 +81,15 @@ export function BulletinCommissionsPanel({ onCommissionsCreees }: { onCommission
   useEffect(() => {
     charger();
     (async () => {
-      const [c, k, p] = await Promise.all([
+      const [c, k, d, p] = await Promise.all([
         supabase.from("clients").select("id,nom,prenom").order("nom").limit(1000),
-        supabase.from("contrats").select("id,numero,produit,assureur,client_id").order("numero").limit(2000),
+        supabase.from("contrats").select("id,numero,produit,assureur,client_id,dossier_id").order("numero").limit(2000),
+        supabase.from("dossiers").select("id,reference").limit(3000),
         supabase.from("profiles").select("id,full_name,email"),
       ]);
       setClients((c.data as Client[]) ?? []);
       setContrats((k.data as Contrat[]) ?? []);
+      setReferences(Object.fromEntries(((d.data as Dossier[]) ?? []).map((item) => [item.id, item.reference ?? "Référence non attribuée"])));
       setProfils((p.data as Profil[]) ?? []);
     })();
   }, []);
@@ -259,7 +263,7 @@ export function BulletinCommissionsPanel({ onCommissionsCreees }: { onCommission
                     <thead className="text-left text-xs uppercase tracking-wide text-ink-muted">
                       <tr>
                         <th className="px-2 py-2">Client détecté</th>
-                        <th className="px-2 py-2">Contrat</th>
+                        <th className="px-2 py-2">N° compagnie détecté</th>
                         <th className="px-2 py-2">Montant</th>
                         <th className="px-2 py-2">Client</th>
                         <th className="px-2 py-2">Contrat associé</th>
@@ -303,7 +307,12 @@ export function BulletinCommissionsPanel({ onCommissionsCreees }: { onCommission
                               <option value="">Choisir un contrat…</option>
                               {contrats.filter((k) => !l.client_id || !k.client_id || k.client_id === l.client_id).map((k) => (
                                 <option key={k.id} value={k.id}>
-                                  {[k.numero || "Sans numéro", k.assureur, k.produit].filter(Boolean).join(" — ")}
+                                  {[
+                                    references[k.dossier_id ?? ""] || "Sans référence interne",
+                                    k.assureur,
+                                    k.produit,
+                                    k.numero ? `N° compagnie : ${k.numero}` : null,
+                                  ].filter(Boolean).join(" — ")}
                                 </option>
                               ))}
                             </select>
