@@ -127,7 +127,9 @@ export const importerBulletinCommission = createServerFn({ method: "POST" })
         const trouve = clientsIndex.find((c) => c.cles.some((k) => cible.includes(k) || k.includes(cible)));
         client_id = trouve?.id ?? null;
       }
-      const rapproche = Boolean(contrat || client_id);
+      // Une ligne n'est prête à générer une commission que si le contrat est identifié.
+      // Une simple correspondance client reste à vérifier pour éviter les commissions orphelines.
+      const rapproche = Boolean(contrat);
       if (rapproche) rapprochees += 1;
 
       return {
@@ -190,7 +192,7 @@ export const rattacherLigneBulletin = createServerFn({ method: "POST" })
       dossier_id = contrat?.dossier_id ?? null;
     }
 
-    const statut = data.ignorer ? "ignoree" : client_id || data.contrat_id ? "rapprochee" : "a_rapprocher";
+    const statut = data.ignorer ? "ignoree" : data.contrat_id ? "rapprochee" : "a_rapprocher";
     const { error } = await supabaseAdmin
       .from("bordereau_lignes")
       .update({ client_id, contrat_id: data.contrat_id ?? null, dossier_id, statut })
@@ -216,7 +218,7 @@ export const genererCommissionsBulletin = createServerFn({ method: "POST" })
 
     let creees = 0;
     for (const l of lignes ?? []) {
-      if (l.commission_id || l.statut !== "rapprochee") continue;
+      if (l.commission_id || l.statut !== "rapprochee" || !l.contrat_id) continue;
       const { data: commission, error } = await supabaseAdmin
         .from("commissions")
         .insert({
