@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { validerChangementMotDePasse, enregistrerConsentementsPlateforme } from "@/lib/client-espace.functions";
-import { testerConnexionEmailCrm } from "@/lib/emails.functions";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -28,9 +27,6 @@ function Parametres() {
   const [mustChange, setMustChange] = useState(false);
   const validerMdp = useServerFn(validerChangementMotDePasse);
   const enregistrerConsentements = useServerFn(enregistrerConsentementsPlateforme);
-  const testerEmail = useServerFn(testerConnexionEmailCrm);
-  const [testEmailBusy, setTestEmailBusy] = useState(false);
-  const [testEmailMsg, setTestEmailMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [okRgpd, setOkRgpd] = useState(false);
   const [okCgu, setOkCgu] = useState(false);
 
@@ -130,30 +126,6 @@ function Parametres() {
         description={`${user?.email ?? ""} · ${role ?? ""}`}
         icon={IconSettings}
       />
-
-      {(role === "admin" || role === "mandataire") && (
-        <section className="crm-card space-y-3 p-5">
-          <div>
-            <h2 className="font-serif text-lg font-medium">Messagerie IONOS du CRM</h2>
-            <p className="mt-1 text-sm text-ink-muted">Vérifie les accès IMAP (réception) et SMTP (envoi) sans envoyer de message.</p>
-          </div>
-          <button type="button" disabled={testEmailBusy} onClick={async () => {
-            setTestEmailBusy(true);
-            setTestEmailMsg(null);
-            try {
-              await testerEmail({ data: {} });
-              setTestEmailMsg({ type: "ok", text: "Connexion IMAP et authentification SMTP réussies. Vous pouvez tester la réception et l'envoi depuis le CRM." });
-            } catch (err) {
-              setTestEmailMsg({ type: "err", text: err instanceof Error ? err.message : "Test de messagerie impossible." });
-            } finally {
-              setTestEmailBusy(false);
-            }
-          }} className="rounded-md bg-[#0A192F] px-4 py-2 text-sm font-medium text-white disabled:opacity-60">
-            {testEmailBusy ? "Vérification…" : "Tester la connexion e-mail"}
-          </button>
-          {testEmailMsg && <p className={`text-sm ${testEmailMsg.type === "ok" ? "text-emerald-700" : "text-red-700"}`}>{testEmailMsg.text}</p>}
-        </section>
-      )}
 
       {(role === "admin" || role === "mandataire") && (
         <section className="crm-card flex flex-wrap items-center justify-between gap-4 p-5">
