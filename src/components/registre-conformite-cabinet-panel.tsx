@@ -43,7 +43,7 @@ const PRIORITES = [
 ];
 const dateFr = (value: string | null | undefined) => value ? new Date(value).toLocaleDateString("fr-FR") : "—";
 
-export function RegistreConformiteCabinetPanel({ isAdmin }: { isAdmin: boolean }) {
+export function RegistreConformiteCabinetPanel() {
   const { user } = useAuth();
   const [obligations, setObligations] = useState<Obligation[]>([]);
   const [actions, setActions] = useState<Action[]>([]);
@@ -80,7 +80,7 @@ export function RegistreConformiteCabinetPanel({ isAdmin }: { isAdmin: boolean }
 
   const stats = useMemo(() => ({
     total: obligations.length,
-    aVerifier: obligations.filter(o => ["a_definir", "a_mettre_en_place", "non_conforme"].includes((edits[o.id]?.statut as string) ?? o.statut)).length,
+    aVerifier: obligations.filter(o => ["a_definir", "a_mettre_en_place", "en_place", "non_conforme"].includes((edits[o.id]?.statut as string) ?? o.statut)).length,
     conformes: obligations.filter(o => ((edits[o.id]?.statut as string) ?? o.statut) === "conforme").length,
     actionsOuvertes: actions.filter(a => !["terminee", "annulee"].includes(a.statut)).length,
     enRetard: actions.filter(a => a.echeance && a.echeance < new Date().toISOString().slice(0, 10) && !["terminee", "annulee"].includes(a.statut)).length,
