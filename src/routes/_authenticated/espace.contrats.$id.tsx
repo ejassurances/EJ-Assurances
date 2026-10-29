@@ -120,7 +120,7 @@ function ContratDetail() {
     setLoading(true);
     const [contrat, echeances, users, roles] = await Promise.all([
       supabase.from("contrats").select("*").eq("id", id).maybeSingle(),
-      supabase.from("contrat_echeances").select("*").eq("contrat_id", id).order("annee"),
+      supabase.from("contrat_echeances").select("*").eq("contrat_id", id).order("date_debut_periode"),
       supabase.from("profiles").select("id,full_name,email"),
       supabase.from("user_roles").select("user_id,role"),
     ]);
@@ -623,6 +623,9 @@ function ContratDetail() {
                     produit_id: sel.produit_id,
                     assureur: sel.compagnie_nom ?? c.assureur,
                     produit: sel.produit_nom ?? c.produit,
+                    fractionnement: (sel.produit_nom ?? c.produit).toLowerCase().includes("trottin")
+                      ? "annuel"
+                      : c.fractionnement,
                   })
                 }
               />
@@ -666,6 +669,22 @@ function ContratDetail() {
                 readOnly={!editable}
                 className={inp}
               />
+            </F>
+            <F label="Périodicité de paiement">
+              <select
+                value={c.produit.toLowerCase().includes("trottin") ? "annuel" : c.fractionnement}
+                onChange={(e) => setC({ ...c, fractionnement: e.target.value })}
+                disabled={!editable || c.produit.toLowerCase().includes("trottin")}
+                className={inp}
+              >
+                <option value="mensuel">Mensuelle</option>
+                <option value="annuel">Annuelle</option>
+              </select>
+              {c.produit.toLowerCase().includes("trottin") && (
+                <p className="mt-1 text-xs text-ink-muted">
+                  Le produit trottinette conserve son traitement spécifique.
+                </p>
+              )}
             </F>
             <F label="Statut">
               <select
@@ -997,7 +1016,7 @@ function ContratDetail() {
               </p>
             </div>
             <div className="text-right text-xs text-ink-muted">
-              {ech.length} année{ech.length > 1 ? "s" : ""} · Cabinet total :{" "}
+              {ech.length} échéance{ech.length > 1 ? "s" : ""} · Cabinet total :{" "}
               {formatEuro(totaux.cabinet)}
             </div>
           </div>
@@ -1011,7 +1030,7 @@ function ContratDetail() {
               <table className="w-full text-sm">
                 <thead className="bg-surface text-xs uppercase tracking-wide text-ink-muted">
                   <tr>
-                    <th className="px-3 py-2 text-left">Année</th>
+                    <th className="px-3 py-2 text-left">N°</th>
                     <th className="px-3 py-2 text-left">Période</th>
                     <th className="px-3 py-2 text-right">CRD début</th>
                     <th className="px-3 py-2 text-right">Prime totale</th>
@@ -1022,9 +1041,9 @@ function ContratDetail() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
-                  {ech.map((e) => (
+                  {ech.map((e, index) => (
                     <tr key={e.id}>
-                      <td className="px-3 py-2">{e.annee}</td>
+                      <td className="px-3 py-2">{index + 1}</td>
                       <td className="px-3 py-2 text-xs text-ink-muted">
                         {new Date(e.date_debut_periode).toLocaleDateString("fr-FR")} →{" "}
                         {new Date(e.date_fin_periode).toLocaleDateString("fr-FR")}
