@@ -49,7 +49,7 @@ function TestMessagerie() {
       />
       <section className="crm-card space-y-4 p-5">
         <p className="text-sm text-ink-muted">
-          Le test vérifie les identifiants IMAP et SMTP côté serveur. Aucun e-mail n'est lu ni envoyé.
+          Vérifie IMAP et SMTP côté serveur sans envoyer de message.
         </p>
         <button
           type="button"
