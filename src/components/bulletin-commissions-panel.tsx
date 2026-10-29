@@ -39,14 +39,6 @@ type Client = { id: string; nom: string; prenom: string | null };
 type Contrat = { id: string; numero: string | null; produit: string | null; assureur: string | null; client_id: string | null; dossier_id: string | null };
 type Dossier = { id: string; reference: string | null };
 type Profil = { id: string; full_name: string | null; email: string | null };
-type Compagnie = { id: string; nom: string; statut: string; type_partenaire: string };
-
-const MOIS = [
-  ["01", "Janvier"], ["02", "Février"], ["03", "Mars"], ["04", "Avril"],
-  ["05", "Mai"], ["06", "Juin"], ["07", "Juillet"], ["08", "Août"],
-  ["09", "Septembre"], ["10", "Octobre"], ["11", "Novembre"], ["12", "Décembre"],
-] as const;
-
 const lireBase64 = (file: File) =>
   new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -71,12 +63,7 @@ export function BulletinCommissionsPanel({ onCommissionsCreees }: { onCommission
   const [contrats, setContrats] = useState<Contrat[]>([]);
   const [references, setReferences] = useState<Record<string, string>>({});
   const [profils, setProfils] = useState<Profil[]>([]);
-  const [compagnies, setCompagnies] = useState<Compagnie[]>([]);
   const [beneficiaire, setBeneficiaire] = useState("");
-  const maintenant = new Date();
-  const [compagnieId, setCompagnieId] = useState("");
-  const [mois, setMois] = useState(String(maintenant.getMonth() + 1).padStart(2, "0"));
-  const [annee, setAnnee] = useState(String(maintenant.getFullYear()));
   const [enCours, setEnCours] = useState(false);
 
   const charger = async () => {
@@ -91,18 +78,16 @@ export function BulletinCommissionsPanel({ onCommissionsCreees }: { onCommission
   useEffect(() => {
     charger();
     (async () => {
-      const [c, k, d, p, partenaires] = await Promise.all([
+      const [c, k, d, p] = await Promise.all([
         supabase.from("clients").select("id,nom,prenom").order("nom").limit(1000),
         supabase.from("contrats").select("id,numero,produit,assureur,client_id,dossier_id").order("numero").limit(2000),
         supabase.from("dossiers").select("id,reference").limit(3000),
         supabase.from("profiles").select("id,full_name,email"),
-        supabase.from("compagnies").select("id,nom,statut,type_partenaire").order("nom").limit(1000),
       ]);
       setClients((c.data as Client[]) ?? []);
       setContrats((k.data as Contrat[]) ?? []);
       setReferences(Object.fromEntries(((d.data as Dossier[]) ?? []).map((item) => [item.id, item.reference ?? "Référence non attribuée"])));
       setProfils((p.data as Profil[]) ?? []);
-      setCompagnies((partenaires.data as Compagnie[]) ?? []);
     })();
   }, []);
 
@@ -133,8 +118,8 @@ export function BulletinCommissionsPanel({ onCommissionsCreees }: { onCommission
           nom_fichier: file.name,
           mime: file.type || null,
           base64,
-          assureur: compagnies.find((compagnie) => compagnie.id === compagnieId)?.nom ?? null,
-          periode: `${annee}-${mois}`,
+          assureur: null,
+          periode: null,
         },
       });
       if (res.avertissement) toast.warning(`Bulletin archivé mais non analysé : ${res.avertissement}`);
@@ -198,60 +183,22 @@ export function BulletinCommissionsPanel({ onCommissionsCreees }: { onCommission
         <span className="rounded-full border border-line px-3 py-1 text-xs text-ink-muted">PDF ou image · 15 Mo max</span>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <label className="flex flex-col gap-1 text-xs font-medium text-ink-muted">
-          Compagnie partenaire
-          <select
-            value={compagnieId}
-            onChange={(e) => setCompagnieId(e.target.value)}
-            disabled={enCours}
-            className="rounded-md border border-line bg-background px-3 py-2 text-sm text-ink"
-          >
-            <option value="">Choisir une compagnie…</option>
-            {compagnies.map((compagnie) => (
-              <option key={compagnie.id} value={compagnie.id}>{compagnie.nom}</option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-ink-muted">
-          Mois du bulletin
-          <select
-            value={mois}
-            onChange={(e) => setMois(e.target.value)}
-            disabled={enCours}
-            className="rounded-md border border-line bg-background px-3 py-2 text-sm text-ink"
-          >
-            {MOIS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-ink-muted">
-          Année
-          <select
-            value={annee}
-            onChange={(e) => setAnnee(e.target.value)}
-            disabled={enCours}
-            className="rounded-md border border-line bg-background px-3 py-2 text-sm text-ink"
-          >
-            {Array.from({ length: 12 }, (_, index) => String(maintenant.getFullYear() + 1 - index)).map((year) => (
-              <option key={year} value={year}>{year}</option>
-            ))}
-          </select>
-        </label>
-        <div className="flex flex-col justify-end gap-1">
-          <input
-            ref={inputRef}
-            type="file"
-            accept="application/pdf,image/*"
-            disabled={enCours || !compagnieId}
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) onFichier(f);
-            }}
-            className="w-full text-sm"
-          />
-          {!compagnieId && <p className="text-xs text-ink-muted">Choisissez d’abord la compagnie.</p>}
-          {enCours && <p className="mt-1 text-xs text-ink-muted">Analyse du bulletin en cours…</p>}
-        </div>
+      <div className="mt-4">
+        <p className="mb-2 text-sm text-ink-muted">
+          La compagnie émettrice et la période de commission sont détectées automatiquement à partir du bulletin.
+        </p>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="application/pdf,image/*"
+          disabled={enCours}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) onFichier(f);
+          }}
+          className="w-full text-sm"
+        />
+        {enCours && <p className="mt-1 text-xs text-ink-muted">Lecture du document : compagnie, période et lignes de commission…</p>}
       </div>
 
       <div className="mt-6 space-y-3">
