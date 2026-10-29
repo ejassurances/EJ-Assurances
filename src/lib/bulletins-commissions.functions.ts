@@ -97,14 +97,20 @@ export const importerBulletinCommission = createServerFn({ method: "POST" })
     }
 
     // Référentiels pour le rapprochement.
-    const [{ data: contrats }, { data: clients }] = await Promise.all([
-      supabaseAdmin.from("contrats").select("id,numero,client_id,dossier_id,produit"),
+    const [{ data: contrats }, { data: clients }, { data: dossiers }] = await Promise.all([
+      supabaseAdmin.from("contrats").select("id,numero,client_id,dossier_id,produit,assureur"),
       supabaseAdmin.from("clients").select("id,nom,prenom"),
+      supabaseAdmin.from("dossiers").select("id,reference,client_id,client_nom"),
     ]);
 
-    const parNumero = new Map<string, { id: string; client_id: string | null; dossier_id: string | null }>();
+    const dossiersParId = new Map((dossiers ?? []).map((d) => [d.id, d]));
+    const contratsParNumero = new Map<string, typeof contrats>();
     for (const c of contrats ?? []) {
-      if (c.numero) parNumero.set(normaliser(c.numero), { id: c.id, client_id: c.client_id, dossier_id: c.dossier_id });
+      if (!c.numero) continue;
+      const cle = normaliser(c.numero);
+      const groupe = contratsParNumero.get(cle) ?? [];
+      groupe.push(c);
+      contratsParNumero.set(cle, groupe);
     }
     const clientsIndex = (clients ?? []).map((c) => ({
       id: c.id,
@@ -119,16 +125,31 @@ export const importerBulletinCommission = createServerFn({ method: "POST" })
     let rapprochees = 0;
     const aInserer = lignes.map((l) => {
       const numeroCle = l.numero_contrat ? normaliser(l.numero_contrat) : "";
-      const contrat = numeroCle ? parNumero.get(numeroCle) : undefined;
-      let client_id = contrat?.client_id ?? null;
+      const candidats = numeroCle ? (contratsParNumero.get(numeroCle) ?? []) : [];
+      const clientTrouve = l.client_nom
+        ? (() => {
+            const cible = normaliser(l.client_nom);
+            return clientsIndex.find((c) => c.cles.some((k) => cible.includes(k) || k.includes(cible)));
+          })()
+        : undefined;
 
-      if (!client_id && l.client_nom) {
-        const cible = normaliser(l.client_nom);
-        const trouve = clientsIndex.find((c) => c.cles.some((k) => cible.includes(k) || k.includes(cible)));
-        client_id = trouve?.id ?? null;
+      // Un numéro de police compagnie peut être partagé : ne jamais garder arbitrairement
+      // le dernier contrat rencontré. Le client et le produit servent à lever l'ambiguïté.
+      let candidatsFiltres = candidats;
+      if (clientTrouve) {
+        candidatsFiltres = candidatsFiltres.filter((c) => c.client_id === clientTrouve.id);
       }
-      // Une ligne n'est prête à générer une commission que si le contrat est identifié.
-      // Une simple correspondance client reste à vérifier pour éviter les commissions orphelines.
+      if (l.produit) {
+        const produitCle = normaliser(l.produit);
+        const parProduit = candidatsFiltres.filter((c) => c.produit && (
+          normaliser(c.produit).includes(produitCle) || produitCle.includes(normaliser(c.produit))
+        ));
+        if (parProduit.length > 0) candidatsFiltres = parProduit;
+      }
+      const contrat = candidatsFiltres.length === 1 ? candidatsFiltres[0] : undefined;
+      const dossier = contrat?.dossier_id ? dossiersParId.get(contrat.dossier_id) : undefined;
+      const client_id = contrat?.client_id ?? clientTrouve?.id ?? null;
+      // En cas de doublon ou de doute, laisser la ligne à vérifier manuellement.
       const rapproche = Boolean(contrat);
       if (rapproche) rapprochees += 1;
 
