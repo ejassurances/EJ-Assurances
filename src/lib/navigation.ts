@@ -29,7 +29,7 @@ export type NavItem = {
 };
 
 export type NavGroup = {
-  key: "principal" | "commercial" | "pilotage" | "administration";
+  key: "principal" | "commercial" | "pilotage" | "comptabilite" | "administration";
   label: string;
   icon: Icon;
   items: NavItem[];
@@ -95,13 +95,21 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: IconChartHistogram,
         roles: STAFF,
       },
-      { label: "Commissions", to: "/espace/commissions", icon: IconCoin, roles: STAFF },
       {
         label: "Diagnostic contrats & finance",
         to: "/espace/diagnostic",
         icon: IconShieldCheck,
         roles: STAFF,
       },
+    ],
+  },
+  {
+    key: "comptabilite",
+    label: "Comptabilité",
+    icon: IconCoin,
+    items: [
+      { label: "Vue comptable", to: "/espace/comptabilite", icon: IconCoin, roles: STAFF },
+      { label: "Commissions", to: "/espace/commissions", icon: IconCoin, roles: STAFF },
     ],
   },
   {
@@ -121,7 +129,6 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Conformité", to: "/espace/conformite", icon: IconShieldCheck, roles: STAFF },
       { label: "Modèle DER", to: "/espace/der-modele", icon: IconFileText, roles: STAFF },
       { label: "Journal d’audit", to: "/espace/audit-logs", icon: IconFileText, roles: ["admin"] },
-      { label: "Comptabilité", to: "/espace/comptabilite", icon: IconCoin, roles: STAFF },
       { label: "Fournisseurs", to: "/espace/fournisseurs", icon: IconBuildingBank, roles: STAFF },
       { label: "Contrôle des e-mails", to: "/espace/gmail-controle", icon: IconMail, roles: STAFF },
       {
