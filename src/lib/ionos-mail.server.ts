@@ -865,7 +865,7 @@ async function verifierSmtp(): Promise<void> {
   const readResponse = async (): Promise<{ code: number; lines: string[] }> => {
     const lines: string[] = [];
     while (true) {
-      let end = pending.indexOf("\\r\\n");
+      let end = pending.indexOf("\r\n");
       while (end < 0) {
         const result = await new Promise<ReadableStreamReadResult<Uint8Array>>((resolve, reject) => {
           const timer = setTimeout(() => reject(new Error("Délai SMTP dépassé.")), 15000);
@@ -873,16 +873,16 @@ async function verifierSmtp(): Promise<void> {
         });
         if (result.done) throw new Error("Connexion SMTP interrompue.");
         pending += decoder.decode(result.value, { stream: true });
-        end = pending.indexOf("\\r\\n");
+        end = pending.indexOf("\r\n");
       }
       const line = pending.slice(0, end);
       pending = pending.slice(end + 2);
       lines.push(line);
-      if (/^\\d{3} /.test(line)) return { code: Number(line.slice(0, 3)), lines };
+      if (/^\d{3} /.test(line)) return { code: Number(line.slice(0, 3)), lines };
     }
   };
   const command = async (value: string, accepted: number[]) => {
-    await writer.write(new TextEncoder().encode(`${value}\\r\\n`));
+    await writer.write(new TextEncoder().encode(`${value}\r\n`));
     const response = await readResponse();
     if (!accepted.includes(response.code)) throw new Error(`SMTP refusé (${response.code}) : ${response.lines.at(-1)?.slice(4, 160) ?? "erreur serveur"}`);
     return response;
