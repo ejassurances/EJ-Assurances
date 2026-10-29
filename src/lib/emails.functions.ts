@@ -2,6 +2,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Onglet Email du CRM : lecture de la boîte IONOS du cabinet,
@@ -220,7 +221,7 @@ export const messageComplet = createServerFn({ method: "POST" })
       // L'échec d'archivage (migration pas encore activée, par exemple) ne bloque
       // pas la consultation du message en direct.
       if (lien?.id) {
-        const { error: archiveError } = await supabaseAdmin
+        const { error: archiveError } = await (supabaseAdmin as unknown as SupabaseClient)
           .from("crm_emails")
           .update({
             sujet: message.sujet ?? null,
@@ -240,7 +241,7 @@ export const messageComplet = createServerFn({ method: "POST" })
       return { message, lien: lien ?? null };
     } catch (erreurLecture) {
       // Si IONOS ne conserve plus le message, restitue la copie CRM archivée.
-      const { data: archive, error: archiveError } = await supabaseAdmin
+      const { data: archive, error: archiveError } = await (supabaseAdmin as unknown as SupabaseClient)
         .from("crm_emails")
         .select("id, gmail_message_id, gmail_thread_id, direction, recu_le, sujet, expediteur_nom, expediteur_email, destinataires, copie_cc, corps_texte, corps_html, pieces_jointes, contenu_archive_le")
         .eq("gmail_message_id", data.id)

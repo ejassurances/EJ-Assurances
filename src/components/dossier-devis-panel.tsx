@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 /* eslint-disable prettier/prettier -- legacy file formatting debt; keep other lint rules enabled */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { LIBELLES_PROFILS, routeRecommandation } from "@/lib/emprunteur-notebook";
@@ -646,8 +647,8 @@ export function DossierDevisPanel({
         : null;
     const noteMotif = `Saisie manuelle — ${LIBELLE_MOTIF[motifSaisie]}`;
     const resume = [form.garanties_resume.trim(), noteMotif].filter(Boolean).join("\n");
-    const { data: cree, error } = await supabase
-      .from("dossier_devis" as never)
+    const { data: cree, error } = await (supabase as unknown as SupabaseClient)
+      .from("dossier_devis")
       .insert({
         dossier_id: dossierId,
         compagnie_id: form.compagnie_id,
