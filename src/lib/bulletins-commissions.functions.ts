@@ -147,7 +147,6 @@ export const importerBulletinCommission = createServerFn({ method: "POST" })
         if (parProduit.length > 0) candidatsFiltres = parProduit;
       }
       const contrat = candidatsFiltres.length === 1 ? candidatsFiltres[0] : undefined;
-      const dossier = contrat?.dossier_id ? dossiersParId.get(contrat.dossier_id) : undefined;
       const client_id = contrat?.client_id ?? clientTrouve?.id ?? null;
       // En cas de doublon ou de doute, laisser la ligne à vérifier manuellement.
       const rapproche = Boolean(contrat);
