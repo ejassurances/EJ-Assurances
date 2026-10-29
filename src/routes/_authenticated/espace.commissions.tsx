@@ -191,7 +191,7 @@ function CommissionsPage() {
         icon={IconCoins}
       />
 
-      {role === "admin" && <div className="mt-6"><BulletinCommissionsPanel onCommissionsCreees={load} /></div>}
+      {(role === "admin" || role === "mandataire") && <div className="mt-6"><BulletinCommissionsPanel onCommissionsCreees={load} /></div>}
 
       {synthese && (
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
