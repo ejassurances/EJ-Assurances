@@ -327,7 +327,7 @@ export const verifierContratImportPortefeuille = createServerFn({ method: "POST"
             normaliserComparaison(contrat.numero_reference) === normaliserComparaison(reference);
           const numeroCorrespond =
             !!numero && normaliserComparaison(contrat.numero) === normaliserComparaison(numero);
-          return assureurCorrespond && (referenceCorrespond || numeroCorrespond || (!reference && !numero));
+          return assureurCorrespond && (reference ? referenceCorrespond : numero ? numeroCorrespond : true);
         });
         if (candidats.length && numero) critere = "client_assureur_numero";
       }
