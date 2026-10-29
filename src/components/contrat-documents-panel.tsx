@@ -61,6 +61,11 @@ export function ContratDocumentsPanel({
   const [analyseId, setAnalyseId] = useState<string | null>(null);
   const [analyse, setAnalyse] = useState<{ docId: string; montant: number; periodicite: "mensuelle" | "annuelle" } | null>(null);
   const [savingPrime, setSavingPrime] = useState(false);
+  const [extractionComplete, setExtractionComplete] = useState<{
+    docId: string;
+    donnees: Awaited<ReturnType<typeof extraireAttestationPortefeuille>>;
+  } | null>(null);
+  const [savingExtraction, setSavingExtraction] = useState(false);
   const extraireAttestation = useServerFn(extraireAttestationPortefeuille);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -182,6 +187,128 @@ export function ContratDocumentsPanel({
     }
   };
 
+  const relancerIA = async (doc: Doc) => {
+    setError(null);
+    setAnalyse(null);
+    setExtractionComplete(null);
+    setAnalyseId(doc.id);
+    try {
+      const { data: fichier, error: downloadError } = await supabase.storage
+        .from("dossier-documents")
+        .download(doc.storage_path);
+      if (downloadError || !fichier) {
+        throw new Error(downloadError?.message ?? "Téléchargement de l'attestation impossible.");
+      }
+      if (fichier.size > 8 * 1024 * 1024) {
+        throw new Error("Le document dépasse la limite de 8 Mo pour l'analyse.");
+      }
+      const mime = fichier.type || (doc.file_name.toLowerCase().endsWith(".pdf") ? "application/pdf" : "");
+      if (!["application/pdf", "image/jpeg", "image/png", "image/webp"].includes(mime)) {
+        throw new Error("Format non pris en charge (PDF, JPG, PNG ou WEBP).");
+      }
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("Lecture du document impossible."));
+        reader.onload = () => {
+          const raw = String(reader.result || "");
+          const encoded = raw.includes(",") ? raw.slice(raw.indexOf(",") + 1) : "";
+          encoded ? resolve(encoded) : reject(new Error("Le document est vide ou illisible."));
+        };
+        reader.readAsDataURL(fichier);
+      });
+      const donnees = await extraireAttestation({
+        data: {
+          file_name: doc.file_name,
+          mime_type: mime as "application/pdf" | "image/jpeg" | "image/png" | "image/webp",
+          base64,
+        },
+      });
+      setExtractionComplete({ docId: doc.id, donnees });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Nouvelle analyse IA impossible.");
+    } finally {
+      setAnalyseId(null);
+    }
+  };
+
+  const appliquerExtraction = async () => {
+    if (!extractionComplete) return;
+    setSavingExtraction(true);
+    setError(null);
+    try {
+      const { data: contrat, error: contratError } = await supabase
+        .from("contrats")
+        .select("id,numero,numero_reference,assureur,produit,date_effet,date_echeance,duree_mois,prime_annuelle,fractionnement,statut")
+        .eq("id", contratId)
+        .maybeSingle();
+      if (contratError || !contrat) {
+        throw new Error(contratError?.message ?? "Contrat introuvable.");
+      }
+      const d = extractionComplete.donnees;
+      const patch: Record<string, unknown> = {};
+      if (d.assureur) patch.assureur = d.assureur;
+      if (d.type_couverture) patch.produit = d.type_couverture;
+      if (d.numero_contrat) patch.numero = d.numero_contrat;
+      if (d.numero_reference) patch.numero_reference = d.numero_reference;
+      if (d.date_effet) patch.date_effet = d.date_effet;
+      if (d.date_echeance) patch.date_echeance = d.date_echeance;
+      if (d.duree_mois) patch.duree_mois = d.duree_mois;
+      if (d.prime_montant && d.prime_periodicite) {
+        patch.prime_annuelle = Math.round(
+          (d.prime_periodicite === "mensuelle" ? d.prime_montant * 12 : d.prime_montant) * 100,
+        ) / 100;
+        patch.fractionnement = (d.type_couverture ?? contrat.produit ?? "").toLowerCase().includes("trottin")
+          ? "annuel"
+          : d.prime_periodicite;
+      }
+      if (Object.keys(patch).length === 0) {
+        throw new Error("L'IA n'a extrait aucune donnée exploitable. Le dossier n'a pas été modifié.");
+      }
+
+      const verrouille = ["actif", "contrat_actif", "contrat_valide"].includes(contrat.statut ?? "");
+      if (verrouille) {
+        const champsTraces = {
+          ...(typeof patch.assureur === "string" ? { assureur: patch.assureur } : {}),
+          ...(typeof patch.produit === "string" ? { produit: patch.produit } : {}),
+          ...(typeof patch.numero === "string" ? { numero: patch.numero } : {}),
+          ...(typeof patch.date_effet === "string" ? { date_effet: patch.date_effet } : {}),
+          ...(typeof patch.date_echeance === "string" ? { date_echeance: patch.date_echeance } : {}),
+          ...(typeof patch.duree_mois === "number" ? { duree_mois: patch.duree_mois } : {}),
+          ...(typeof patch.prime_annuelle === "number" ? { prime_annuelle: patch.prime_annuelle } : {}),
+          ...(typeof patch.fractionnement === "string" ? { fractionnement: patch.fractionnement } : {}),
+        };
+        const { error: rpcError } = await supabase.rpc("corriger_contrat_actif", {
+          _contrat_id: contratId,
+          _motif: "Mise à jour après nouvelle lecture IA de l'attestation, vérifiée par le conseiller",
+          _champs: champsTraces,
+        } as never);
+        if (rpcError) throw new Error(rpcError.message);
+        if (typeof patch.numero_reference === "string") {
+          const { error: referenceError } = await supabase
+            .from("contrats")
+            .update({ numero_reference: patch.numero_reference } as never)
+            .eq("id", contratId);
+          if (referenceError) throw new Error(referenceError.message);
+        }
+      } else {
+        const { error: updateError } = await supabase
+          .from("contrats")
+          .update(patch as never)
+          .eq("id", contratId);
+        if (updateError) throw new Error(updateError.message);
+      }
+
+      setExtractionComplete(null);
+      await load();
+      await onPrimeUpdated?.();
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Mise à jour du contrat impossible.");
+    } finally {
+      setSavingExtraction(false);
+    }
+  };
+
   const confirmerPrime = async () => {
     if (!analyse) return;
     setSavingPrime(true);
@@ -293,13 +420,22 @@ export function ContratDocumentsPanel({
             </div>
             <div className="flex shrink-0 gap-2">
               {canEdit && ["attestation_assurance", "avis_echeance", "conditions_particulieres"].includes(d.type_document ?? "") && (
-                <button
-                  onClick={() => analyserPrime(d)}
-                  disabled={analyseId !== null || savingPrime}
-                  className="rounded-full border border-line px-3 py-1 text-xs hover:bg-surface disabled:opacity-50"
-                >
-                  {analyseId === d.id ? "Analyse…" : "Lire la prime"}
-                </button>
+                <>
+                  <button
+                    onClick={() => analyserPrime(d)}
+                    disabled={analyseId !== null || savingPrime || savingExtraction}
+                    className="rounded-full border border-line px-3 py-1 text-xs hover:bg-surface disabled:opacity-50"
+                  >
+                    {analyseId === d.id ? "Analyse…" : "Lire la prime"}
+                  </button>
+                  <button
+                    onClick={() => relancerIA(d)}
+                    disabled={analyseId !== null || savingPrime || savingExtraction}
+                    className="rounded-full border border-[#D4AF37] px-3 py-1 text-xs font-medium hover:bg-surface disabled:opacity-50"
+                  >
+                    {analyseId === d.id ? "IA en cours…" : "Relancer l’IA"}
+                  </button>
+                </>
               )}
               <button
                 onClick={() => download(d.storage_path, d.file_name)}
@@ -319,6 +455,47 @@ export function ContratDocumentsPanel({
           </li>
         ))}
       </ul>
+
+      {extractionComplete && (
+        <div className="rounded-lg border border-[#D4AF37] bg-background p-4 space-y-3">
+          <div>
+            <p className="text-sm font-medium">Données relues par l’IA</p>
+            <p className="mt-1 text-xs text-ink-muted">
+              Vérifiez les valeurs avant application. Seules les informations extraites avec certitude seront mises à jour ; les champs absents du document resteront inchangés.
+            </p>
+          </div>
+          <dl className="grid gap-2 text-sm sm:grid-cols-2">
+            {([
+              ["Compagnie", extractionComplete.donnees.assureur],
+              ["Produit", extractionComplete.donnees.type_couverture],
+              ["N° contrat", extractionComplete.donnees.numero_contrat],
+              ["Référence compagnie", extractionComplete.donnees.numero_reference],
+              ["Date d’effet", extractionComplete.donnees.date_effet],
+              ["Date d’échéance", extractionComplete.donnees.date_echeance],
+              ["Durée (mois)", extractionComplete.donnees.duree_mois],
+              ["Prime lue", extractionComplete.donnees.prime_montant != null && extractionComplete.donnees.prime_periodicite
+                ? `${new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(extractionComplete.donnees.prime_montant)} ${extractionComplete.donnees.prime_periodicite === "mensuelle" ? "/ mois" : "/ an"}`
+                : null],
+            ] as const).map(([label, value]) => (
+              <div key={label} className="rounded-md bg-surface p-2">
+                <dt className="text-xs text-ink-muted">{label}</dt>
+                <dd className="break-words font-medium">{value == null || value === "" ? "Non détecté — inchangé" : String(value)}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="text-xs text-ink-muted">
+            Une mise à jour d’un contrat déjà validé par la compagnie sera enregistrée avec une trace de correction.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={appliquerExtraction} disabled={savingExtraction} className="rounded-full bg-[#0A192F] px-4 py-2 text-xs font-medium text-white disabled:opacity-50">
+              {savingExtraction ? "Mise à jour…" : "Confirmer et mettre à jour le dossier"}
+            </button>
+            <button onClick={() => setExtractionComplete(null)} disabled={savingExtraction} className="rounded-full border border-line px-4 py-2 text-xs">
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
 
       {analyse && (
         <div className="rounded-lg border border-line bg-background p-4 space-y-3">
