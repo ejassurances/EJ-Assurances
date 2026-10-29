@@ -283,13 +283,6 @@ export function ContratDocumentsPanel({
           _champs: champsTraces,
         } as never);
         if (rpcError) throw new Error(rpcError.message);
-        if (typeof patch.numero_reference === "string") {
-          const { error: referenceError } = await supabase
-            .from("contrats")
-            .update({ numero_reference: patch.numero_reference } as never)
-            .eq("id", contratId);
-          if (referenceError) throw new Error(referenceError.message);
-        }
       } else {
         const { error: updateError } = await supabase
           .from("contrats")
@@ -484,7 +477,7 @@ export function ContratDocumentsPanel({
             ))}
           </dl>
           <p className="text-xs text-ink-muted">
-            Une mise à jour d’un contrat déjà validé par la compagnie sera enregistrée avec une trace de correction.
+            Une mise à jour d’un contrat déjà validé par la compagnie sera enregistrée avec une trace de correction. Pour ces contrats verrouillés, la référence compagnie reste inchangée ; elle n’est pas autorisée dans la correction tracée actuelle.
           </p>
           <div className="flex flex-wrap gap-2">
             <button onClick={appliquerExtraction} disabled={savingExtraction} className="rounded-full bg-[#0A192F] px-4 py-2 text-xs font-medium text-white disabled:opacity-50">
