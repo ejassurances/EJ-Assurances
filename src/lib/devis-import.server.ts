@@ -103,7 +103,7 @@ export async function lireDevisDocument(admin: Admin, documentId: string): Promi
     .eq("id", documentId)
     .maybeSingle();
   if (!doc) throw new Error("Document introuvable");
-  const d = doc as unknown as { file_name: string | null; mime_type: string | null; storage_path: string };
+  const d = doc as unknown as { dossier_id: string; file_name: string | null; mime_type: string | null; storage_path: string };
 
   let blob: Blob | null = null;
   for (const bucket of BUCKETS) {
@@ -188,7 +188,7 @@ export async function lireDevisDocument(admin: Admin, documentId: string): Promi
   const { error: sauvegardeErreur } = await admin.from("devis_import_lectures").upsert(
     {
       document_id: documentId,
-      dossier_id: (d as { dossier_id: string }).dossier_id,
+      dossier_id: d.dossier_id,
       source_sha256: empreinteSha256,
       extraction: resultat,
       statut: "proposee",

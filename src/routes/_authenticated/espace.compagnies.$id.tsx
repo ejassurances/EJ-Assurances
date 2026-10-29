@@ -1748,6 +1748,8 @@ function ProduitEditor({
         isAdmin={isAdmin}
         onChange={loadDocs}
         onAnalyseTerminee={() => setGarantiesRefreshKey((key) => key + 1)}
+        remplirDepuisDocument={remplirDepuisDocument}
+        documentAnalyseEnCours={documentAnalyseEnCours}
       />
 
       <ProduitGarantiesTab
@@ -1891,6 +1893,8 @@ function DocumentsBlock({
   isAdmin,
   onChange,
   onAnalyseTerminee,
+  remplirDepuisDocument,
+  documentAnalyseEnCours,
 }: {
   produitId: string;
   familleCode: string | null;
@@ -1898,6 +1902,8 @@ function DocumentsBlock({
   isAdmin: boolean;
   onChange: () => void;
   onAnalyseTerminee: () => void;
+  remplirDepuisDocument: (document: ProduitDoc) => void;
+  documentAnalyseEnCours: string | null;
 }) {
   const analyserAutomatiquement = useServerFn(analyserGarantiesAutomatiquement);
   const typesDisponibles = docTypesPour(familleCode);

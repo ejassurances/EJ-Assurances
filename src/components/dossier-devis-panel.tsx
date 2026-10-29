@@ -409,7 +409,7 @@ export function DossierDevisPanel({
         .maybeSingle(),
     ]);
     if (d.error) setErr(d.error.message);
-    setDevis((d.data as DossierDevis[]) ?? []);
+    setDevis((d.data as unknown as DossierDevis[]) ?? []);
     setCompagnies((c.data as Ref[]) ?? []);
     setProduits((p.data as ProduitRef[]) ?? []);
     setClassement((cl.data as Classement | null) ?? null);
@@ -647,7 +647,7 @@ export function DossierDevisPanel({
     const noteMotif = `Saisie manuelle — ${LIBELLE_MOTIF[motifSaisie]}`;
     const resume = [form.garanties_resume.trim(), noteMotif].filter(Boolean).join("\n");
     const { data: cree, error } = await supabase
-      .from("dossier_devis")
+      .from("dossier_devis" as never)
       .insert({
         dossier_id: dossierId,
         compagnie_id: form.compagnie_id,
