@@ -82,7 +82,9 @@ export function PilotageFinancierCabinet() {
 
   const lignes = useMemo(() => {
     const debut = new Date();
-    const mois = genererMois(new Date(debut.getFullYear(), debut.getMonth(), 1), 60);
+    const moisActuel = `${debut.getFullYear()}-${String(debut.getMonth() + 1).padStart(2, "0")}`;
+    // Année complète en cours + cinq exercices suivants.
+    const mois = genererMois(new Date(debut.getFullYear(), 0, 1), 72);
     const tauxNumerique = tauxConfigure ? Math.max(0, Math.min(100, Number(taux) || 0)) / 100 : 0;
     const resultats = new Map<string, MoisFinance>();
     for (const key of mois) resultats.set(key, {
@@ -100,7 +102,7 @@ export function PilotageFinancierCabinet() {
 
     for (const e of echeances) {
       const key = moisCle(e.date_debut_periode);
-      if (!key || !resultats.has(key) || ["annulee", "payee"].includes(e.statut)) continue;
+      if (!key || !resultats.has(key) || key < moisActuel || ["annulee", "payee"].includes(e.statut)) continue;
       if (encaisseParContratMois.has(`${e.contrat_id}:${key}`)) continue;
       resultats.get(key)!.commissionsPrevues += Number(e.commission_cabinet_periode) || 0;
     }
@@ -230,7 +232,7 @@ export function PilotageFinancierCabinet() {
         ))}
       </div>
       <p className="mt-4 text-xs text-ink-muted">
-        Le besoin de financement est calculé à partir d’un solde de trésorerie initial supposé nul. Il ne tient pas compte d’un solde bancaire réel, d’impôts hors URSSAF, de TVA à reverser ni de charges qui ne sont pas encore saisies. Ce tableau est un outil de pilotage interne, pas un bilan comptable ou un calcul fiscal officiel.
+        Le besoin de financement cumulé est calculé à partir d’un solde supposé nul au 1er janvier de l’année en cours. Il ne tient pas compte d’un solde bancaire réel, d’impôts hors URSSAF, de TVA à reverser ni de charges qui ne sont pas encore saisies. Ce tableau est un outil de pilotage interne, pas un bilan comptable ou un calcul fiscal officiel.
       </p>
     </section>
   );
