@@ -23,6 +23,9 @@ const schema = z.object({
     produit: z.string().trim().min(1).max(160),
     date_effet: z.string().max(10).optional().nullable(),
     date_echeance: z.string().max(10).optional().nullable(),
+    prime_montant: z.number().positive().finite().optional().nullable(),
+    prime_periodicite: z.enum(["mensuelle", "annuelle"]).optional().nullable(),
+    duree_mois: z.number().int().positive().max(1200).optional().nullable(),
   }),
   fichiers: z.array(z.object({
     code: z.enum(["attestation_assurance", "cni", "justificatif_domicile", "rib"]),
@@ -88,17 +91,40 @@ export const enregistrerContratImportPortefeuille = createServerFn({ method: "PO
     if (contratId) {
       const { data: existing, error } = await supabaseAdmin.from("contrats").select("id,client_id").eq("id", contratId).maybeSingle();
       if (error || !existing || existing.client_id !== clientId) throw new Error("Le contrat sélectionné ne correspond plus à cette fiche client.");
+      const primeAnnuelle =
+        data.contrat.prime_montant != null && data.contrat.prime_periodicite
+          ? Math.round((data.contrat.prime_periodicite === "mensuelle"
+              ? data.contrat.prime_montant * 12
+              : data.contrat.prime_montant) * 100) / 100
+          : null;
       const { error: updateError } = await supabaseAdmin.from("contrats").update({
         numero: data.contrat.numero || undefined, assureur: data.contrat.assureur, produit: data.contrat.produit,
         date_effet: data.contrat.date_effet || undefined, date_echeance: data.contrat.date_echeance || undefined,
+        ...(primeAnnuelle !== null ? {
+          prime_annuelle: primeAnnuelle,
+          fractionnement: data.contrat.prime_periodicite === "mensuelle" ? "mensuel" : "annuel",
+        } : {}),
+        ...(data.contrat.duree_mois ? { duree_mois: data.contrat.duree_mois } : {}),
         updated_at: new Date().toISOString(),
       }).eq("id", contratId);
       if (updateError) throw new Error("Mise à jour du contrat impossible : " + updateError.message);
     } else {
+      const primeAnnuelle =
+        data.contrat.prime_montant != null && data.contrat.prime_periodicite
+          ? Math.round((data.contrat.prime_periodicite === "mensuelle"
+              ? data.contrat.prime_montant * 12
+              : data.contrat.prime_montant) * 100) / 100
+          : null;
       const { data: created, error } = await supabaseAdmin.from("contrats").insert({
         client_id: clientId, numero: data.contrat.numero || null, assureur: data.contrat.assureur,
         produit: data.contrat.produit, date_effet: data.contrat.date_effet || null,
-        date_echeance: data.contrat.date_echeance || null, statut: "en_cours", created_by: context.userId,
+        date_echeance: data.contrat.date_echeance || null,
+        ...(primeAnnuelle !== null ? {
+          prime_annuelle: primeAnnuelle,
+          fractionnement: data.contrat.prime_periodicite === "mensuelle" ? "mensuel" : "annuel",
+        } : {}),
+        ...(data.contrat.duree_mois ? { duree_mois: data.contrat.duree_mois } : {}),
+        statut: "en_cours", created_by: context.userId,
       }).select("id").single();
       if (error || !created) throw new Error("Création du contrat impossible : " + (error?.message ?? "erreur inconnue"));
       contratId = created.id;
