@@ -173,7 +173,7 @@ function ConformitePage() {
 
           {section === "formations" && <FormationsPersonnelPanel isAdmin={role === "admin"} />}
 
-          {section === "registre-cabinet" && <RegistreConformiteCabinetPanel isAdmin={role === "admin"} />}
+          {section === "registre-cabinet" && <RegistreConformiteCabinetPanel />}
         </div>
 
         <div className="lg:w-72">
