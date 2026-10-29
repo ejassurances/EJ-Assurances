@@ -453,6 +453,7 @@ function NouvelleFacture({
       compte_charge: "606800",
       moyen_paiement: "",
       notes: "",
+      abonnement_sans_fin: false,
     });
     setFichier(null);
   };
