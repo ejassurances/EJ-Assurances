@@ -1082,6 +1082,7 @@ function ContratDetail() {
           canEdit={canEdit}
           produitId={c.produit_id}
           compagnieId={c.compagnie_id}
+          onPrimeUpdated={load}
         />
       )}
 
