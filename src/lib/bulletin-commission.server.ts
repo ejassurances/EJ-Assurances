@@ -78,8 +78,10 @@ export async function lireBulletinCommission(fichier: {
   mime: string;
   base64: string;
 }): Promise<BulletinLu> {
-  const cle = process.env["GEMINI_API_KEY"];
-  if (!cle) throw new Error("Analyse indisponible : clé IA absente du projet.");
+  // La passerelle geminiFetch est désormais compatible Anthropic/Claude :
+  // vérifier la même clé que celle réellement utilisée par la passerelle.
+  const cle = process.env["ANTHROPIC_API_KEY"];
+  if (!cle) throw new Error("Analyse indisponible : la clé ANTHROPIC_API_KEY est absente du projet.");
 
   let derniere = "";
   for (const modele of MODELES) {
