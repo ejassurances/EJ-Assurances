@@ -74,8 +74,8 @@ export const importerBulletinCommission = createServerFn({ method: "POST" })
     const { data: bordereau, error: bErr } = await supabaseAdmin
       .from("bordereaux_commissions")
       .insert({
-        assureur: (data.assureur || lu?.assureur || "Compagnie à préciser").slice(0, 160),
-        periode: (data.periode || lu?.periode || new Date().toISOString().slice(0, 7)).slice(0, 40),
+        assureur: (data.assureur || lu?.assureur || "Compagnie à identifier").slice(0, 160),
+        periode: (data.periode || lu?.periode || "Période à identifier").slice(0, 40),
         montant_total: lu?.montant_total ?? Number(totalLignes.toFixed(2)),
         nb_lignes: lignes.length,
         statut: "importe",
@@ -83,10 +83,14 @@ export const importerBulletinCommission = createServerFn({ method: "POST" })
         fichier_nom: data.nom_fichier.slice(0, 300),
         fichier_source: data.nom_fichier.slice(0, 300),
         analyse_le: new Date().toISOString(),
-        analyse_avertissement: avertissement,
+        analyse_avertissement: avertissement ?? (
+          !lu?.assureur || !lu?.periode
+            ? `Détection à vérifier : ${!lu?.assureur ? "compagnie non identifiée" : ""}${!lu?.assureur && !lu?.periode ? " ; " : ""}${!lu?.periode ? "période non identifiée" : ""}.`
+            : null
+        ),
         notes: avertissement
           ? `Analyse IA indisponible : ${avertissement}`
-          : `Analyse IA (confiance ${((lu?.confiance ?? 0) * 100).toFixed(0)} %) — rapprochement à vérifier.`,
+          : `Analyse IA (confiance ${((lu?.confiance ?? 0) * 100).toFixed(0)} %) — compagnie et période détectées automatiquement, rapprochement à vérifier.`,
         created_by: context.userId,
       })
       .select("id")
