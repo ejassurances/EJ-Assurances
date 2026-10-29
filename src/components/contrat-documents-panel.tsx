@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProduitDocumentsLink } from "@/components/produit-documents-link";
 import { normaliserNomFichierPourStockage } from "@/lib/storage-key";
+import { useServerFn } from "@tanstack/react-start";
+import { extraireAttestationPortefeuille } from "@/lib/import-portefeuille.functions";
 
 type Doc = {
   id: string;
@@ -54,6 +56,10 @@ export function ContratDocumentsPanel({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [type, setType] = useState<string>("attestation_assurance");
+  const [analyseId, setAnalyseId] = useState<string | null>(null);
+  const [analyse, setAnalyse] = useState<{ docId: string; montant: number; periodicite: "mensuelle" | "annuelle" } | null>(null);
+  const [savingPrime, setSavingPrime] = useState(false);
+  const extraireAttestation = useServerFn(extraireAttestationPortefeuille);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
@@ -133,6 +139,82 @@ export function ContratDocumentsPanel({
     }
   };
 
+  const analyserPrime = async (doc: Doc) => {
+    setError(null);
+    setAnalyse(null);
+    setAnalyseId(doc.id);
+    try {
+      const { data: fichier, error: downloadError } = await supabase.storage
+        .from("dossier-documents")
+        .download(doc.storage_path);
+      if (downloadError || !fichier) throw new Error(downloadError?.message ?? "Téléchargement du document impossible.");
+      if (fichier.size > 8 * 1024 * 1024) throw new Error("Le document dépasse la limite de 8 Mo pour l'analyse.");
+      const mime = fichier.type || (doc.file_name.toLowerCase().endsWith(".pdf") ? "application/pdf" : "");
+      if (!["application/pdf", "image/jpeg", "image/png", "image/webp"].includes(mime)) {
+        throw new Error("Format non pris en charge pour l'analyse automatique (PDF, JPG, PNG ou WEBP).");
+      }
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("Lecture du document impossible."));
+        reader.onload = () => {
+          const raw = String(reader.result || "");
+          const encoded = raw.includes(",") ? raw.slice(raw.indexOf(",") + 1) : "";
+          encoded ? resolve(encoded) : reject(new Error("Le document est vide ou illisible."));
+        };
+        reader.readAsDataURL(fichier);
+      });
+      const resultat = await extraireAttestation({
+        data: { file_name: doc.file_name, mime_type: mime as "application/pdf" | "image/jpeg" | "image/png" | "image/webp", base64 },
+      });
+      if (typeof resultat.prime_montant !== "number" || !Number.isFinite(resultat.prime_montant) || resultat.prime_montant <= 0) {
+        throw new Error("Aucun montant de prime positif n'a été extrait avec certitude. Aucun montant n'a été modifié.");
+      }
+      if (resultat.prime_periodicite !== "mensuelle" && resultat.prime_periodicite !== "annuelle") {
+        throw new Error("Le montant a été lu, mais sa périodicité n'est pas certaine. Aucun montant n'a été modifié.");
+      }
+      setAnalyse({ docId: doc.id, montant: resultat.prime_montant, periodicite: resultat.prime_periodicite });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Analyse de l'attestation impossible.");
+    } finally {
+      setAnalyseId(null);
+    }
+  };
+
+  const confirmerPrime = async () => {
+    if (!analyse) return;
+    setSavingPrime(true);
+    setError(null);
+    try {
+      const { data: contrat, error: contratError } = await supabase
+        .from("contrats")
+        .select("prime_annuelle,statut")
+        .eq("id", contratId)
+        .maybeSingle();
+      if (contratError || !contrat) throw new Error(contratError?.message ?? "Contrat introuvable.");
+      if (contrat.prime_annuelle !== null) {
+        throw new Error("La prime annuelle est déjà renseignée. Pour préserver la saisie existante, aucune valeur n'a été écrasée.");
+      }
+      const montantAnnuel = Math.round((analyse.periodicite === "mensuelle" ? analyse.montant * 12 : analyse.montant) * 100) / 100;
+      const verrouille = ["actif", "contrat_actif", "contrat_valide"].includes(contrat.statut ?? "");
+      const result = verrouille
+        ? await supabase.rpc("corriger_contrat_actif", {
+            _contrat_id: contratId,
+            _motif: "Montant annuel extrait de l'attestation du contrat et confirmé par le conseiller",
+            _champs: { prime_annuelle: montantAnnuel },
+          })
+        : await supabase.from("contrats").update({ prime_annuelle: montantAnnuel }).eq("id", contratId);
+      if (result.error) throw new Error(result.error.message);
+      setAnalyse(null);
+      await load();
+      setError(null);
+      // Le déclencheur SQL du contrat recalcule les échéances et la fiscalité à partir de la prime enregistrée.
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Enregistrement de la prime impossible.");
+    } finally {
+      setSavingPrime(false);
+    }
+  };
+
   const download = async (path: string, name: string) => {
     const { data, error: sErr } = await supabase.storage.from("dossier-documents").createSignedUrl(path, 60);
     if (sErr || !data) return;
@@ -206,6 +288,15 @@ export function ContratDocumentsPanel({
               </p>
             </div>
             <div className="flex shrink-0 gap-2">
+              {canEdit && ["attestation_assurance", "avis_echeance", "conditions_particulieres"].includes(d.type_document ?? "") && (
+                <button
+                  onClick={() => analyserPrime(d)}
+                  disabled={analyseId !== null || savingPrime}
+                  className="rounded-full border border-line px-3 py-1 text-xs hover:bg-surface disabled:opacity-50"
+                >
+                  {analyseId === d.id ? "Analyse…" : "Lire la prime"}
+                </button>
+              )}
               <button
                 onClick={() => download(d.storage_path, d.file_name)}
                 className="rounded-full border border-line px-3 py-1 text-xs hover:bg-surface"
@@ -224,6 +315,31 @@ export function ContratDocumentsPanel({
           </li>
         ))}
       </ul>
+
+      {analyse && (
+        <div className="rounded-lg border border-line bg-background p-4 space-y-3">
+          <div>
+            <p className="text-sm font-medium">Prime extraite de l'attestation</p>
+            <p className="text-sm text-ink-muted">
+              Montant lu : {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(analyse.montant)}
+              {" · "}{analyse.periodicite === "mensuelle" ? "par mois" : "par an"}
+            </p>
+            <p className="text-xs text-ink-muted">
+              Prime annuelle proposée : {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(analyse.periodicite === "mensuelle" ? analyse.montant * 12 : analyse.montant)}.
+              Vérifiez ce montant sur le document avant confirmation. Une prime annuelle déjà renseignée ne sera jamais remplacée.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={confirmerPrime} disabled={savingPrime} className="rounded-full bg-[#0A192F] px-4 py-2 text-xs font-medium text-white disabled:opacity-50">
+              {savingPrime ? "Enregistrement et recalcul…" : "Confirmer la prime et recalculer"}
+            </button>
+            <button onClick={() => setAnalyse(null)} disabled={savingPrime} className="rounded-full border border-line px-4 py-2 text-xs">
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+      {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
 
       {rattachables.length > 0 && (
         <div className="rounded-lg border border-dashed border-line p-3">
