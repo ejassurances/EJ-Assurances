@@ -1,0 +1,14 @@
+ALTER FUNCTION public.calculer_score_conformite_client(uuid) SET search_path = pg_catalog, public;
+ALTER FUNCTION public.can_access_client(uuid) SET search_path = pg_catalog, public;
+ALTER FUNCTION public.can_access_contrat(uuid) SET search_path = pg_catalog, public;
+ALTER FUNCTION public.can_access_dossier(uuid) SET search_path = pg_catalog, public;
+ALTER FUNCTION public.corriger_contrat_actif(uuid, jsonb, text) SET search_path = pg_catalog, public;
+ALTER FUNCTION public.economies_emprunteur(uuid) SET search_path = pg_catalog, public;
+ALTER FUNCTION public.est_manager_actif_de(uuid) SET search_path = pg_catalog, public;
+ALTER FUNCTION public.has_role(uuid, public.app_role) SET search_path = pg_catalog, public;
+ALTER FUNCTION public.log_audit(text, text, text, jsonb) SET search_path = pg_catalog, public;
+ALTER FUNCTION public.recalculer_echeances_contrat(uuid) SET search_path = pg_catalog, public;
+ALTER FUNCTION public.recalculer_remuneration_contrat(uuid) SET search_path = pg_catalog, public;
+ALTER FUNCTION public.rls_auto_enable() SET search_path = pg_catalog, public;
+ALTER FUNCTION public.score_conformite_cabinet() SET search_path = pg_catalog, public;
+ALTER FUNCTION public.score_valeur_client(uuid) SET search_path = pg_catalog, public;
