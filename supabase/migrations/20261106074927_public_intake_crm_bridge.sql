@@ -1,0 +1,3 @@
+-- Reconciliation marker for the migration already applied to the EJ CRM project.
+-- The production objects were applied and verified in Supabase before this file was restored to GitHub.
+-- This file is intentionally non-destructive and must not recreate or alter production data.
