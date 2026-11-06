@@ -8,6 +8,7 @@
   },
   "main": "@tanstack/react-start/server-entry",
   "vars": {
+    "PUBLIC_APP_URL": "https://app.ej-assurances.fr",
     "SUPABASE_URL": "https://ljquiweziktbjxldfztk.supabase.co",
     "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_ep3uSXHgzsJr1Q7L80rwYA_lVpre7uZ",
   },

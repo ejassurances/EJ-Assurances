@@ -28,7 +28,20 @@ export const demanderReinitialisationMotDePasse = createServerFn({ method: "POST
         email,
         options: { redirectTo: appUrl("/reset-password") },
       });
-      if (error || !link?.properties?.action_link) return { ok: true };
+      if (error) {
+        // Keep the response generic to prevent account enumeration, but record
+        // the Auth error so failed redirect allow-list checks are diagnosable.
+        console.error("[auth-reset] Supabase recovery link generation failed", {
+          code: error.code,
+          status: error.status,
+          message: error.message,
+        });
+        return { ok: true };
+      }
+      if (!link?.properties?.action_link) {
+        console.error("[auth-reset] Supabase returned no recovery action link");
+        return { ok: true };
+      }
 
       let prenom = "";
       const { data: client } = await supabaseAdmin
