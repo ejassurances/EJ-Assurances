@@ -1,0 +1,3 @@
+-- Reconciliation marker for the crypto hardening migration already applied to the EJ CRM project.
+-- The production function was verified in Supabase before this migration file was restored to GitHub.
+-- This file is intentionally non-destructive and must not recreate or alter production data.
