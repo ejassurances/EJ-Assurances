@@ -35,7 +35,7 @@ function AuthPage() {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotMsg, setForgotMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
-  const demanderReset = async ({ data }: { data: { email: string } }) => { const { error } = await supabase.auth.resetPasswordForEmail(data.email, { redirectTo: `${window.location.origin}/reset-password` }); if (error) throw error; };
+  const demanderReset = useServerFn(demanderReinitialisationMotDePasse);
 
   useEffect(() => {
     setMonte(true);
