@@ -1,3 +1,5 @@
+/* eslint-disable prettier/prettier */
+
 /**
  * URL publique canonique du CRM (domaine personnalisé de production).
  * Tous les liens envoyés par e-mail doivent l'utiliser, jamais l'origine
