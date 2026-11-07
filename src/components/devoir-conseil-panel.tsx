@@ -4,8 +4,16 @@ import { calculerFraisCourtage } from "@/lib/frais-courtage";
 import { assuresEmprunteur } from "@/lib/recueil-besoins-schemas";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { catalogueOffreUniqueFn, envoyerDevoirConseilFn, pdfDevoirConseil } from "@/lib/devoir-conseil.functions";
-import { prefillDevoirConseil, STATUT_OFFRE_LABEL, type StatutOffre } from "@/lib/devoir-conseil-modeles";
+import {
+  catalogueOffreUniqueFn,
+  envoyerDevoirConseilFn,
+  pdfDevoirConseil,
+} from "@/lib/devoir-conseil.functions";
+import {
+  prefillDevoirConseil,
+  STATUT_OFFRE_LABEL,
+  type StatutOffre,
+} from "@/lib/devoir-conseil-modeles";
 import { useAuth } from "@/lib/auth-context";
 import { useCommissionBareme } from "@/hooks/use-commission-bareme";
 import { resoudreRegle, decrireRegle, fmtEuros } from "@/lib/commissions-bareme";
@@ -17,8 +25,6 @@ import {
 } from "@/lib/commission-previsions";
 import { etatDelaiEnvoi } from "@/lib/devoir-conseil-delai";
 import { DocumentsPretPanel } from "@/components/documents-pret-panel";
-
-
 
 type Devoir = {
   id: string;
@@ -110,11 +116,16 @@ export function DevoirConseilPanel({
     recueil_besoins: Record<string, unknown> | null;
     created_at: string | null;
   } | null>(null);
-  const [prevision, setPrevision] = useState<{ id: string; montant_previsionnel_total: number | null } | null>(
-    null,
-  );
+  const [prevision, setPrevision] = useState<{
+    id: string;
+    montant_previsionnel_total: number | null;
+  } | null>(null);
   const [prevOpen, setPrevOpen] = useState(false);
-  const [prevForm, setPrevForm] = useState<{ mensuel: string; mois: string; periodicite: Periodicite }>({
+  const [prevForm, setPrevForm] = useState<{
+    mensuel: string;
+    mois: string;
+    periodicite: Periodicite;
+  }>({
     mensuel: "",
     mois: "",
     periodicite: "mensuelle",
@@ -245,10 +256,9 @@ export function DevoirConseilPanel({
     const t = setInterval(() => setTick((n) => n + 1), 60000);
     return () => clearInterval(t);
   }, []);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   const delai = etatDelaiEnvoi(lettreSigneeLe, new Date());
   void tick;
-
 
   // Contre-proposition demandée depuis l'analyse IA du refus : ouvre et pré-remplit la saisie.
   useEffect(() => {
@@ -257,10 +267,10 @@ export function DevoirConseilPanel({
     setForm((f) => ({
       ...f,
       recommandation: contreProposition.suggestion || f.recommandation,
-      motifs: `Contre-proposition suite au refus du client (motif : ${contreProposition.motif}).\n${f.motifs}`.trim(),
+      motifs:
+        `Contre-proposition suite au refus du client (motif : ${contreProposition.motif}).\n${f.motifs}`.trim(),
     }));
   }, [contreProposition?.key]);
-
 
   // Devis saisis sur le dossier + recueil de besoins : base de pré-remplissage automatique.
   useEffect(() => {
@@ -311,7 +321,6 @@ export function DevoirConseilPanel({
       }
       if (list.length > 0) appliquerDevis(list);
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dossierId]);
 
   /** Montant en euros, format court pour un tableau dense. */
@@ -390,7 +399,6 @@ export function DevoirConseilPanel({
     );
   }, [echeancier.economie_brute, fraisCourtageCalc, form.frais_dossier, form.frais_adhesion]);
 
-
   /** Reprend les données du recueil de besoins (capital, CRD, quotité, durée, exigences). */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const appliquerRecueil = (dosRow: any) => {
@@ -399,10 +407,12 @@ export function DevoirConseilPanel({
       const n = Number(v);
       return Number.isFinite(n) && n > 0 ? n : null;
     };
-    const capital = nb(recueil["capital_emprunte"]) ?? nb(recueil["capital"]) ?? nb(dosRow?.capital);
+    const capital =
+      nb(recueil["capital_emprunte"]) ?? nb(recueil["capital"]) ?? nb(dosRow?.capital);
     const crd = nb(recueil["capital_restant_du"]) ?? nb(recueil["crd"]);
     const quotite = nb(recueil["quotite"]);
-    const duree = nb(recueil["mois_restants"]) ?? nb(recueil["duree_mois"]) ?? nb(dosRow?.duree_mois);
+    const duree =
+      nb(recueil["mois_restants"]) ?? nb(recueil["duree_mois"]) ?? nb(dosRow?.duree_mois);
     const exigences =
       typeof recueil["exigences"] === "string"
         ? (recueil["exigences"] as string)
@@ -443,11 +453,16 @@ export function DevoirConseilPanel({
         compagnie: f.compagnie || retenu.compagnie,
         produit: f.produit || retenu.produit,
         type_cotisation: f.type_cotisation || (retenu.type_cotisation ?? f.type_cotisation),
-        montant_total: f.montant_total || (retenu.montant_total_saisi != null ? String(retenu.montant_total_saisi) : ""),
+        montant_total:
+          f.montant_total ||
+          (retenu.montant_total_saisi != null ? String(retenu.montant_total_saisi) : ""),
         cotisation_mensuelle:
-          f.cotisation_mensuelle || (retenu.cotisation_mensuelle != null ? String(retenu.cotisation_mensuelle) : ""),
-        cotisation_min: f.cotisation_min || (retenu.cotisation_min != null ? String(retenu.cotisation_min) : ""),
-        cotisation_max: f.cotisation_max || (retenu.cotisation_max != null ? String(retenu.cotisation_max) : ""),
+          f.cotisation_mensuelle ||
+          (retenu.cotisation_mensuelle != null ? String(retenu.cotisation_mensuelle) : ""),
+        cotisation_min:
+          f.cotisation_min || (retenu.cotisation_min != null ? String(retenu.cotisation_min) : ""),
+        cotisation_max:
+          f.cotisation_max || (retenu.cotisation_max != null ? String(retenu.cotisation_max) : ""),
       }));
     }
   };
@@ -473,11 +488,16 @@ export function DevoirConseilPanel({
         compagnie: retenu.compagnie || f.compagnie,
         produit: retenu.produit || f.produit,
         type_cotisation: retenu.type_cotisation ?? f.type_cotisation,
-        montant_total: retenu.montant_total_saisi != null ? String(retenu.montant_total_saisi) : f.montant_total,
+        montant_total:
+          retenu.montant_total_saisi != null ? String(retenu.montant_total_saisi) : f.montant_total,
         cotisation_mensuelle:
-          retenu.cotisation_mensuelle != null ? String(retenu.cotisation_mensuelle) : f.cotisation_mensuelle,
-        cotisation_min: retenu.cotisation_min != null ? String(retenu.cotisation_min) : f.cotisation_min,
-        cotisation_max: retenu.cotisation_max != null ? String(retenu.cotisation_max) : f.cotisation_max,
+          retenu.cotisation_mensuelle != null
+            ? String(retenu.cotisation_mensuelle)
+            : f.cotisation_mensuelle,
+        cotisation_min:
+          retenu.cotisation_min != null ? String(retenu.cotisation_min) : f.cotisation_min,
+        cotisation_max:
+          retenu.cotisation_max != null ? String(retenu.cotisation_max) : f.cotisation_max,
       }));
     }
   };
@@ -498,7 +518,8 @@ export function DevoirConseilPanel({
     // Repli uniquement : si un devis porte un taux de commission, la prévision
     // est dérivée de ce taux au moment de la création du contrat de l'assuré.
     if (staff && !prevision && !prevIgnoree && !tauxDevisPresent && regleApplicable) {
-      const periodicite: Periodicite = regleApplicable.regle.periodicite === "annuelle" ? "annuelle" : "mensuelle";
+      const periodicite: Periodicite =
+        regleApplicable.regle.periodicite === "annuelle" ? "annuelle" : "mensuelle";
       // En annuel, l'assiette est la cotisation de l'année (12 × la mensuelle saisie).
       const cotisation = form.cotisation_mensuelle ? Number(form.cotisation_mensuelle) : null;
       const mensuel = montantMensuelEstime(
@@ -561,13 +582,19 @@ export function DevoirConseilPanel({
           produit: form.produit.trim() || undefined,
           garanties: form.garanties.trim() || undefined,
           exigences_client: form.exigences_client.trim() || undefined,
-          cotisation_mensuelle: form.cotisation_mensuelle ? Number(form.cotisation_mensuelle) : null,
+          cotisation_mensuelle: form.cotisation_mensuelle
+            ? Number(form.cotisation_mensuelle)
+            : null,
           type_cotisation: form.type_cotisation || null,
           montant_total: form.montant_total ? Number(form.montant_total) : null,
           cotisation_min:
-            form.type_cotisation === "CRD" && form.cotisation_min ? Number(form.cotisation_min) : null,
+            form.type_cotisation === "CRD" && form.cotisation_min
+              ? Number(form.cotisation_min)
+              : null,
           cotisation_max:
-            form.type_cotisation === "CRD" && form.cotisation_max ? Number(form.cotisation_max) : null,
+            form.type_cotisation === "CRD" && form.cotisation_max
+              ? Number(form.cotisation_max)
+              : null,
           frais_dossier: form.frais_dossier ? Number(form.frais_dossier) : null,
           frais_souscription: form.frais_souscription ? Number(form.frais_souscription) : null,
           frais_courtage: form.frais_courtage ? Number(form.frais_courtage) : null,
@@ -579,7 +606,9 @@ export function DevoirConseilPanel({
                   compagnie: o.compagnie.trim(),
                   produit: o.produit.trim(),
                   formule: o.formule.trim() || null,
-                  cotisation_mensuelle: o.cotisation_mensuelle ? Number(o.cotisation_mensuelle) : null,
+                  cotisation_mensuelle: o.cotisation_mensuelle
+                    ? Number(o.cotisation_mensuelle)
+                    : null,
                   cout_total: o.cout_total ? Number(o.cout_total) : null,
                   statut: o.statut,
                   commentaire: o.commentaire.trim() || null,
@@ -589,7 +618,9 @@ export function DevoirConseilPanel({
             ? {
                 assiette: form.assiette,
                 capital_assure: form.capital_assure ? Number(form.capital_assure) : null,
-                capital_restant_du: form.capital_restant_du ? Number(form.capital_restant_du) : null,
+                capital_restant_du: form.capital_restant_du
+                  ? Number(form.capital_restant_du)
+                  : null,
                 quotite: form.quotite ? Number(form.quotite) : null,
                 duree_mois: form.duree_mois ? Number(form.duree_mois) : null,
               }
@@ -609,7 +640,9 @@ export function DevoirConseilPanel({
       await load();
       onChanged();
     } catch (e) {
-      setError(e instanceof Error ? e.message : sansEnvoi ? "Erreur de validation" : "Erreur d'envoi");
+      setError(
+        e instanceof Error ? e.message : sansEnvoi ? "Erreur de validation" : "Erreur d'envoi",
+      );
     }
     setBusy(false);
   };
@@ -626,7 +659,8 @@ export function DevoirConseilPanel({
   };
 
   const troisOffres = !emprunteur || offreUnique || offresRemplies.length >= 3;
-  const valide = form.recommandation.trim().length >= 10 && form.motifs.trim().length >= 10 && troisOffres;
+  const valide =
+    form.recommandation.trim().length >= 10 && form.motifs.trim().length >= 10 && troisOffres;
 
   const appliquerModele = () => {
     const pre = prefillDevoirConseil({
@@ -671,9 +705,7 @@ export function DevoirConseilPanel({
 
       {devoir ? (
         <div className="mt-3 space-y-1 text-sm text-ink-soft">
-          <p>
-            Destinataire : {devoir.email_destinataire ?? "—"}
-          </p>
+          <p>Destinataire : {devoir.email_destinataire ?? "—"}</p>
           {devoir.envoye_le ? (
             <p className="text-emerald-700">
               Envoyé le {new Date(devoir.envoye_le).toLocaleString("fr-FR")}
@@ -690,7 +722,9 @@ export function DevoirConseilPanel({
             </p>
           ) : null}
           {devoir.signed_at && (
-            <p className="text-emerald-700">Signé le {new Date(devoir.signed_at).toLocaleString("fr-FR")}</p>
+            <p className="text-emerald-700">
+              Signé le {new Date(devoir.signed_at).toLocaleString("fr-FR")}
+            </p>
           )}
           {devoir.signed_at && devoir.echelonnement_demande && (
             <p className="rounded-lg border border-amber-400/50 bg-amber-50 px-3 py-2 text-amber-900">
@@ -698,23 +732,32 @@ export function DevoirConseilPanel({
               {devoir.echelonnement_montant_mensuel
                 ? ` (+${Number(devoir.echelonnement_montant_mensuel).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} € / mois pendant 12 mois)`
                 : ""}
-              . Pensez à l'indiquer sur l'intranet du partenaire, afin qu'il prélève bien les frais de
-              distribution en 12 fois plutôt qu'en une seule fois. Les frais de dossier, eux, restent prélevés
-              en une seule fois.
+              . Pensez à l'indiquer sur l'intranet du partenaire, afin qu'il prélève bien les frais
+              de distribution en 12 fois plutôt qu'en une seule fois. Les frais de dossier, eux,
+              restent prélevés en une seule fois.
             </p>
           )}
           {devoir.refuse_le && (
             <p className="text-destructive">
-              Refusé le {new Date(devoir.refuse_le).toLocaleString("fr-FR")} — motif : {devoir.refus_motif}
+              Refusé le {new Date(devoir.refuse_le).toLocaleString("fr-FR")} — motif :{" "}
+              {devoir.refus_motif}
             </p>
           )}
-          {devoir.hash && <p className="text-xs text-ink-muted">Empreinte SHA-256 : {devoir.hash.slice(0, 24)}…</p>}
+          {devoir.hash && (
+            <p className="text-xs text-ink-muted">
+              Empreinte SHA-256 : {devoir.hash.slice(0, 24)}…
+            </p>
+          )}
           {devoir.recommandation && (
-            <p className="mt-2 whitespace-pre-wrap rounded-md bg-surface p-3 text-sm">{devoir.recommandation}</p>
+            <p className="mt-2 whitespace-pre-wrap rounded-md bg-surface p-3 text-sm">
+              {devoir.recommandation}
+            </p>
           )}
         </div>
       ) : (
-        <p className="mt-3 text-sm text-ink-muted">Aucun devoir de conseil généré pour ce projet.</p>
+        <p className="mt-3 text-sm text-ink-muted">
+          Aucun devoir de conseil généré pour ce projet.
+        </p>
       )}
 
       {staff && prevision && (
@@ -737,8 +780,8 @@ export function DevoirConseilPanel({
         <div className="mt-4 space-y-3 rounded-xl border border-[color:var(--crm-gold,#D4AF37)] bg-surface p-4">
           <p className="font-serif text-base text-ink">Commission prévisionnelle de ce dossier</p>
           <p className="text-xs text-ink-muted">
-            Règle appliquée : {regleApplicable ? decrireRegle(regleApplicable.regle) : "—"}. Ajustez si besoin
-            avant confirmation.
+            Règle appliquée : {regleApplicable ? decrireRegle(regleApplicable.regle) : "—"}. Ajustez
+            si besoin avant confirmation.
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-xs text-ink-muted">
@@ -755,7 +798,9 @@ export function DevoirConseilPanel({
               </select>
             </label>
             <label className="text-xs text-ink-muted">
-              {prevForm.periodicite === "annuelle" ? "Commission annuelle (€)" : "Commission mensuelle (€)"}
+              {prevForm.periodicite === "annuelle"
+                ? "Commission annuelle (€)"
+                : "Commission mensuelle (€)"}
               <input
                 type="number"
                 step="0.01"
@@ -783,7 +828,11 @@ export function DevoirConseilPanel({
             <strong>
               {prevForm.mensuel && prevForm.mois
                 ? fmtEuros(
-                    totalPrevisionnel(Number(prevForm.mensuel), Number(prevForm.mois), prevForm.periodicite) ?? 0,
+                    totalPrevisionnel(
+                      Number(prevForm.mensuel),
+                      Number(prevForm.mois),
+                      prevForm.periodicite,
+                    ) ?? 0,
                   )
                 : "total indisponible"}
             </strong>
@@ -841,7 +890,10 @@ export function DevoirConseilPanel({
           </button>
         )}
         {open && (
-          <button onClick={appliquerModele} className="rounded-full border border-line px-4 py-2 text-sm hover:bg-surface">
+          <button
+            onClick={appliquerModele}
+            className="rounded-full border border-line px-4 py-2 text-sm hover:bg-surface"
+          >
             Pré-remplir depuis le modèle
           </button>
         )}
@@ -857,8 +909,9 @@ export function DevoirConseilPanel({
 
       {devisDossier.length === 0 && (
         <p className="mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-          Aucun devis enregistré sur ce dossier : la mise en concurrence du devoir de conseil serait vide. Revenez à
-          l'étape « Étude et devis » pour déposer ou reprendre les devis, puis revenez ici.
+          Aucun devis enregistré sur ce dossier : la mise en concurrence du devoir de conseil serait
+          vide. Revenez à l'étape « Étude et devis » pour déposer ou reprendre les devis, puis
+          revenez ici.
         </p>
       )}
 
@@ -882,16 +935,18 @@ export function DevoirConseilPanel({
             />
           )}
 
-
-
           {/* Offres comparées */}
           <div className="rounded-xl border border-line p-3">
             <p className="text-xs uppercase tracking-wide text-ink-muted">
-              2. Offres comparées {emprunteur && <span className="text-destructive">(3 minimum en emprunteur)</span>}
+              2. Offres comparées{" "}
+              {emprunteur && <span className="text-destructive">(3 minimum en emprunteur)</span>}
             </p>
             <div className="mt-3 space-y-3">
               {offres.map((o, i) => (
-                <div key={i} className="grid gap-2 rounded-md border border-line bg-surface p-3 sm:grid-cols-6">
+                <div
+                  key={i}
+                  className="grid gap-2 rounded-md border border-line bg-surface p-3 sm:grid-cols-6"
+                >
                   <input
                     placeholder="Compagnie"
                     value={o.compagnie}
@@ -962,7 +1017,10 @@ export function DevoirConseilPanel({
                 <select
                   value={form.assiette}
                   onChange={(e) =>
-                    setForm({ ...form, assiette: e.target.value as "capital_initial" | "capital_restant_du" })
+                    setForm({
+                      ...form,
+                      assiette: e.target.value as "capital_initial" | "capital_restant_du",
+                    })
                   }
                   className="w-full rounded-md border border-line bg-background px-3 py-2 text-sm"
                 >
@@ -1124,7 +1182,8 @@ export function DevoirConseilPanel({
                     className="w-full rounded-md border border-line bg-background px-3 py-2 text-sm"
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Calcul automatique indisponible (aucune économie chiffrée) : saisissez le montant retenu.
+                    Calcul automatique indisponible (aucune économie chiffrée) : saisissez le
+                    montant retenu.
                   </p>
                 </>
               )}
@@ -1151,136 +1210,138 @@ export function DevoirConseilPanel({
 
           {emprunteur && echeancier.lignes.length > 0 && (
             <>
-            <div className="rounded-lg border border-line">
-              <div className="border-b border-line px-3 py-2">
-                <p className="text-sm font-semibold">Échéancier comparatif du prêt</p>
-                <p className="text-xs text-muted-foreground">
-                  À compter du mois prévu de la substitution
-                  {echeancier.date_effet
-                    ? ` (${echeancier.date_effet.split("-").reverse().join("/")})`
-                    : ""}
-                  . 12 premières échéances détaillées, puis une ligne par année. Différentiel en
-                  vert : économie pour le client ; en rouge : surcoût.
-                </p>
-                {form.type_cotisation === "CRD" && (
-                  <p className="mt-1 text-xs text-amber-700">
-                    Cotisation calculée sur le capital restant dû : plus élevée les premières années,
-                    puis dégressive. Cette information est reprise dans le devoir de conseil remis au
-                    client.
+              <div className="rounded-lg border border-line">
+                <div className="border-b border-line px-3 py-2">
+                  <p className="text-sm font-semibold">Échéancier comparatif du prêt</p>
+                  <p className="text-xs text-muted-foreground">
+                    À compter du mois prévu de la substitution
+                    {echeancier.date_effet
+                      ? ` (${echeancier.date_effet.split("-").reverse().join("/")})`
+                      : ""}
+                    . 12 premières échéances détaillées, puis une ligne par année. Différentiel en
+                    vert : économie pour le client ; en rouge : surcoût.
                   </p>
-                )}
-              </div>
-              <div className="max-h-80 overflow-auto">
-                <table className="w-full text-right text-xs">
-                  <thead className="sticky top-0 bg-muted">
-                    <tr>
-                      <th className="px-2 py-1 text-left font-medium">Date d'échéance</th>
-                      <th className="px-2 py-1 font-medium">Échéance banque (hors assurance)</th>
-                      <th className="px-2 py-1 font-medium">Assurance banque</th>
-                      <th className="px-2 py-1 font-medium">Total</th>
-                      <th className="px-2 py-1 font-medium">Assurance EJ Assurances</th>
-                      <th className="px-2 py-1 font-medium">Économie réalisée</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {regrouperEcheancierParAnnee(echeancier.lignes).map((v) =>
-                      v.type === "mois" ? (
-                        <tr key={`m-${v.ligne.rang}`} className="border-t border-line">
-                          <td className="px-2 py-1 text-left">
-                            {v.ligne.date.split("-").reverse().join("/")}
-                          </td>
-                          <td className="px-2 py-1">{eur(v.ligne.echeance)}</td>
-                          <td className="px-2 py-1">{eur(v.ligne.assurance_initiale)}</td>
-                          <td className="px-2 py-1">{eur(v.ligne.total_actuel)}</td>
-                          <td className="px-2 py-1">{eur(v.ligne.assurance_nouvelle)}</td>
-                          <td
-                            className={`px-2 py-1 font-semibold ${v.ligne.differentiel > 0 ? "text-red-600" : "text-emerald-600"}`}
+                  {form.type_cotisation === "CRD" && (
+                    <p className="mt-1 text-xs text-amber-700">
+                      Cotisation calculée sur le capital restant dû : plus élevée les premières
+                      années, puis dégressive. Cette information est reprise dans le devoir de
+                      conseil remis au client.
+                    </p>
+                  )}
+                </div>
+                <div className="max-h-80 overflow-auto">
+                  <table className="w-full text-right text-xs">
+                    <thead className="sticky top-0 bg-muted">
+                      <tr>
+                        <th className="px-2 py-1 text-left font-medium">Date d'échéance</th>
+                        <th className="px-2 py-1 font-medium">Échéance banque (hors assurance)</th>
+                        <th className="px-2 py-1 font-medium">Assurance banque</th>
+                        <th className="px-2 py-1 font-medium">Total</th>
+                        <th className="px-2 py-1 font-medium">Assurance EJ Assurances</th>
+                        <th className="px-2 py-1 font-medium">Économie réalisée</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {regrouperEcheancierParAnnee(echeancier.lignes).map((v) =>
+                        v.type === "mois" ? (
+                          <tr key={`m-${v.ligne.rang}`} className="border-t border-line">
+                            <td className="px-2 py-1 text-left">
+                              {v.ligne.date.split("-").reverse().join("/")}
+                            </td>
+                            <td className="px-2 py-1">{eur(v.ligne.echeance)}</td>
+                            <td className="px-2 py-1">{eur(v.ligne.assurance_initiale)}</td>
+                            <td className="px-2 py-1">{eur(v.ligne.total_actuel)}</td>
+                            <td className="px-2 py-1">{eur(v.ligne.assurance_nouvelle)}</td>
+                            <td
+                              className={`px-2 py-1 font-semibold ${v.ligne.differentiel > 0 ? "text-red-600" : "text-emerald-600"}`}
+                            >
+                              {v.ligne.differentiel > 0 ? "-" : ""}
+                              {eur(Math.abs(v.ligne.differentiel))}
+                            </td>
+                          </tr>
+                        ) : (
+                          <tr
+                            key={`a-${v.annee}`}
+                            className="border-t border-line bg-muted/60 font-medium"
                           >
-                            {v.ligne.differentiel > 0 ? "-" : ""}
-                            {eur(Math.abs(v.ligne.differentiel))}
-                          </td>
-                        </tr>
-                      ) : (
-                        <tr key={`a-${v.annee}`} className="border-t border-line bg-muted/60 font-medium">
-                          <td className="px-2 py-1 text-left">
-                            Année {v.annee} ({v.nb_mois} mois)
-                          </td>
-                          <td className="px-2 py-1">{eur(v.echeance)}</td>
-                          <td className="px-2 py-1">{eur(v.assurance_initiale)}</td>
-                          <td className="px-2 py-1">{eur(v.total_actuel)}</td>
-                          <td className="px-2 py-1">{eur(v.assurance_nouvelle)}</td>
-                          <td
-                            className={`px-2 py-1 font-semibold ${v.differentiel > 0 ? "text-red-600" : "text-emerald-600"}`}
-                          >
-                            {v.differentiel > 0 ? "-" : ""}
-                            {eur(Math.abs(v.differentiel))}
-                          </td>
-                        </tr>
-                      ),
-                    )}
-                  </tbody>
-                </table>
+                            <td className="px-2 py-1 text-left">
+                              Année {v.annee} ({v.nb_mois} mois)
+                            </td>
+                            <td className="px-2 py-1">{eur(v.echeance)}</td>
+                            <td className="px-2 py-1">{eur(v.assurance_initiale)}</td>
+                            <td className="px-2 py-1">{eur(v.total_actuel)}</td>
+                            <td className="px-2 py-1">{eur(v.assurance_nouvelle)}</td>
+                            <td
+                              className={`px-2 py-1 font-semibold ${v.differentiel > 0 ? "text-red-600" : "text-emerald-600"}`}
+                            >
+                              {v.differentiel > 0 ? "-" : ""}
+                              {eur(Math.abs(v.differentiel))}
+                            </td>
+                          </tr>
+                        ),
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="border-t border-line px-3 py-2 text-xs">
+                  Assurance de la banque : {eur(echeancier.total_assurance_initiale)} — assurance
+                  proposée : {eur(echeancier.total_assurance_nouvelle)} sur la période restante.
+                </div>
               </div>
-              <div className="border-t border-line px-3 py-2 text-xs">
-                Assurance de la banque : {eur(echeancier.total_assurance_initiale)} — assurance
-                proposée : {eur(echeancier.total_assurance_nouvelle)} sur la période restante.
-              </div>
-            </div>
 
-            <div className="mt-4 rounded-lg border border-line">
-              <div className="border-b border-line px-3 py-2">
-                <p className="text-sm font-semibold">Conditions financières</p>
-                <p className="text-xs text-muted-foreground">
-                  Frais ponctuels du nouveau contrat — jamais étalés sur la durée, déduits une
-                  seule fois de l'économie brute pour obtenir l'économie nette.
-                </p>
-              </div>
-              <div className="grid grid-cols-3 divide-x divide-line text-sm">
-                <div className="px-3 py-2">
-                  <p className="text-xs text-muted-foreground">Frais de courtage</p>
-                  <p className="font-medium">{eur(Number(form.frais_courtage || 0))}</p>
-                </div>
-                <div className="px-3 py-2">
-                  <p className="text-xs text-muted-foreground">Frais de dossier</p>
-                  <p className="font-medium">{eur(Number(form.frais_dossier || 0))}</p>
-                </div>
-                <div className="px-3 py-2">
-                  <p className="text-xs text-muted-foreground">Frais d'adhésion</p>
-                  <p className="font-medium">{eur(Number(form.frais_adhesion || 0))}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 divide-x divide-line border-t border-line text-sm">
-                <div className="px-3 py-3">
+              <div className="mt-4 rounded-lg border border-line">
+                <div className="border-b border-line px-3 py-2">
+                  <p className="text-sm font-semibold">Conditions financières</p>
                   <p className="text-xs text-muted-foreground">
-                    Économie brute (cotisations seules, sur la durée résiduelle)
-                  </p>
-                  <p
-                    className={`text-base font-semibold ${
-                      echeancier.economie_brute >= 0 ? "text-emerald-600" : "text-red-600"
-                    }`}
-                  >
-                    {echeancier.economie_brute >= 0 ? "" : "-"}
-                    {eur(Math.abs(echeancier.economie_brute))}
+                    Frais ponctuels du nouveau contrat — jamais étalés sur la durée, déduits une
+                    seule fois de l'économie brute pour obtenir l'économie nette.
                   </p>
                 </div>
-                <div className="px-3 py-3">
-                  <p className="text-xs text-muted-foreground">
-                    Économie nette (après frais de courtage, dossier, adhésion)
-                  </p>
-                  <p
-                    className={`text-base font-semibold ${
-                      economieNette >= 0 ? "text-emerald-600" : "text-red-600"
-                    }`}
-                  >
-                    {economieNette >= 0 ? "" : "-"}
-                    {eur(Math.abs(economieNette))}
-                  </p>
+                <div className="grid grid-cols-3 divide-x divide-line text-sm">
+                  <div className="px-3 py-2">
+                    <p className="text-xs text-muted-foreground">Frais de courtage</p>
+                    <p className="font-medium">{eur(Number(form.frais_courtage || 0))}</p>
+                  </div>
+                  <div className="px-3 py-2">
+                    <p className="text-xs text-muted-foreground">Frais de dossier</p>
+                    <p className="font-medium">{eur(Number(form.frais_dossier || 0))}</p>
+                  </div>
+                  <div className="px-3 py-2">
+                    <p className="text-xs text-muted-foreground">Frais d'adhésion</p>
+                    <p className="font-medium">{eur(Number(form.frais_adhesion || 0))}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 divide-x divide-line border-t border-line text-sm">
+                  <div className="px-3 py-3">
+                    <p className="text-xs text-muted-foreground">
+                      Économie brute (cotisations seules, sur la durée résiduelle)
+                    </p>
+                    <p
+                      className={`text-base font-semibold ${
+                        echeancier.economie_brute >= 0 ? "text-emerald-600" : "text-red-600"
+                      }`}
+                    >
+                      {echeancier.economie_brute >= 0 ? "" : "-"}
+                      {eur(Math.abs(echeancier.economie_brute))}
+                    </p>
+                  </div>
+                  <div className="px-3 py-3">
+                    <p className="text-xs text-muted-foreground">
+                      Économie nette (après frais de courtage, dossier, adhésion)
+                    </p>
+                    <p
+                      className={`text-base font-semibold ${
+                        economieNette >= 0 ? "text-emerald-600" : "text-red-600"
+                      }`}
+                    >
+                      {economieNette >= 0 ? "" : "-"}
+                      {eur(Math.abs(economieNette))}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
             </>
           )}
-
 
           <Field label="Garanties retenues">
             <textarea
@@ -1316,7 +1377,9 @@ export function DevoirConseilPanel({
           </Field>
 
           <div className="rounded-xl border border-line p-3">
-            <p className="text-xs uppercase tracking-wide text-ink-muted">Accusé de remise des documents</p>
+            <p className="text-xs uppercase tracking-wide text-ink-muted">
+              Accusé de remise des documents
+            </p>
             <div className="mt-2 grid gap-2 text-sm sm:grid-cols-2">
               {(
                 [
@@ -1352,8 +1415,10 @@ export function DevoirConseilPanel({
           </div>
           <p className="text-xs text-ink-muted">
             Après validation, l'envoi au client est automatique
-            {delai.disponible_le ? ` (prévu à partir du ${delai.disponible_le.toLocaleString("fr-FR")})` : ""}.
-            {!delai.autorise && delai.motif ? ` ${delai.motif}` : ""}
+            {delai.disponible_le
+              ? ` (prévu à partir du ${delai.disponible_le.toLocaleString("fr-FR")})`
+              : ""}
+            .{!delai.autorise && delai.motif ? ` ${delai.motif}` : ""}
           </p>
 
           {!valide && (
