@@ -33,6 +33,7 @@ import { Route as AuthenticatedEspaceDiagnosticRouteImport } from './routes/_aut
 import { Route as AuthenticatedEspaceFournisseursRouteImport } from './routes/_authenticated/espace.fournisseurs'
 import { Route as AuthenticatedEspaceGmailControleRouteImport } from './routes/_authenticated/espace.gmail-controle'
 import { Route as AuthenticatedEspaceGrillesGarantiesRouteImport } from './routes/_authenticated/espace.grilles-garanties'
+import { Route as AuthenticatedEspaceMailTestRouteImport } from './routes/_authenticated/espace.mail-test'
 import { Route as AuthenticatedEspaceMesRecommandationsRouteImport } from './routes/_authenticated/espace.mes-recommandations'
 import { Route as AuthenticatedEspaceMonEspaceRouteImport } from './routes/_authenticated/espace.mon-espace'
 import { Route as AuthenticatedEspaceMonEspaceMandataireRouteImport } from './routes/_authenticated/espace.mon-espace-mandataire'
@@ -228,6 +229,12 @@ const AuthenticatedEspaceGrillesGarantiesRoute =
   AuthenticatedEspaceGrillesGarantiesRouteImport.update({
     id: '/grilles-garanties',
     path: '/grilles-garanties',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceMailTestRoute =
+  AuthenticatedEspaceMailTestRouteImport.update({
+    id: '/mail-test',
+    path: '/mail-test',
     getParentRoute: () => AuthenticatedEspaceRoute,
   } as any)
 const AuthenticatedEspaceMesRecommandationsRoute =
@@ -624,6 +631,7 @@ export interface FileRoutesByFullPath {
   '/espace/fournisseurs': typeof AuthenticatedEspaceFournisseursRoute
   '/espace/gmail-controle': typeof AuthenticatedEspaceGmailControleRoute
   '/espace/grilles-garanties': typeof AuthenticatedEspaceGrillesGarantiesRoute
+  '/espace/mail-test': typeof AuthenticatedEspaceMailTestRoute
   '/espace/mes-recommandations': typeof AuthenticatedEspaceMesRecommandationsRoute
   '/espace/mon-espace': typeof AuthenticatedEspaceMonEspaceRoute
   '/espace/mon-espace-mandataire': typeof AuthenticatedEspaceMonEspaceMandataireRoute
@@ -712,6 +720,7 @@ export interface FileRoutesByTo {
   '/espace/fournisseurs': typeof AuthenticatedEspaceFournisseursRoute
   '/espace/gmail-controle': typeof AuthenticatedEspaceGmailControleRoute
   '/espace/grilles-garanties': typeof AuthenticatedEspaceGrillesGarantiesRoute
+  '/espace/mail-test': typeof AuthenticatedEspaceMailTestRoute
   '/espace/mes-recommandations': typeof AuthenticatedEspaceMesRecommandationsRoute
   '/espace/mon-espace': typeof AuthenticatedEspaceMonEspaceRoute
   '/espace/mon-espace-mandataire': typeof AuthenticatedEspaceMonEspaceMandataireRoute
@@ -803,6 +812,7 @@ export interface FileRoutesById {
   '/_authenticated/espace/fournisseurs': typeof AuthenticatedEspaceFournisseursRoute
   '/_authenticated/espace/gmail-controle': typeof AuthenticatedEspaceGmailControleRoute
   '/_authenticated/espace/grilles-garanties': typeof AuthenticatedEspaceGrillesGarantiesRoute
+  '/_authenticated/espace/mail-test': typeof AuthenticatedEspaceMailTestRoute
   '/_authenticated/espace/mes-recommandations': typeof AuthenticatedEspaceMesRecommandationsRoute
   '/_authenticated/espace/mon-espace': typeof AuthenticatedEspaceMonEspaceRoute
   '/_authenticated/espace/mon-espace-mandataire': typeof AuthenticatedEspaceMonEspaceMandataireRoute
@@ -894,6 +904,7 @@ export interface FileRouteTypes {
     | '/espace/fournisseurs'
     | '/espace/gmail-controle'
     | '/espace/grilles-garanties'
+    | '/espace/mail-test'
     | '/espace/mes-recommandations'
     | '/espace/mon-espace'
     | '/espace/mon-espace-mandataire'
@@ -982,6 +993,7 @@ export interface FileRouteTypes {
     | '/espace/fournisseurs'
     | '/espace/gmail-controle'
     | '/espace/grilles-garanties'
+    | '/espace/mail-test'
     | '/espace/mes-recommandations'
     | '/espace/mon-espace'
     | '/espace/mon-espace-mandataire'
@@ -1072,6 +1084,7 @@ export interface FileRouteTypes {
     | '/_authenticated/espace/fournisseurs'
     | '/_authenticated/espace/gmail-controle'
     | '/_authenticated/espace/grilles-garanties'
+    | '/_authenticated/espace/mail-test'
     | '/_authenticated/espace/mes-recommandations'
     | '/_authenticated/espace/mon-espace'
     | '/_authenticated/espace/mon-espace-mandataire'
@@ -1355,6 +1368,13 @@ declare module '@tanstack/react-router' {
       path: '/grilles-garanties'
       fullPath: '/espace/grilles-garanties'
       preLoaderRoute: typeof AuthenticatedEspaceGrillesGarantiesRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/_authenticated/espace/mail-test': {
+      id: '/_authenticated/espace/mail-test'
+      path: '/mail-test'
+      fullPath: '/espace/mail-test'
+      preLoaderRoute: typeof AuthenticatedEspaceMailTestRouteImport
       parentRoute: typeof AuthenticatedEspaceRoute
     }
     '/_authenticated/espace/mes-recommandations': {
@@ -1835,6 +1855,7 @@ interface AuthenticatedEspaceRouteChildren {
   AuthenticatedEspaceFournisseursRoute: typeof AuthenticatedEspaceFournisseursRoute
   AuthenticatedEspaceGmailControleRoute: typeof AuthenticatedEspaceGmailControleRoute
   AuthenticatedEspaceGrillesGarantiesRoute: typeof AuthenticatedEspaceGrillesGarantiesRoute
+  AuthenticatedEspaceMailTestRoute: typeof AuthenticatedEspaceMailTestRoute
   AuthenticatedEspaceMesRecommandationsRoute: typeof AuthenticatedEspaceMesRecommandationsRoute
   AuthenticatedEspaceMonEspaceRoute: typeof AuthenticatedEspaceMonEspaceRoute
   AuthenticatedEspaceMonEspaceMandataireRoute: typeof AuthenticatedEspaceMonEspaceMandataireRoute
@@ -1881,6 +1902,7 @@ const AuthenticatedEspaceRouteChildren: AuthenticatedEspaceRouteChildren = {
   AuthenticatedEspaceGmailControleRoute: AuthenticatedEspaceGmailControleRoute,
   AuthenticatedEspaceGrillesGarantiesRoute:
     AuthenticatedEspaceGrillesGarantiesRoute,
+  AuthenticatedEspaceMailTestRoute: AuthenticatedEspaceMailTestRoute,
   AuthenticatedEspaceMesRecommandationsRoute:
     AuthenticatedEspaceMesRecommandationsRoute,
   AuthenticatedEspaceMonEspaceRoute: AuthenticatedEspaceMonEspaceRoute,

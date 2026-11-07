@@ -23,7 +23,14 @@ function offsetParisMinutes(d: Date): number {
   });
   const p = fmt.formatToParts(d);
   const v = (t: string) => Number(p.find((x) => x.type === t)?.value ?? "0");
-  const local = Date.UTC(v("year"), v("month") - 1, v("day"), v("hour") % 24, v("minute"), v("second"));
+  const local = Date.UTC(
+    v("year"),
+    v("month") - 1,
+    v("day"),
+    v("hour") % 24,
+    v("minute"),
+    v("second"),
+  );
   return Math.round((local - Math.floor(d.getTime() / 1000) * 1000) / 60000);
 }
 
@@ -96,16 +103,32 @@ export async function envoyerEmailsDus(
   let envoyes = 0;
   let echecs = 0;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  for (const e of ((data ?? []) as any[])) {
+  for (const e of (data ?? []) as any[]) {
     try {
+      // Parcours site public : l'espace client (et le DER) doit exister avant
+      // l'e-mail qui y renvoie le prospect.
+      if (e.template === "public-intake-recueil") {
+        const { preparerEspaceParcoursPublic } = await import("@/lib/parcours-public.server");
+        const prep = await preparerEspaceParcoursPublic(admin as never, {
+          client_id: e.contexte?.client_id ?? e.contexte?.liens?.client_id ?? null,
+        });
+        if (!prep.ok) throw new Error(`Espace client non préparé : ${prep.erreur ?? "erreur"}`);
+      }
       const res = await sendTemplateEmail(e.template as string, e.destinataire as string, {
         templateData: (e.donnees ?? {}) as Record<string, unknown>,
         idempotencyKey: (e.idempotency_key as string | null) ?? undefined,
-        liens: (e.contexte?.liens ?? undefined) as never,
+        liens: (e.contexte?.liens ??
+          (e.contexte?.client_id
+            ? { client_id: e.contexte.client_id, dossier_id: e.contexte.dossier_id ?? null }
+            : undefined)) as never,
       });
       await admin
         .from("emails_planifies")
-        .update({ statut: res.sent ? "envoye" : "ignore", envoye_le: new Date().toISOString(), erreur: null })
+        .update({
+          statut: res.sent ? "envoye" : "ignore",
+          envoye_le: new Date().toISOString(),
+          erreur: null,
+        })
         .eq("id", e.id);
       if (res.sent) envoyes += 1;
       if (res.sent) await noterEnvoiDansCrm(admin, e);
@@ -131,7 +154,7 @@ async function noterEnvoiDansCrm(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   e: any,
 ): Promise<void> {
-  const clientId: string | null = e?.contexte?.liens?.client_id ?? null;
+  const clientId: string | null = e?.contexte?.liens?.client_id ?? e?.contexte?.client_id ?? null;
   if (!clientId) return;
   const titre: string = e?.donnees?.titre ?? e?.template ?? "Email";
   try {
