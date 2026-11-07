@@ -11,7 +11,10 @@ import { z } from "zod";
  * le dossier à partir de l'empreinte et on n'expose que le strict nécessaire.
  */
 
-const tokenSchema = z.string().trim().regex(/^[a-f0-9]{48}$/, "Lien invalide.");
+const tokenSchema = z
+  .string()
+  .trim()
+  .regex(/^[a-f0-9]{48}$/, "Lien invalide.");
 const MAX_RECUEIL_BYTES = 200_000;
 
 async function empreinteJeton(token: string): Promise<string> {
@@ -40,7 +43,10 @@ async function retrouverDossier(admin: any, token: string): Promise<DossierLie> 
     .maybeSingle();
   if (error) throw new Error("Lien indisponible pour le moment. Réessayez plus tard.");
   if (!demande || !demande.dossier_id) throw new Error("Ce lien n'est pas valide.");
-  if (demande.followup_token_expires_at && new Date(demande.followup_token_expires_at) < new Date()) {
+  if (
+    demande.followup_token_expires_at &&
+    new Date(demande.followup_token_expires_at) < new Date()
+  ) {
     throw new Error("Ce lien a expiré. Répondez à notre e-mail pour en recevoir un nouveau.");
   }
 
@@ -50,7 +56,8 @@ async function retrouverDossier(admin: any, token: string): Promise<DossierLie> 
     .eq("id", demande.dossier_id)
     .maybeSingle();
   if (dossierError || !dossier) throw new Error("Dossier introuvable.");
-  if (dossier.type_assurance !== "emprunteur") throw new Error("Ce lien ne concerne pas un recueil emprunteur.");
+  if (dossier.type_assurance !== "emprunteur")
+    throw new Error("Ce lien ne concerne pas un recueil emprunteur.");
 
   return {
     contactId: demande.id,
@@ -68,7 +75,11 @@ export const chargerRecueilPublic = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const d = await retrouverDossier(supabaseAdmin, data.token);
     // Le recueil est transmis sérialisé : sa forme dépend du schéma de branche.
-    return { prenom: d.prenom, reference: d.reference, recueilJson: JSON.stringify(d.recueil ?? {}) };
+    return {
+      prenom: d.prenom,
+      reference: d.reference,
+      recueilJson: JSON.stringify(d.recueil ?? {}),
+    };
   });
 
 export const enregistrerRecueilPublic = createServerFn({ method: "POST" })
@@ -80,7 +91,10 @@ export const enregistrerRecueilPublic = createServerFn({ method: "POST" })
         final: z.boolean(),
         message: z.string().trim().max(2000).optional().nullable(),
       })
-      .refine((v) => JSON.stringify(v.recueil).length <= MAX_RECUEIL_BYTES, "Réponses trop volumineuses.")
+      .refine(
+        (v) => JSON.stringify(v.recueil).length <= MAX_RECUEIL_BYTES,
+        "Réponses trop volumineuses.",
+      )
       .parse(input),
   )
   .handler(async ({ data }) => {
@@ -91,7 +105,8 @@ export const enregistrerRecueilPublic = createServerFn({ method: "POST" })
     }
 
     const d = await retrouverDossier(supabaseAdmin, data.token);
-    const { assurePrincipalEmprunteur, ageDepuisDateNaissance } = await import("@/lib/recueil-besoins-schemas");
+    const { assurePrincipalEmprunteur, ageDepuisDateNaissance } =
+      await import("@/lib/recueil-besoins-schemas");
 
     // Champs de compatibilité emprunteur, calculés comme dans l'espace client.
     const principal = assurePrincipalEmprunteur(data.recueil["assures"]);
@@ -103,15 +118,23 @@ export const enregistrerRecueilPublic = createServerFn({ method: "POST" })
       fumeur: principal ? principal.fumeur === true : null,
     };
     if (data.final) {
-      maj["prochaine_action"] = "Contrôler le recueil des besoins reçu et demander les pièces manquantes";
+      maj["prochaine_action"] =
+        "Contrôler le recueil des besoins reçu et demander les pièces manquantes";
       maj["prochaine_action_le"] = new Date().toISOString().slice(0, 10);
     }
 
-    const { error } = await supabaseAdmin.from("dossiers").update(maj as never).eq("id", d.dossierId);
+    const { error } = await supabaseAdmin
+      .from("dossiers")
+      .update(maj as never)
+      .eq("id", d.dossierId);
     if (error) throw new Error("Enregistrement impossible. Réessayez dans quelques instants.");
 
     if (data.final) {
-      const { data: admins } = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "admin").limit(1);
+      const { data: admins } = await supabaseAdmin
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "admin")
+        .limit(1);
       const adminId = admins?.[0]?.user_id ?? null;
       const contenu = [
         `Recueil des besoins emprunteur complété par le prospect (dossier ${d.reference ?? d.dossierId}).`,
@@ -136,16 +159,17 @@ export const enregistrerRecueilPublic = createServerFn({ method: "POST" })
         .eq("titre", "Contrôler le recueil des besoins reçu")
         .eq("statut", "a_faire")
         .limit(1);
-      if (!dejaOuverte || dejaOuverte.length === 0) await supabaseAdmin.from("taches").insert({
-        client_id: d.clientId,
-        dossier_id: d.dossierId,
-        titre: "Contrôler le recueil des besoins reçu",
-        description: contenu,
-        echeance: new Date().toISOString().slice(0, 10),
-        priorite: "haute",
-        statut: "a_faire",
-        assignee_id: adminId,
-      } as never);
+      if (!dejaOuverte || dejaOuverte.length === 0)
+        await supabaseAdmin.from("taches").insert({
+          client_id: d.clientId,
+          dossier_id: d.dossierId,
+          titre: "Contrôler le recueil des besoins reçu",
+          description: contenu,
+          echeance: new Date().toISOString().slice(0, 10),
+          priorite: "haute",
+          statut: "a_faire",
+          assignee_id: adminId,
+        } as never);
     }
 
     return { ok: true as const, reference: d.reference };

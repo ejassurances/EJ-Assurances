@@ -30,7 +30,9 @@ function RecueilBesoinsPublic() {
   const enregistrer = useServerFn(enregistrerRecueilPublic);
   const branche = getBranche("emprunteur");
 
-  const [etat, setEtat] = useState<"chargement" | "pret" | "envoi" | "termine" | "erreur">("chargement");
+  const [etat, setEtat] = useState<"chargement" | "pret" | "envoi" | "termine" | "erreur">(
+    "chargement",
+  );
   const [erreur, setErreur] = useState<string | null>(null);
   const [prenom, setPrenom] = useState<string | null>(null);
   const [reference, setReference] = useState<string | null>(null);
@@ -61,7 +63,9 @@ function RecueilBesoinsPublic() {
     setErreur(null);
     if (final) setEtat("envoi");
     try {
-      await enregistrer({ data: { token, recueil: valeurs, final, message: message.trim() || null } });
+      await enregistrer({
+        data: { token, recueil: valeurs, final, message: message.trim() || null },
+      });
       if (final) setEtat("termine");
     } catch (e) {
       setErreur(e instanceof Error ? e.message : "Enregistrement impossible.");
@@ -77,13 +81,15 @@ function RecueilBesoinsPublic() {
           {prenom ? `Bonjour ${prenom}, votre recueil des besoins` : "Votre recueil des besoins"}
         </h1>
         <p className="text-sm text-ink-muted">
-          Assurance de prêt immobilier{reference ? ` · dossier ${reference}` : ""}. Vos réponses sont
-          enregistrées à chaque étape : vous pouvez revenir plus tard avec le même lien.
+          Assurance de prêt immobilier{reference ? ` · dossier ${reference}` : ""}. Vos réponses
+          sont enregistrées à chaque étape : vous pouvez revenir plus tard avec le même lien.
         </p>
       </header>
 
       {erreur && (
-        <div className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900">{erreur}</div>
+        <div className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900">
+          {erreur}
+        </div>
       )}
 
       {etat === "chargement" && <p className="text-sm text-ink-muted">Chargement…</p>}
@@ -92,8 +98,8 @@ function RecueilBesoinsPublic() {
         <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-6 text-sm text-emerald-900">
           <p className="font-medium">Merci, votre recueil est bien transmis.</p>
           <p className="mt-2">
-            Votre conseiller l'étudie et revient vers vous sous 72 heures. Si un document manque, il vous le
-            demandera par e-mail.
+            Votre conseiller l'étudie et revient vers vous sous 72 heures. Si un document manque, il
+            vous le demandera par e-mail.
           </p>
         </div>
       )}
@@ -122,8 +128,8 @@ function RecueilBesoinsPublic() {
               />
             </label>
             <p className="text-xs text-ink-muted">
-              Ne transmettez aucune information médicale détaillée ici : si elle est nécessaire, votre
-              conseiller vous indiquera le canal sécurisé prévu par l'assureur.
+              Ne transmettez aucune information médicale détaillée ici : si elle est nécessaire,
+              votre conseiller vous indiquera le canal sécurisé prévu par l'assureur.
             </p>
           </div>
         </RecueilWorkflow>

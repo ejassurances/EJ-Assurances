@@ -1,6 +1,7 @@
 import * as React from "react";
 import { render } from "@react-email/render";
 import { TEMPLATES } from "./registry";
+import { TEMPLATES_PARCOURS_PUBLIC } from "./public-intake-recueil";
 
 // Server-only: reads BREVO_API_KEY. Never import from client components.
 
@@ -52,10 +53,10 @@ export async function sendTemplateEmail(
   to: string,
   options: SendTemplateEmailOptions = {},
 ): Promise<SendTemplateEmailResult> {
-  const template = TEMPLATES[templateName];
+  const template = TEMPLATES[templateName] ?? TEMPLATES_PARCOURS_PUBLIC[templateName];
   if (!template) {
     throw new Error(
-      `Template '${templateName}' not found. Available: ${Object.keys(TEMPLATES).join(", ")}`,
+      `Template '${templateName}' not found. Available: ${[...Object.keys(TEMPLATES), ...Object.keys(TEMPLATES_PARCOURS_PUBLIC)].join(", ")}`,
     );
   }
 
