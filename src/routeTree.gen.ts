@@ -16,6 +16,7 @@ import { Route as AssuranceVieProfilRouteImport } from './routes/assurance-vie-p
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DevenirPrescripteurRouteImport } from './routes/devenir-prescripteur'
 import { Route as FamillesModernesProfilRouteImport } from './routes/familles-modernes-profil'
+import { Route as RecueilBesoinsRouteImport } from './routes/recueil-besoins'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedEspaceRouteImport } from './routes/_authenticated/espace'
 import { Route as EspaceCguRouteImport } from './routes/espace.cgu'
@@ -33,6 +34,7 @@ import { Route as AuthenticatedEspaceDiagnosticRouteImport } from './routes/_aut
 import { Route as AuthenticatedEspaceFournisseursRouteImport } from './routes/_authenticated/espace.fournisseurs'
 import { Route as AuthenticatedEspaceGmailControleRouteImport } from './routes/_authenticated/espace.gmail-controle'
 import { Route as AuthenticatedEspaceGrillesGarantiesRouteImport } from './routes/_authenticated/espace.grilles-garanties'
+import { Route as AuthenticatedEspaceMailTestRouteImport } from './routes/_authenticated/espace.mail-test'
 import { Route as AuthenticatedEspaceMesRecommandationsRouteImport } from './routes/_authenticated/espace.mes-recommandations'
 import { Route as AuthenticatedEspaceMonEspaceRouteImport } from './routes/_authenticated/espace.mon-espace'
 import { Route as AuthenticatedEspaceMonEspaceMandataireRouteImport } from './routes/_authenticated/espace.mon-espace-mandataire'
@@ -132,6 +134,11 @@ const FamillesModernesProfilRoute = FamillesModernesProfilRouteImport.update({
   path: '/familles-modernes-profil',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RecueilBesoinsRoute = RecueilBesoinsRouteImport.update({
+  id: '/recueil-besoins',
+  path: '/recueil-besoins',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -228,6 +235,12 @@ const AuthenticatedEspaceGrillesGarantiesRoute =
   AuthenticatedEspaceGrillesGarantiesRouteImport.update({
     id: '/grilles-garanties',
     path: '/grilles-garanties',
+    getParentRoute: () => AuthenticatedEspaceRoute,
+  } as any)
+const AuthenticatedEspaceMailTestRoute =
+  AuthenticatedEspaceMailTestRouteImport.update({
+    id: '/mail-test',
+    path: '/mail-test',
     getParentRoute: () => AuthenticatedEspaceRoute,
   } as any)
 const AuthenticatedEspaceMesRecommandationsRoute =
@@ -608,6 +621,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/devenir-prescripteur': typeof DevenirPrescripteurRoute
   '/familles-modernes-profil': typeof FamillesModernesProfilRoute
+  '/recueil-besoins': typeof RecueilBesoinsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/espace': typeof AuthenticatedEspaceRouteWithChildren
   '/espace/cgu': typeof EspaceCguRoute
@@ -624,6 +638,7 @@ export interface FileRoutesByFullPath {
   '/espace/fournisseurs': typeof AuthenticatedEspaceFournisseursRoute
   '/espace/gmail-controle': typeof AuthenticatedEspaceGmailControleRoute
   '/espace/grilles-garanties': typeof AuthenticatedEspaceGrillesGarantiesRoute
+  '/espace/mail-test': typeof AuthenticatedEspaceMailTestRoute
   '/espace/mes-recommandations': typeof AuthenticatedEspaceMesRecommandationsRoute
   '/espace/mon-espace': typeof AuthenticatedEspaceMonEspaceRoute
   '/espace/mon-espace-mandataire': typeof AuthenticatedEspaceMonEspaceMandataireRoute
@@ -697,6 +712,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/devenir-prescripteur': typeof DevenirPrescripteurRoute
   '/familles-modernes-profil': typeof FamillesModernesProfilRoute
+  '/recueil-besoins': typeof RecueilBesoinsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/espace/cgu': typeof EspaceCguRoute
   '/espace/confidentialite': typeof EspaceConfidentialiteRoute
@@ -712,6 +728,7 @@ export interface FileRoutesByTo {
   '/espace/fournisseurs': typeof AuthenticatedEspaceFournisseursRoute
   '/espace/gmail-controle': typeof AuthenticatedEspaceGmailControleRoute
   '/espace/grilles-garanties': typeof AuthenticatedEspaceGrillesGarantiesRoute
+  '/espace/mail-test': typeof AuthenticatedEspaceMailTestRoute
   '/espace/mes-recommandations': typeof AuthenticatedEspaceMesRecommandationsRoute
   '/espace/mon-espace': typeof AuthenticatedEspaceMonEspaceRoute
   '/espace/mon-espace-mandataire': typeof AuthenticatedEspaceMonEspaceMandataireRoute
@@ -787,6 +804,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/devenir-prescripteur': typeof DevenirPrescripteurRoute
   '/familles-modernes-profil': typeof FamillesModernesProfilRoute
+  '/recueil-besoins': typeof RecueilBesoinsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/espace': typeof AuthenticatedEspaceRouteWithChildren
   '/espace/cgu': typeof EspaceCguRoute
@@ -803,6 +821,7 @@ export interface FileRoutesById {
   '/_authenticated/espace/fournisseurs': typeof AuthenticatedEspaceFournisseursRoute
   '/_authenticated/espace/gmail-controle': typeof AuthenticatedEspaceGmailControleRoute
   '/_authenticated/espace/grilles-garanties': typeof AuthenticatedEspaceGrillesGarantiesRoute
+  '/_authenticated/espace/mail-test': typeof AuthenticatedEspaceMailTestRoute
   '/_authenticated/espace/mes-recommandations': typeof AuthenticatedEspaceMesRecommandationsRoute
   '/_authenticated/espace/mon-espace': typeof AuthenticatedEspaceMonEspaceRoute
   '/_authenticated/espace/mon-espace-mandataire': typeof AuthenticatedEspaceMonEspaceMandataireRoute
@@ -878,6 +897,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/devenir-prescripteur'
     | '/familles-modernes-profil'
+    | '/recueil-besoins'
     | '/reset-password'
     | '/espace'
     | '/espace/cgu'
@@ -894,6 +914,7 @@ export interface FileRouteTypes {
     | '/espace/fournisseurs'
     | '/espace/gmail-controle'
     | '/espace/grilles-garanties'
+    | '/espace/mail-test'
     | '/espace/mes-recommandations'
     | '/espace/mon-espace'
     | '/espace/mon-espace-mandataire'
@@ -967,6 +988,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/devenir-prescripteur'
     | '/familles-modernes-profil'
+    | '/recueil-besoins'
     | '/reset-password'
     | '/espace/cgu'
     | '/espace/confidentialite'
@@ -982,6 +1004,7 @@ export interface FileRouteTypes {
     | '/espace/fournisseurs'
     | '/espace/gmail-controle'
     | '/espace/grilles-garanties'
+    | '/espace/mail-test'
     | '/espace/mes-recommandations'
     | '/espace/mon-espace'
     | '/espace/mon-espace-mandataire'
@@ -1056,6 +1079,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/devenir-prescripteur'
     | '/familles-modernes-profil'
+    | '/recueil-besoins'
     | '/reset-password'
     | '/_authenticated/espace'
     | '/espace/cgu'
@@ -1072,6 +1096,7 @@ export interface FileRouteTypes {
     | '/_authenticated/espace/fournisseurs'
     | '/_authenticated/espace/gmail-controle'
     | '/_authenticated/espace/grilles-garanties'
+    | '/_authenticated/espace/mail-test'
     | '/_authenticated/espace/mes-recommandations'
     | '/_authenticated/espace/mon-espace'
     | '/_authenticated/espace/mon-espace-mandataire'
@@ -1147,6 +1172,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   DevenirPrescripteurRoute: typeof DevenirPrescripteurRoute
   FamillesModernesProfilRoute: typeof FamillesModernesProfilRoute
+  RecueilBesoinsRoute: typeof RecueilBesoinsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   EspaceCguRoute: typeof EspaceCguRoute
   EspaceConfidentialiteRoute: typeof EspaceConfidentialiteRoute
@@ -1236,6 +1262,13 @@ declare module '@tanstack/react-router' {
       path: '/familles-modernes-profil'
       fullPath: '/familles-modernes-profil'
       preLoaderRoute: typeof FamillesModernesProfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recueil-besoins': {
+      id: '/recueil-besoins'
+      path: '/recueil-besoins'
+      fullPath: '/recueil-besoins'
+      preLoaderRoute: typeof RecueilBesoinsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -1355,6 +1388,13 @@ declare module '@tanstack/react-router' {
       path: '/grilles-garanties'
       fullPath: '/espace/grilles-garanties'
       preLoaderRoute: typeof AuthenticatedEspaceGrillesGarantiesRouteImport
+      parentRoute: typeof AuthenticatedEspaceRoute
+    }
+    '/_authenticated/espace/mail-test': {
+      id: '/_authenticated/espace/mail-test'
+      path: '/mail-test'
+      fullPath: '/espace/mail-test'
+      preLoaderRoute: typeof AuthenticatedEspaceMailTestRouteImport
       parentRoute: typeof AuthenticatedEspaceRoute
     }
     '/_authenticated/espace/mes-recommandations': {
@@ -1835,6 +1875,7 @@ interface AuthenticatedEspaceRouteChildren {
   AuthenticatedEspaceFournisseursRoute: typeof AuthenticatedEspaceFournisseursRoute
   AuthenticatedEspaceGmailControleRoute: typeof AuthenticatedEspaceGmailControleRoute
   AuthenticatedEspaceGrillesGarantiesRoute: typeof AuthenticatedEspaceGrillesGarantiesRoute
+  AuthenticatedEspaceMailTestRoute: typeof AuthenticatedEspaceMailTestRoute
   AuthenticatedEspaceMesRecommandationsRoute: typeof AuthenticatedEspaceMesRecommandationsRoute
   AuthenticatedEspaceMonEspaceRoute: typeof AuthenticatedEspaceMonEspaceRoute
   AuthenticatedEspaceMonEspaceMandataireRoute: typeof AuthenticatedEspaceMonEspaceMandataireRoute
@@ -1881,6 +1922,7 @@ const AuthenticatedEspaceRouteChildren: AuthenticatedEspaceRouteChildren = {
   AuthenticatedEspaceGmailControleRoute: AuthenticatedEspaceGmailControleRoute,
   AuthenticatedEspaceGrillesGarantiesRoute:
     AuthenticatedEspaceGrillesGarantiesRoute,
+  AuthenticatedEspaceMailTestRoute: AuthenticatedEspaceMailTestRoute,
   AuthenticatedEspaceMesRecommandationsRoute:
     AuthenticatedEspaceMesRecommandationsRoute,
   AuthenticatedEspaceMonEspaceRoute: AuthenticatedEspaceMonEspaceRoute,
@@ -1946,6 +1988,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   DevenirPrescripteurRoute: DevenirPrescripteurRoute,
   FamillesModernesProfilRoute: FamillesModernesProfilRoute,
+  RecueilBesoinsRoute: RecueilBesoinsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   EspaceCguRoute: EspaceCguRoute,
   EspaceConfidentialiteRoute: EspaceConfidentialiteRoute,
