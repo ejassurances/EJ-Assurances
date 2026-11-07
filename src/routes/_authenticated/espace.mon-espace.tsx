@@ -34,7 +34,6 @@ import { CompletudeRings } from "@/components/completude-rings";
 import { SectionNav, type SectionNavItem } from "@/components/section-nav";
 import { IconFileCheck, IconFileEuro, IconFolders } from "@tabler/icons-react";
 
-
 export const Route = createFileRoute("/_authenticated/espace/mon-espace")({
   component: MonEspace,
   head: () => ({
@@ -212,17 +211,37 @@ function MonEspace() {
     }
 
     if (cl) {
-      const [{ data: der }, { data: lm }, { data: dc }, { data: docs }, { data: entreprise }] = await Promise.all([
-        supabase.from("client_der_envois").select("id").eq("client_id", cl.id).is("signed_at", null).limit(1),
-        supabase.from("lettres_mission").select("id").eq("client_id", cl.id).is("signed_at", null).limit(1),
-        supabase.from("devoirs_conseil").select("id").eq("client_id", cl.id).eq("statut", "envoye").limit(1),
-        supabase
-          .from("client_kyc_documents")
-          .select("id,type,nom,statut,created_at")
-          .eq("client_id", cl.id)
-          .order("created_at", { ascending: false }),
-        supabase.from("client_entreprise").select("id,siret,raison_sociale").eq("client_id", cl.id).maybeSingle(),
-      ]);
+      const [{ data: der }, { data: lm }, { data: dc }, { data: docs }, { data: entreprise }] =
+        await Promise.all([
+          supabase
+            .from("client_der_envois")
+            .select("id")
+            .eq("client_id", cl.id)
+            .is("signed_at", null)
+            .limit(1),
+          supabase
+            .from("lettres_mission")
+            .select("id")
+            .eq("client_id", cl.id)
+            .is("signed_at", null)
+            .limit(1),
+          supabase
+            .from("devoirs_conseil")
+            .select("id")
+            .eq("client_id", cl.id)
+            .eq("statut", "envoye")
+            .limit(1),
+          supabase
+            .from("client_kyc_documents")
+            .select("id,type,nom,statut,created_at")
+            .eq("client_id", cl.id)
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("client_entreprise")
+            .select("id,siret,raison_sociale")
+            .eq("client_id", cl.id)
+            .maybeSingle(),
+        ]);
       setDerAFaire((der ?? []).length > 0);
       setLettreAFaire((lm ?? []).length > 0);
       setDevoirAFaire((dc ?? []).length > 0);
@@ -242,7 +261,6 @@ function MonEspace() {
     } catch {
       setDda(null);
     }
-
 
     setLoading(false);
   };
@@ -321,7 +339,6 @@ function MonEspace() {
     }
   };
 
-
   const envoyer = async () => {
     if (message.trim().length < 2) return;
     setEnvoiMsg(true);
@@ -364,7 +381,9 @@ function MonEspace() {
           fumeur,
         },
       });
-      setEtudeOk(`Demande enregistrée — dossier ${res.reference}. Votre conseiller vous contacte sous 48 h.`);
+      setEtudeOk(
+        `Demande enregistrée — dossier ${res.reference}. Votre conseiller vous contacte sous 48 h.`,
+      );
       setEtudeOuverte(false);
       setEtudeBranche("");
       setEtudeMessage("");
@@ -393,9 +412,12 @@ function MonEspace() {
     (comp?.der ?? []).length;
   const signatures = [!derAFaire, !lettreAFaire, !devoirAFaire];
   const pctSignatures = Math.round((signatures.filter(Boolean).length / signatures.length) * 100);
-  const pctPieces = kycVisible.length === 0 ? 0 : Math.round(
-    (kycVisible.filter((k) => k.statut === "valide").length / kycVisible.length) * 100,
-  );
+  const pctPieces =
+    kycVisible.length === 0
+      ? 0
+      : Math.round(
+          (kycVisible.filter((k) => k.statut === "valide").length / kycVisible.length) * 100,
+        );
   const dossierEnCours = dossiers[0];
   const items: SectionNavItem<(typeof TABS)[number]["key"]>[] = TABS.map((t) => ({
     key: t.key,
@@ -411,7 +433,9 @@ function MonEspace() {
         contexte={[
           client?.reference ? `Référence client ${client.reference}` : null,
           dossierEnCours ? `Dossier ${dossierEnCours.reference}` : null,
-          comp?.conseiller?.nom ? `Conseiller : ${comp.conseiller.nom}` : "Conseiller : EJ Partners Assurances",
+          comp?.conseiller?.nom
+            ? `Conseiller : ${comp.conseiller.nom}`
+            : "Conseiller : EJ Partners Assurances",
         ]}
       >
         {client && (
@@ -459,8 +483,11 @@ function MonEspace() {
         </div>
       )}
 
-
-      {etudeOk && <p className="rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-800">{etudeOk}</p>}
+      {etudeOk && (
+        <p className="rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-800">
+          {etudeOk}
+        </p>
+      )}
 
       {etudeOuverte && (
         <div className="space-y-4">
@@ -468,8 +495,8 @@ function MonEspace() {
             <div className="rounded-2xl border border-line bg-surface-elevated p-6">
               <h2 className="font-serif text-lg">Nouvelle demande d'étude</h2>
               <p className="mt-1 text-sm text-ink-muted">
-                Choisissez la branche concernée : vous remplirez ensuite le même recueil des besoins que celui
-                utilisé par votre conseiller.
+                Choisissez la branche concernée : vous remplirez ensuite le même recueil des besoins
+                que celui utilisé par votre conseiller.
               </p>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {BRANCHES_CREATION.map((b) => (
@@ -535,7 +562,10 @@ function MonEspace() {
           <p className="font-medium">Documents à signer</p>
           <div className="mt-2 flex flex-wrap gap-3">
             {derAFaire && (
-              <Link to="/espace/signer-der" className="rounded-md border border-amber-400 bg-white px-3 py-1.5">
+              <Link
+                to="/espace/signer-der"
+                className="rounded-md border border-amber-400 bg-white px-3 py-1.5"
+              >
                 Signer le DER
               </Link>
             )}
@@ -561,530 +591,634 @@ function MonEspace() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_16rem]">
         <div className="min-w-0 space-y-6">
-
-
-      {tab === "projet" && (
-        <div className="space-y-6">
-          {dossiers.length === 0 && (
-            <p className="rounded-lg border border-line bg-surface p-5 text-sm text-ink-muted">
-              Aucun projet en cours pour le moment. Notre équipe revient vers vous très rapidement.
-            </p>
-          )}
-          {dossiers.map((d) => (
-            <div key={d.id} className="space-y-3">
-              <div className="rounded-lg border border-line bg-surface p-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="font-medium text-ink">{labelForBranche(d.type_assurance)}</p>
-                    <p className="text-xs text-ink-muted">
-                      Référence {d.reference} · ouvert le {new Date(d.created_at).toLocaleDateString("fr-FR")}
-                    </p>
+          {tab === "projet" && (
+            <div className="space-y-6">
+              {dossiers.length === 0 && (
+                <p className="rounded-lg border border-line bg-surface p-5 text-sm text-ink-muted">
+                  Aucun projet en cours pour le moment. Notre équipe revient vers vous très
+                  rapidement.
+                </p>
+              )}
+              {dossiers.map((d) => (
+                <div key={d.id} className="space-y-3">
+                  <div className="rounded-lg border border-line bg-surface p-5">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="font-medium text-ink">{labelForBranche(d.type_assurance)}</p>
+                        <p className="text-xs text-ink-muted">
+                          Référence {d.reference} · ouvert le{" "}
+                          {new Date(d.created_at).toLocaleDateString("fr-FR")}
+                        </p>
+                      </div>
+                    </div>
+                    {d.economie_estimee != null && (
+                      <p className="mt-3 text-sm text-ink-soft">
+                        Économie estimée :{" "}
+                        <strong>{d.economie_estimee.toLocaleString("fr-FR")} €</strong> sur la durée
+                        du prêt (estimation provisoire, une étude complémentaire peut être
+                        nécessaire).
+                      </p>
+                    )}
                   </div>
+                  <DossierPipelineClient statut={d.statut} />
+
+                  {(() => {
+                    const lettres = (dda?.lettres ?? []).filter((l) => l.dossier_id === d.id);
+                    const devoirs = (dda?.devoirs ?? []).filter((x) => x.dossier_id === d.id);
+                    const docs = (comp?.documents ?? []).filter((x) => x.dossier_id === d.id);
+                    const ders = comp?.der ?? [];
+                    if (
+                      lettres.length === 0 &&
+                      devoirs.length === 0 &&
+                      docs.length === 0 &&
+                      ders.length === 0
+                    )
+                      return null;
+                    return (
+                      <div className="rounded-lg border border-line bg-surface p-5">
+                        <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                          Documents de ce dossier
+                        </h3>
+                        <ul className="mt-3 space-y-2 text-sm">
+                          {ders.map((x) => (
+                            <li
+                              key={x.id}
+                              className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2"
+                            >
+                              <span>
+                                <strong>Document d'entrée en relation (DER)</strong>
+                                <span className="ml-2 text-xs text-ink-muted">
+                                  remis le {jour(x.envoye_le)} ·{" "}
+                                  {x.signed_at
+                                    ? `signé le ${jour(x.signed_at)}`
+                                    : "signature en attente"}
+                                </span>
+                              </span>
+                              {x.telechargeable ? (
+                                <button
+                                  onClick={() => telechargerDer(x.id)}
+                                  className="shrink-0 rounded-full border border-line px-3 py-1 text-xs hover:bg-background"
+                                >
+                                  Télécharger
+                                </button>
+                              ) : (
+                                <Link
+                                  to="/espace/signer-der"
+                                  className="shrink-0 rounded-full border border-line px-3 py-1 text-xs"
+                                >
+                                  Consulter
+                                </Link>
+                              )}
+                            </li>
+                          ))}
+                          {lettres.map((l) => (
+                            <li
+                              key={l.id}
+                              className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2"
+                            >
+                              <span>
+                                <strong>Lettre de mission</strong>
+                                <span className="ml-2 text-xs text-ink-muted">
+                                  {l.signed_at
+                                    ? `signée le ${jour(l.signed_at)}`
+                                    : "signature en attente"}
+                                </span>
+                              </span>
+                              <button
+                                onClick={() => ouvrirLettreMission(l.id)}
+                                className="shrink-0 rounded-full border border-line px-3 py-1 text-xs hover:bg-background"
+                              >
+                                Ouvrir / imprimer le PDF
+                              </button>
+                            </li>
+                          ))}
+                          {devoirs.map((x) => (
+                            <li
+                              key={x.id}
+                              className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2"
+                            >
+                              <span>
+                                <strong>Devoir de conseil</strong>
+                                <span className="ml-2 text-xs text-ink-muted">
+                                  {x.signed_at ? `validé le ${jour(x.signed_at)}` : x.statut}
+                                </span>
+                              </span>
+                              <button
+                                onClick={() => ouvrirDevoirConseil(x.id)}
+                                className="shrink-0 rounded-full border border-line px-3 py-1 text-xs hover:bg-background"
+                              >
+                                Ouvrir / imprimer le PDF
+                              </button>
+                            </li>
+                          ))}
+                          {docs.map((doc) => (
+                            <li
+                              key={doc.id}
+                              className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2"
+                            >
+                              <span className="min-w-0">
+                                <strong>{doc.file_name}</strong>
+                                <span className="ml-2 text-xs text-ink-muted">
+                                  {doc.categorie ? `${doc.categorie} · ` : ""}
+                                  {jour(doc.created_at)}
+                                </span>
+                              </span>
+                              <button
+                                onClick={() => telechargerDocument(doc.id)}
+                                className="shrink-0 rounded-full border border-line px-3 py-1 text-xs hover:bg-background"
+                              >
+                                Télécharger
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })()}
                 </div>
-                {d.economie_estimee != null && (
-                  <p className="mt-3 text-sm text-ink-soft">
-                    Économie estimée : <strong>{d.economie_estimee.toLocaleString("fr-FR")} €</strong> sur la durée du
-                    prêt (estimation provisoire, une étude complémentaire peut être nécessaire).
+              ))}
+            </div>
+          )}
+
+          {tab === "contrats" && (
+            <div className="space-y-4">
+              {(comp?.contrats ?? []).length === 0 ? (
+                <p className="rounded-lg border border-line bg-surface p-5 text-sm text-ink-muted">
+                  Aucun contrat enregistré à votre nom pour le moment.
+                </p>
+              ) : (
+                (comp?.contrats ?? []).map((c) => (
+                  <div key={c.id} className="rounded-lg border border-line bg-surface p-5">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="font-medium text-ink">
+                          {c.compagnie ?? "Assureur"} {c.produit ? `· ${c.produit}` : ""}
+                        </p>
+                        <p className="text-xs text-ink-muted">
+                          {c.numero ? `Contrat n° ${c.numero} · ` : ""}
+                          {STATUT_CONTRAT[c.statut ?? ""] ?? c.statut ?? "—"}
+                        </p>
+                      </div>
+                      <span className="text-sm text-ink-soft">{euros(c.prime_annuelle)} / an</span>
+                    </div>
+                    <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-3">
+                      <Info label="Date d'effet">{jour(c.date_effet)}</Info>
+                      <Info label="Échéance">{jour(c.date_echeance)}</Info>
+                      <Info label="Fractionnement">{c.fractionnement ?? "—"}</Info>
+                    </dl>
+                    <EspaceClientContratDocuments
+                      contratId={c.id}
+                      documents={(comp?.documents ?? []).filter((d) => d.contrat_id === c.id)}
+                      onTelecharger={telechargerDocument}
+                    />
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {tab === "conformite" && (
+            <div className="space-y-8">
+              <div className="rounded-lg border border-line bg-surface p-5">
+                <h2 className="font-serif text-lg">Mes documents déposés</h2>
+                {kycVisible.length === 0 ? (
+                  <p className="mt-2 text-sm text-ink-muted">
+                    Aucun document déposé pour le moment.
+                  </p>
+                ) : (
+                  <ul className="mt-3 space-y-2 text-sm">
+                    {kycVisible.map((k) => (
+                      <li
+                        key={k.id}
+                        className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2"
+                      >
+                        <span>
+                          <strong>{KYC_LABEL[k.type] ?? k.type}</strong> · {k.nom}
+                          <span className="ml-2 text-xs text-ink-muted">
+                            déposé le {new Date(k.created_at).toLocaleDateString("fr-FR")} ·{" "}
+                            {k.statut}
+                          </span>
+                        </span>
+                        <button
+                          onClick={() => telecharger(k.id)}
+                          className="rounded-full border border-line px-3 py-1 text-xs hover:bg-background"
+                        >
+                          Télécharger
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {!estPro && (
+                  <p className="mt-3 text-xs text-ink-muted">
+                    Vous êtes enregistré comme particulier : aucun document d'entreprise (KBIS /
+                    Sirene) ne vous est demandé.
                   </p>
                 )}
               </div>
-              <DossierPipelineClient statut={d.statut} />
 
-              {(() => {
-                const lettres = (dda?.lettres ?? []).filter((l) => l.dossier_id === d.id);
-                const devoirs = (dda?.devoirs ?? []).filter((x) => x.dossier_id === d.id);
-                const docs = (comp?.documents ?? []).filter((x) => x.dossier_id === d.id);
-                const ders = comp?.der ?? [];
-                if (lettres.length === 0 && devoirs.length === 0 && docs.length === 0 && ders.length === 0) return null;
-                return (
-                  <div className="rounded-lg border border-line bg-surface p-5">
-                    <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                      Documents de ce dossier
-                    </h3>
-                    <ul className="mt-3 space-y-2 text-sm">
-                      {ders.map((x) => (
-                        <li key={x.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2">
-                          <span>
-                            <strong>Document d'entrée en relation (DER)</strong>
-                            <span className="ml-2 text-xs text-ink-muted">
-                              remis le {jour(x.envoye_le)} ·{" "}
-                              {x.signed_at ? `signé le ${jour(x.signed_at)}` : "signature en attente"}
-                            </span>
-                          </span>
-                          {x.telechargeable ? (
-                            <button
-                              onClick={() => telechargerDer(x.id)}
-                              className="shrink-0 rounded-full border border-line px-3 py-1 text-xs hover:bg-background"
-                            >
-                              Télécharger
-                            </button>
-                          ) : (
-                            <Link to="/espace/signer-der" className="shrink-0 rounded-full border border-line px-3 py-1 text-xs">
-                              Consulter
-                            </Link>
-                          )}
-                        </li>
-                      ))}
-                      {lettres.map((l) => (
-                        <li key={l.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2">
-                          <span>
-                            <strong>Lettre de mission</strong>
-                            <span className="ml-2 text-xs text-ink-muted">
-                              {l.signed_at ? `signée le ${jour(l.signed_at)}` : "signature en attente"}
-                            </span>
-                          </span>
-                          <button
-                            onClick={() => ouvrirLettreMission(l.id)}
-                            className="shrink-0 rounded-full border border-line px-3 py-1 text-xs hover:bg-background"
-                          >
-                            Ouvrir / imprimer le PDF
-                          </button>
-                        </li>
-                      ))}
-                      {devoirs.map((x) => (
-                        <li key={x.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2">
-                          <span>
-                            <strong>Devoir de conseil</strong>
-                            <span className="ml-2 text-xs text-ink-muted">
-                              {x.signed_at ? `validé le ${jour(x.signed_at)}` : x.statut}
-                            </span>
-                          </span>
-                          <button
-                            onClick={() => ouvrirDevoirConseil(x.id)}
-                            className="shrink-0 rounded-full border border-line px-3 py-1 text-xs hover:bg-background"
-                          >
-                            Ouvrir / imprimer le PDF
-                          </button>
-                        </li>
-                      ))}
-                      {docs.map((doc) => (
-                        <li key={doc.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2">
-                          <span className="min-w-0">
-                            <strong>{doc.file_name}</strong>
-                            <span className="ml-2 text-xs text-ink-muted">
-                              {doc.categorie ? `${doc.categorie} · ` : ""}
-                              {jour(doc.created_at)}
-                            </span>
-                          </span>
-                          <button
-                            onClick={() => telechargerDocument(doc.id)}
-                            className="shrink-0 rounded-full border border-line px-3 py-1 text-xs hover:bg-background"
-                          >
-                            Télécharger
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                );
-              })()}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {tab === "contrats" && (
-        <div className="space-y-4">
-          {(comp?.contrats ?? []).length === 0 ? (
-            <p className="rounded-lg border border-line bg-surface p-5 text-sm text-ink-muted">
-              Aucun contrat enregistré à votre nom pour le moment.
-            </p>
-          ) : (
-            (comp?.contrats ?? []).map((c) => (
-              <div key={c.id} className="rounded-lg border border-line bg-surface p-5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="font-medium text-ink">
-                      {c.compagnie ?? "Assureur"} {c.produit ? `· ${c.produit}` : ""}
-                    </p>
-                    <p className="text-xs text-ink-muted">
-                      {c.numero ? `Contrat n° ${c.numero} · ` : ""}
-                      {STATUT_CONTRAT[c.statut ?? ""] ?? c.statut ?? "—"}
-                    </p>
-                  </div>
-                  <span className="text-sm text-ink-soft">{euros(c.prime_annuelle)} / an</span>
+              {dossiers.length === 0 && (
+                <p className="rounded-lg border border-line bg-surface p-5 text-sm text-ink-muted">
+                  Aucune pièce demandée pour l'instant.
+                </p>
+              )}
+              {dossiers.map((d) => (
+                <div key={d.id} className="space-y-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                    Dossier {d.reference} — {labelForBranche(d.type_assurance)}
+                  </p>
+                  <DossierPiecesPanel dossierId={d.id} clientId={client?.id ?? null} />
                 </div>
-                <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-3">
-                  <Info label="Date d'effet">{jour(c.date_effet)}</Info>
-                  <Info label="Échéance">{jour(c.date_echeance)}</Info>
-                  <Info label="Fractionnement">{c.fractionnement ?? "—"}</Info>
-                </dl>
-                <EspaceClientContratDocuments
-                  contratId={c.id}
-                  documents={(comp?.documents ?? []).filter((d) => d.contrat_id === c.id)}
-                  onTelecharger={telechargerDocument}
-                />
+              ))}
+
+              <div className="rounded-lg border border-line bg-surface p-5">
+                <h2 className="font-serif text-lg">Documents de mes dossiers et contrats</h2>
+                {(comp?.documents ?? []).length === 0 ? (
+                  <p className="mt-2 text-sm text-ink-muted">
+                    Aucun document partagé pour le moment.
+                  </p>
+                ) : (
+                  <ul className="mt-3 space-y-2 text-sm">
+                    {(comp?.documents ?? []).map((doc) => (
+                      <li
+                        key={doc.id}
+                        className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2"
+                      >
+                        <span>
+                          <strong>{doc.file_name}</strong>
+                          <span className="ml-2 text-xs text-ink-muted">
+                            {[
+                              doc.categorie,
+                              doc.dossier_reference ? `dossier ${doc.dossier_reference}` : null,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ")}{" "}
+                            · {jour(doc.created_at)}
+                          </span>
+                        </span>
+                        <button
+                          onClick={() => telechargerDocument(doc.id)}
+                          className="rounded-full border border-line px-3 py-1 text-xs hover:bg-background"
+                        >
+                          Télécharger
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
-            ))
-          )}
-        </div>
-      )}
 
-      {tab === "conformite" && (
-        <div className="space-y-8">
-          <div className="rounded-lg border border-line bg-surface p-5">
-            <h2 className="font-serif text-lg">Mes documents déposés</h2>
-            {kycVisible.length === 0 ? (
-              <p className="mt-2 text-sm text-ink-muted">Aucun document déposé pour le moment.</p>
-            ) : (
-              <ul className="mt-3 space-y-2 text-sm">
-                {kycVisible.map((k) => (
-                  <li key={k.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2">
+              <div className="rounded-lg border border-line bg-surface p-5">
+                <h2 className="font-serif text-lg">
+                  Ma lettre de mission et mon devoir de conseil
+                </h2>
+                <p className="mt-1 text-xs text-ink-muted">
+                  Ouvrez le PDF puis utilisez la fonction « Imprimer » de votre navigateur (ou «
+                  Partager » sur mobile).
+                </p>
+                {(dda?.lettres ?? []).length === 0 && (dda?.devoirs ?? []).length === 0 ? (
+                  <p className="mt-2 text-sm text-ink-muted">
+                    Aucun document de conseil disponible pour le moment.
+                  </p>
+                ) : (
+                  <ul className="mt-3 space-y-2 text-sm">
+                    {(dda?.lettres ?? []).map((l) => (
+                      <li
+                        key={l.id}
+                        className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2"
+                      >
+                        <span>
+                          <strong>Lettre de mission</strong>
+                          <span className="ml-2 text-xs text-ink-muted">
+                            {labelForBranche(l.type_assurance)}
+                            {l.reference ? ` · dossier ${l.reference}` : ""} ·{" "}
+                            {l.signed_at
+                              ? `signée le ${jour(l.signed_at)}`
+                              : "signature en attente"}
+                          </span>
+                        </span>
+                        <button
+                          onClick={() => ouvrirLettreMission(l.id)}
+                          className="rounded-full border border-line px-3 py-1 text-xs hover:bg-background"
+                        >
+                          Ouvrir / imprimer le PDF
+                        </button>
+                      </li>
+                    ))}
+                    {(dda?.devoirs ?? []).map((d) => (
+                      <li
+                        key={d.id}
+                        className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2"
+                      >
+                        <span>
+                          <strong>Devoir de conseil</strong>
+                          <span className="ml-2 text-xs text-ink-muted">
+                            {labelForBranche(d.type_assurance)}
+                            {d.reference ? ` · dossier ${d.reference}` : ""} ·{" "}
+                            {d.signed_at ? `validé le ${jour(d.signed_at)}` : d.statut}
+                          </span>
+                        </span>
+                        <button
+                          onClick={() => ouvrirDevoirConseil(d.id)}
+                          className="rounded-full border border-line px-3 py-1 text-xs hover:bg-background"
+                        >
+                          Ouvrir / imprimer le PDF
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="rounded-lg border border-line bg-surface p-5">
+                <h2 className="font-serif text-lg">Mes documents d'information réglementaires</h2>
+                <ul className="mt-3 space-y-2 text-sm">
+                  {(comp?.der ?? []).map((d) => (
+                    <li
+                      key={d.id}
+                      className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2"
+                    >
+                      <span>
+                        <strong>Document d'entrée en relation (DER)</strong>
+                        {d.version ? (
+                          <span className="ml-1 text-xs text-ink-muted">version {d.version}</span>
+                        ) : null}
+                        <span className="ml-2 text-xs text-ink-muted">
+                          remis le {jour(d.envoye_le)} ·{" "}
+                          {d.signed_at ? `signé le ${jour(d.signed_at)}` : "signature en attente"}
+                        </span>
+                      </span>
+                      {d.telechargeable ? (
+                        <button
+                          onClick={() => telechargerDer(d.id)}
+                          className="rounded-full border border-line px-3 py-1 text-xs hover:bg-background"
+                        >
+                          Télécharger
+                        </button>
+                      ) : (
+                        <Link
+                          to="/espace/signer-der"
+                          className="rounded-full border border-line px-3 py-1 text-xs"
+                        >
+                          Consulter
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                  <li className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2">
                     <span>
-                      <strong>{KYC_LABEL[k.type] ?? k.type}</strong> · {k.nom}
+                      <strong>Conditions générales d'utilisation</strong>
                       <span className="ml-2 text-xs text-ink-muted">
-                        déposé le {new Date(k.created_at).toLocaleDateString("fr-FR")} · {k.statut}
+                        {(() => {
+                          const c = (comp?.consentements ?? []).find((x) => x.type === "cgu");
+                          return c ? `acceptées le ${jour(c.accepte_le)}` : "non encore acceptées";
+                        })()}
                       </span>
                     </span>
-                    <button
-                      onClick={() => telecharger(k.id)}
+                    <Link
+                      to="/espace/cgu"
                       className="rounded-full border border-line px-3 py-1 text-xs hover:bg-background"
                     >
-                      Télécharger
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {!estPro && (
-              <p className="mt-3 text-xs text-ink-muted">
-                Vous êtes enregistré comme particulier : aucun document d'entreprise (KBIS / Sirene) ne vous est
-                demandé.
-              </p>
-            )}
-          </div>
-
-          {dossiers.length === 0 && (
-            <p className="rounded-lg border border-line bg-surface p-5 text-sm text-ink-muted">
-              Aucune pièce demandée pour l'instant.
-            </p>
-          )}
-          {dossiers.map((d) => (
-            <div key={d.id} className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                Dossier {d.reference} — {labelForBranche(d.type_assurance)}
-              </p>
-              <DossierPiecesPanel dossierId={d.id} clientId={client?.id ?? null} />
-            </div>
-          ))}
-
-          <div className="rounded-lg border border-line bg-surface p-5">
-            <h2 className="font-serif text-lg">Documents de mes dossiers et contrats</h2>
-            {(comp?.documents ?? []).length === 0 ? (
-              <p className="mt-2 text-sm text-ink-muted">Aucun document partagé pour le moment.</p>
-            ) : (
-              <ul className="mt-3 space-y-2 text-sm">
-                {(comp?.documents ?? []).map((doc) => (
-                  <li
-                    key={doc.id}
-                    className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2"
-                  >
-                    <span>
-                      <strong>{doc.file_name}</strong>
-                      <span className="ml-2 text-xs text-ink-muted">
-                        {[doc.categorie, doc.dossier_reference ? `dossier ${doc.dossier_reference}` : null]
-                          .filter(Boolean)
-                          .join(" · ")}{" "}
-                        · {jour(doc.created_at)}
-                      </span>
-                    </span>
-                    <button
-                      onClick={() => telechargerDocument(doc.id)}
-                      className="rounded-full border border-line px-3 py-1 text-xs hover:bg-background"
-                    >
-                      Télécharger
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <div className="rounded-lg border border-line bg-surface p-5">
-            <h2 className="font-serif text-lg">Ma lettre de mission et mon devoir de conseil</h2>
-            <p className="mt-1 text-xs text-ink-muted">
-              Ouvrez le PDF puis utilisez la fonction « Imprimer » de votre navigateur (ou « Partager » sur mobile).
-            </p>
-            {(dda?.lettres ?? []).length === 0 && (dda?.devoirs ?? []).length === 0 ? (
-              <p className="mt-2 text-sm text-ink-muted">Aucun document de conseil disponible pour le moment.</p>
-            ) : (
-              <ul className="mt-3 space-y-2 text-sm">
-                {(dda?.lettres ?? []).map((l) => (
-                  <li key={l.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2">
-                    <span>
-                      <strong>Lettre de mission</strong>
-                      <span className="ml-2 text-xs text-ink-muted">
-                        {labelForBranche(l.type_assurance)}
-                        {l.reference ? ` · dossier ${l.reference}` : ""} ·{" "}
-                        {l.signed_at ? `signée le ${jour(l.signed_at)}` : "signature en attente"}
-                      </span>
-                    </span>
-                    <button
-                      onClick={() => ouvrirLettreMission(l.id)}
-                      className="rounded-full border border-line px-3 py-1 text-xs hover:bg-background"
-                    >
-                      Ouvrir / imprimer le PDF
-                    </button>
-                  </li>
-                ))}
-                {(dda?.devoirs ?? []).map((d) => (
-                  <li key={d.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2">
-                    <span>
-                      <strong>Devoir de conseil</strong>
-                      <span className="ml-2 text-xs text-ink-muted">
-                        {labelForBranche(d.type_assurance)}
-                        {d.reference ? ` · dossier ${d.reference}` : ""} ·{" "}
-                        {d.signed_at ? `validé le ${jour(d.signed_at)}` : d.statut}
-                      </span>
-                    </span>
-                    <button
-                      onClick={() => ouvrirDevoirConseil(d.id)}
-                      className="rounded-full border border-line px-3 py-1 text-xs hover:bg-background"
-                    >
-                      Ouvrir / imprimer le PDF
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-
-
-          <div className="rounded-lg border border-line bg-surface p-5">
-            <h2 className="font-serif text-lg">Mes documents d'information réglementaires</h2>
-            <ul className="mt-3 space-y-2 text-sm">
-              {(comp?.der ?? []).map((d) => (
-                <li key={d.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2">
-                  <span>
-                    <strong>Document d'entrée en relation (DER)</strong>
-                    {d.version ? <span className="ml-1 text-xs text-ink-muted">version {d.version}</span> : null}
-                    <span className="ml-2 text-xs text-ink-muted">
-                      remis le {jour(d.envoye_le)} ·{" "}
-                      {d.signed_at ? `signé le ${jour(d.signed_at)}` : "signature en attente"}
-                    </span>
-                  </span>
-                  {d.telechargeable ? (
-                    <button
-                      onClick={() => telechargerDer(d.id)}
-                      className="rounded-full border border-line px-3 py-1 text-xs hover:bg-background"
-                    >
-                      Télécharger
-                    </button>
-                  ) : (
-                    <Link to="/espace/signer-der" className="rounded-full border border-line px-3 py-1 text-xs">
                       Consulter
                     </Link>
-                  )}
-                </li>
-              ))}
-              <li className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2">
-                <span>
-                  <strong>Conditions générales d'utilisation</strong>
-                  <span className="ml-2 text-xs text-ink-muted">
-                    {(() => {
-                      const c = (comp?.consentements ?? []).find((x) => x.type === "cgu");
-                      return c ? `acceptées le ${jour(c.accepte_le)}` : "non encore acceptées";
-                    })()}
-                  </span>
-                </span>
-                <Link to="/espace/cgu" className="rounded-full border border-line px-3 py-1 text-xs hover:bg-background">
-                  Consulter
-                </Link>
-              </li>
-              <li className="flex flex-wrap items-center justify-between gap-3">
-                <span>
-                  <strong>Politique de confidentialité (RGPD)</strong>
-                  <span className="ml-2 text-xs text-ink-muted">
-                    {(() => {
-                      const c = (comp?.consentements ?? []).find((x) => x.type === "rgpd");
-                      return c ? `acceptée le ${jour(c.accepte_le)}` : "non encore acceptée";
-                    })()}
-                  </span>
-                </span>
-                <Link
-                  to="/espace/confidentialite"
-                  className="rounded-full border border-line px-3 py-1 text-xs hover:bg-background"
-                >
-                  Consulter
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-      )}
-
-      {tab === "sinistres" && client && (
-        <SinistresPanel clientId={client.id} mode="client" canEdit />
-      )}
-
-      {tab === "messages" && (
-        <div className="space-y-6">
-          <div className="rounded-lg border border-line bg-surface p-5">
-            <h2 className="font-serif text-lg">Mon conseiller</h2>
-            <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-3">
-              <Info label="Conseiller référent">{comp?.conseiller?.nom ?? "EJ Partners Assurances"}</Info>
-              <Info label="E-mail">
-                <a className="underline" href={`mailto:${comp?.conseiller?.email ?? "service.client@ej-assurances.fr"}`}>
-                  {comp?.conseiller?.email ?? "service.client@ej-assurances.fr"}
-                </a>
-              </Info>
-              <Info label="Téléphone">
-                <a className="underline" href="tel:+33189314029">
-                  {comp?.conseiller?.telephone ?? "01.89.31.40.29"}
-                </a>
-              </Info>
-            </dl>
-          </div>
-
-          <div className="space-y-4 rounded-lg border border-line bg-surface p-5">
-            <h2 className="font-serif text-lg">Messagerie</h2>
-            {(comp?.messages ?? []).length === 0 ? (
-              <p className="text-sm text-ink-muted">
-                Aucun message pour l'instant. Écrivez-nous, votre conseiller vous répond sous 48 h ouvrées.
-              </p>
-            ) : (
-              <ul className="space-y-3">
-                {(comp?.messages ?? []).map((m) => (
-                  <li
-                    key={m.id}
-                    className={
-                      "rounded-lg border p-3 text-sm " +
-                      (m.de_moi ? "border-line bg-background" : "border-emerald-200 bg-emerald-50")
-                    }
-                  >
-                    <p className="text-xs text-ink-muted">
-                      {m.de_moi ? "Vous" : "Votre conseiller"} · {new Date(m.created_at).toLocaleString("fr-FR")}
-                    </p>
-                    <p className="mt-1 whitespace-pre-line">{m.contenu}</p>
                   </li>
-                ))}
-              </ul>
-            )}
-            <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              rows={4}
-              placeholder="Votre message…"
-              className="w-full rounded-md border border-line bg-background px-3 py-2 text-sm"
-            />
-            <button
-              onClick={envoyer}
-              disabled={envoiMsg || message.trim().length < 2}
-              className="rounded-full bg-ink px-5 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
-            >
-              {envoiMsg ? "Envoi…" : "Envoyer mon message"}
-            </button>
-          </div>
-        </div>
-      )}
+                  <li className="flex flex-wrap items-center justify-between gap-3">
+                    <span>
+                      <strong>Politique de confidentialité (RGPD)</strong>
+                      <span className="ml-2 text-xs text-ink-muted">
+                        {(() => {
+                          const c = (comp?.consentements ?? []).find((x) => x.type === "rgpd");
+                          return c ? `acceptée le ${jour(c.accepte_le)}` : "non encore acceptée";
+                        })()}
+                      </span>
+                    </span>
+                    <Link
+                      to="/espace/confidentialite"
+                      className="rounded-full border border-line px-3 py-1 text-xs hover:bg-background"
+                    >
+                      Consulter
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          )}
 
-      {tab === "compte" && (
-        <div className="space-y-4 rounded-lg border border-line bg-surface p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-serif text-lg">Mes informations</h2>
-            {client && (
-              <button
-                onClick={() => setEdit((v) => !v)}
-                className="rounded-full border border-line px-4 py-1.5 text-sm hover:bg-background"
-              >
-                {edit ? "Annuler" : "Modifier mes informations"}
-              </button>
-            )}
-          </div>
+          {tab === "sinistres" && client && (
+            <SinistresPanel clientId={client.id} mode="client" canEdit />
+          )}
 
-          {!edit ? (
-            <dl className="grid gap-3 text-sm sm:grid-cols-2">
-              <Info label="Nom">{client ? `${client.prenom ?? ""} ${client.nom}`.trim() : "—"}</Info>
-              <Info label="Référence client">{client?.reference ?? "—"}</Info>
-              <Info label="E-mail de connexion">{user?.email}</Info>
-              <Info label="E-mail secondaire">{client?.email2 ?? "—"}</Info>
-              <Info label="Mobile">{client?.mobile ?? "—"}</Info>
-              <Info label="Téléphone fixe">{client?.telephone ?? "—"}</Info>
-              <Info label="Adresse">
-                {[client?.adresse, client?.complement_adresse, client?.code_postal, client?.ville, client?.pays]
-                  .filter(Boolean)
-                  .join(", ") || "—"}
-              </Info>
-              <Info label="Préférence de contact">{client?.preference_contact ?? "—"}</Info>
-            </dl>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Champ label="Civilité" value={form.civilite} onChange={(v) => setForm({ ...form, civilite: v })} />
-              <Champ label="Prénom" value={form.prenom} onChange={(v) => setForm({ ...form, prenom: v })} />
-              <Champ label="Nom" value={form.nom} onChange={(v) => setForm({ ...form, nom: v })} />
-              <Champ
-                label="E-mail secondaire"
-                value={form.email2}
-                onChange={(v) => setForm({ ...form, email2: v })}
-              />
-              <Champ label="Mobile" value={form.mobile} onChange={(v) => setForm({ ...form, mobile: v })} />
-              <Champ
-                label="Téléphone fixe"
-                value={form.telephone}
-                onChange={(v) => setForm({ ...form, telephone: v })}
-              />
-              <Champ label="Adresse" value={form.adresse} onChange={(v) => setForm({ ...form, adresse: v })} />
-              <Champ
-                label="Complément d'adresse"
-                value={form.complement_adresse}
-                onChange={(v) => setForm({ ...form, complement_adresse: v })}
-              />
-              <Champ
-                label="Code postal"
-                value={form.code_postal}
-                onChange={(v) => setForm({ ...form, code_postal: v })}
-              />
-              <Champ label="Ville" value={form.ville} onChange={(v) => setForm({ ...form, ville: v })} />
-              <Champ label="Pays" value={form.pays} onChange={(v) => setForm({ ...form, pays: v })} />
-              <label className="block">
-                <span className="mb-1 block text-xs uppercase tracking-wide text-ink-muted">
-                  Préférence de contact
-                </span>
-                <select
-                  value={form.preference_contact}
-                  onChange={(e) => setForm({ ...form, preference_contact: e.target.value })}
+          {tab === "messages" && (
+            <div className="space-y-6">
+              <div className="rounded-lg border border-line bg-surface p-5">
+                <h2 className="font-serif text-lg">Mon conseiller</h2>
+                <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-3">
+                  <Info label="Conseiller référent">
+                    {comp?.conseiller?.nom ?? "EJ Partners Assurances"}
+                  </Info>
+                  <Info label="E-mail">
+                    <a
+                      className="underline"
+                      href={`mailto:${comp?.conseiller?.email ?? "service.client@ej-assurances.fr"}`}
+                    >
+                      {comp?.conseiller?.email ?? "service.client@ej-assurances.fr"}
+                    </a>
+                  </Info>
+                  <Info label="Téléphone">
+                    <a className="underline" href="tel:+33189314029">
+                      {comp?.conseiller?.telephone ?? "01.89.31.40.29"}
+                    </a>
+                  </Info>
+                </dl>
+              </div>
+
+              <div className="space-y-4 rounded-lg border border-line bg-surface p-5">
+                <h2 className="font-serif text-lg">Messagerie</h2>
+                {(comp?.messages ?? []).length === 0 ? (
+                  <p className="text-sm text-ink-muted">
+                    Aucun message pour l'instant. Écrivez-nous, votre conseiller vous répond sous 48
+                    h ouvrées.
+                  </p>
+                ) : (
+                  <ul className="space-y-3">
+                    {(comp?.messages ?? []).map((m) => (
+                      <li
+                        key={m.id}
+                        className={
+                          "rounded-lg border p-3 text-sm " +
+                          (m.de_moi
+                            ? "border-line bg-background"
+                            : "border-emerald-200 bg-emerald-50")
+                        }
+                      >
+                        <p className="text-xs text-ink-muted">
+                          {m.de_moi ? "Vous" : "Votre conseiller"} ·{" "}
+                          {new Date(m.created_at).toLocaleString("fr-FR")}
+                        </p>
+                        <p className="mt-1 whitespace-pre-line">{m.contenu}</p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  rows={4}
+                  placeholder="Votre message…"
                   className="w-full rounded-md border border-line bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">—</option>
-                  <option value="email">E-mail</option>
-                  <option value="telephone">Téléphone</option>
-                  <option value="sms">SMS</option>
-                </select>
-              </label>
-              <div className="sm:col-span-2">
+                />
                 <button
-                  onClick={enregistrer}
-                  disabled={saving || form.nom.trim().length === 0}
+                  onClick={envoyer}
+                  disabled={envoiMsg || message.trim().length < 2}
                   className="rounded-full bg-ink px-5 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
                 >
-                  {saving ? "Enregistrement…" : "Enregistrer"}
+                  {envoiMsg ? "Envoi…" : "Envoyer mon message"}
                 </button>
               </div>
             </div>
           )}
 
-          {savedMsg && <p className="text-xs text-emerald-700">{savedMsg}</p>}
-          {saveErr && <p className="text-xs text-destructive">{saveErr}</p>}
+          {tab === "compte" && (
+            <div className="space-y-4 rounded-lg border border-line bg-surface p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="font-serif text-lg">Mes informations</h2>
+                {client && (
+                  <button
+                    onClick={() => setEdit((v) => !v)}
+                    className="rounded-full border border-line px-4 py-1.5 text-sm hover:bg-background"
+                  >
+                    {edit ? "Annuler" : "Modifier mes informations"}
+                  </button>
+                )}
+              </div>
 
-          <p className="text-xs text-ink-muted">
-            Votre e-mail de connexion et votre date de naissance ne sont pas modifiables ici : contactez votre
-            conseiller.
-          </p>
-          <Link
-            to="/espace/parametres"
-            className="inline-block rounded-[var(--radius)] bg-[#0A192F] px-4 py-2 text-sm font-medium text-white"
-          >
-            Gérer mon mot de passe
-          </Link>
-        </div>
-      )}
+              {!edit ? (
+                <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                  <Info label="Nom">
+                    {client ? `${client.prenom ?? ""} ${client.nom}`.trim() : "—"}
+                  </Info>
+                  <Info label="Référence client">{client?.reference ?? "—"}</Info>
+                  <Info label="E-mail de connexion">{user?.email}</Info>
+                  <Info label="E-mail secondaire">{client?.email2 ?? "—"}</Info>
+                  <Info label="Mobile">{client?.mobile ?? "—"}</Info>
+                  <Info label="Téléphone fixe">{client?.telephone ?? "—"}</Info>
+                  <Info label="Adresse">
+                    {[
+                      client?.adresse,
+                      client?.complement_adresse,
+                      client?.code_postal,
+                      client?.ville,
+                      client?.pays,
+                    ]
+                      .filter(Boolean)
+                      .join(", ") || "—"}
+                  </Info>
+                  <Info label="Préférence de contact">{client?.preference_contact ?? "—"}</Info>
+                </dl>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Champ
+                    label="Civilité"
+                    value={form.civilite}
+                    onChange={(v) => setForm({ ...form, civilite: v })}
+                  />
+                  <Champ
+                    label="Prénom"
+                    value={form.prenom}
+                    onChange={(v) => setForm({ ...form, prenom: v })}
+                  />
+                  <Champ
+                    label="Nom"
+                    value={form.nom}
+                    onChange={(v) => setForm({ ...form, nom: v })}
+                  />
+                  <Champ
+                    label="E-mail secondaire"
+                    value={form.email2}
+                    onChange={(v) => setForm({ ...form, email2: v })}
+                  />
+                  <Champ
+                    label="Mobile"
+                    value={form.mobile}
+                    onChange={(v) => setForm({ ...form, mobile: v })}
+                  />
+                  <Champ
+                    label="Téléphone fixe"
+                    value={form.telephone}
+                    onChange={(v) => setForm({ ...form, telephone: v })}
+                  />
+                  <Champ
+                    label="Adresse"
+                    value={form.adresse}
+                    onChange={(v) => setForm({ ...form, adresse: v })}
+                  />
+                  <Champ
+                    label="Complément d'adresse"
+                    value={form.complement_adresse}
+                    onChange={(v) => setForm({ ...form, complement_adresse: v })}
+                  />
+                  <Champ
+                    label="Code postal"
+                    value={form.code_postal}
+                    onChange={(v) => setForm({ ...form, code_postal: v })}
+                  />
+                  <Champ
+                    label="Ville"
+                    value={form.ville}
+                    onChange={(v) => setForm({ ...form, ville: v })}
+                  />
+                  <Champ
+                    label="Pays"
+                    value={form.pays}
+                    onChange={(v) => setForm({ ...form, pays: v })}
+                  />
+                  <label className="block">
+                    <span className="mb-1 block text-xs uppercase tracking-wide text-ink-muted">
+                      Préférence de contact
+                    </span>
+                    <select
+                      value={form.preference_contact}
+                      onChange={(e) => setForm({ ...form, preference_contact: e.target.value })}
+                      className="w-full rounded-md border border-line bg-background px-3 py-2 text-sm"
+                    >
+                      <option value="">—</option>
+                      <option value="email">E-mail</option>
+                      <option value="telephone">Téléphone</option>
+                      <option value="sms">SMS</option>
+                    </select>
+                  </label>
+                  <div className="sm:col-span-2">
+                    <button
+                      onClick={enregistrer}
+                      disabled={saving || form.nom.trim().length === 0}
+                      className="rounded-full bg-ink px-5 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+                    >
+                      {saving ? "Enregistrement…" : "Enregistrer"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {savedMsg && <p className="text-xs text-emerald-700">{savedMsg}</p>}
+              {saveErr && <p className="text-xs text-destructive">{saveErr}</p>}
+
+              <p className="text-xs text-ink-muted">
+                Votre e-mail de connexion et votre date de naissance ne sont pas modifiables ici :
+                contactez votre conseiller.
+              </p>
+              <Link
+                to="/espace/parametres"
+                className="inline-block rounded-[var(--radius)] bg-[#0A192F] px-4 py-2 text-sm font-medium text-white"
+              >
+                Gérer mon mot de passe
+              </Link>
+            </div>
+          )}
         </div>
 
         <SectionNav title="Mon espace" items={items} active={tab} onSelect={setTab} />
       </div>
     </div>
-
   );
 }
 
