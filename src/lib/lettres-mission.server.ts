@@ -26,7 +26,8 @@ export async function envoyerLettreMission(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const d = dossier as any;
-  if (!d.client_email) throw new Error("Le dossier n'a pas d'email client — renseignez-le d'abord.");
+  if (!d.client_email)
+    throw new Error("Le dossier n'a pas d'email client — renseignez-le d'abord.");
 
   const contenu = {
     cabinet: {
@@ -120,7 +121,10 @@ export async function envoyerLettreMission(
   // Statut du dossier : lettre envoyée, en attente de signature
   await supabase.from("dossiers").update({ statut: "lettre_mission_envoyee" }).eq("id", dossierId);
   if (d.client_id) {
-    await supabase.from("clients").update({ dda_statut: "en_attente_signature" }).eq("id", d.client_id);
+    await supabase
+      .from("clients")
+      .update({ dda_statut: "en_attente_signature" })
+      .eq("id", d.client_id);
   }
 
   return { id: lettreId };
@@ -163,9 +167,11 @@ export async function envoyerLettresMissionDues(
 
   const { data, error } = await supabase
     .from("dossiers")
-    .select("id, client_id, client_email, reference, statut")
+    .select("id, client_id, client_email, reference, statut, recueil_besoins")
     .in("statut", [...STATUTS_DOSSIER_AVANT_LM])
     .not("client_email", "is", null)
+    // Filtré en base : des dossiers sans recueil ne doivent pas occuper le lot.
+    .not("recueil_besoins", "is", null)
     .order("created_at", { ascending: true })
     .limit(limite);
   if (error) throw new Error(error.message);
@@ -177,8 +183,15 @@ export async function envoyerLettresMissionDues(
   let echecs = 0;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  for (const d of ((data ?? []) as any[])) {
+  for (const d of (data ?? []) as any[]) {
     try {
+      // La lettre de mission reprend le recueil des besoins : pas d'envoi tant
+      // qu'il n'a pas été transmis (client ou cabinet).
+      const recueil = d.recueil_besoins as Record<string, unknown> | null;
+      if (!recueil || Object.keys(recueil).length === 0) {
+        reportees += 1;
+        continue;
+      }
       // Une lettre déjà vivante (envoyée ou signée) : rien à faire.
       const { data: lm } = await supabase
         .from("lettres_mission")

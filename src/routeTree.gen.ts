@@ -16,7 +16,6 @@ import { Route as AssuranceVieProfilRouteImport } from './routes/assurance-vie-p
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DevenirPrescripteurRouteImport } from './routes/devenir-prescripteur'
 import { Route as FamillesModernesProfilRouteImport } from './routes/familles-modernes-profil'
-import { Route as RecueilBesoinsRouteImport } from './routes/recueil-besoins'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedEspaceRouteImport } from './routes/_authenticated/espace'
 import { Route as EspaceCguRouteImport } from './routes/espace.cgu'
@@ -132,11 +131,6 @@ const DevenirPrescripteurRoute = DevenirPrescripteurRouteImport.update({
 const FamillesModernesProfilRoute = FamillesModernesProfilRouteImport.update({
   id: '/familles-modernes-profil',
   path: '/familles-modernes-profil',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RecueilBesoinsRoute = RecueilBesoinsRouteImport.update({
-  id: '/recueil-besoins',
-  path: '/recueil-besoins',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -621,7 +615,6 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/devenir-prescripteur': typeof DevenirPrescripteurRoute
   '/familles-modernes-profil': typeof FamillesModernesProfilRoute
-  '/recueil-besoins': typeof RecueilBesoinsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/espace': typeof AuthenticatedEspaceRouteWithChildren
   '/espace/cgu': typeof EspaceCguRoute
@@ -712,7 +705,6 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/devenir-prescripteur': typeof DevenirPrescripteurRoute
   '/familles-modernes-profil': typeof FamillesModernesProfilRoute
-  '/recueil-besoins': typeof RecueilBesoinsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/espace/cgu': typeof EspaceCguRoute
   '/espace/confidentialite': typeof EspaceConfidentialiteRoute
@@ -804,7 +796,6 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/devenir-prescripteur': typeof DevenirPrescripteurRoute
   '/familles-modernes-profil': typeof FamillesModernesProfilRoute
-  '/recueil-besoins': typeof RecueilBesoinsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/espace': typeof AuthenticatedEspaceRouteWithChildren
   '/espace/cgu': typeof EspaceCguRoute
@@ -897,7 +888,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/devenir-prescripteur'
     | '/familles-modernes-profil'
-    | '/recueil-besoins'
     | '/reset-password'
     | '/espace'
     | '/espace/cgu'
@@ -988,7 +978,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/devenir-prescripteur'
     | '/familles-modernes-profil'
-    | '/recueil-besoins'
     | '/reset-password'
     | '/espace/cgu'
     | '/espace/confidentialite'
@@ -1079,7 +1068,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/devenir-prescripteur'
     | '/familles-modernes-profil'
-    | '/recueil-besoins'
     | '/reset-password'
     | '/_authenticated/espace'
     | '/espace/cgu'
@@ -1172,7 +1160,6 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   DevenirPrescripteurRoute: typeof DevenirPrescripteurRoute
   FamillesModernesProfilRoute: typeof FamillesModernesProfilRoute
-  RecueilBesoinsRoute: typeof RecueilBesoinsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   EspaceCguRoute: typeof EspaceCguRoute
   EspaceConfidentialiteRoute: typeof EspaceConfidentialiteRoute
@@ -1262,13 +1249,6 @@ declare module '@tanstack/react-router' {
       path: '/familles-modernes-profil'
       fullPath: '/familles-modernes-profil'
       preLoaderRoute: typeof FamillesModernesProfilRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/recueil-besoins': {
-      id: '/recueil-besoins'
-      path: '/recueil-besoins'
-      fullPath: '/recueil-besoins'
-      preLoaderRoute: typeof RecueilBesoinsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -1988,7 +1968,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   DevenirPrescripteurRoute: DevenirPrescripteurRoute,
   FamillesModernesProfilRoute: FamillesModernesProfilRoute,
-  RecueilBesoinsRoute: RecueilBesoinsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   EspaceCguRoute: EspaceCguRoute,
   EspaceConfidentialiteRoute: EspaceConfidentialiteRoute,

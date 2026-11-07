@@ -14,6 +14,7 @@ import {
   ageDepuisDateNaissance,
 } from "@/lib/recueil-besoins-schemas";
 import { RecueilWorkflow } from "@/components/recueil-workflow";
+import { RecueilEspaceClientCard } from "@/components/recueil-espace-client-card";
 import {
   majMesCoordonnees,
   monFichierUrl,
@@ -526,6 +527,8 @@ function MonEspace() {
           )}
         </div>
       )}
+
+      <RecueilEspaceClientCard onEnvoye={() => void load()} />
 
       {(derAFaire || lettreAFaire || devoirAFaire) && (
         <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">

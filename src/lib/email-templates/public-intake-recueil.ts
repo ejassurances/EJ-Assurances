@@ -12,26 +12,15 @@ function echapperHtml(v: unknown): string {
 }
 
 /**
- * Lien du recueil des besoins : le formulaire public génère un jeton ; le
- * recueil vit dans le CRM (app.ej-assurances.fr/recueil-besoins).
+ * E-mail envoyé après une demande d'étude sur le site public. L'espace client
+ * vient d'être créé (identifiants provisoires et DER envoyés à part).
  */
-export function lienRecueilCrm(recueilUrl: unknown): string {
-  const base = "https://app.ej-assurances.fr/recueil-besoins";
-  try {
-    const token = new URL(String(recueilUrl ?? "")).searchParams.get("token") ?? "";
-    return /^[a-f0-9]{48}$/.test(token) ? `${base}?token=${token}` : base;
-  } catch {
-    return base;
-  }
-}
-
 export function PublicIntakeRecueilEmail(props: {
   prenom?: string;
   dossier_reference?: string;
-  recueil_url?: string;
   documents?: string[];
 }) {
-  const lien = lienRecueilCrm(props.recueil_url);
+  const lien = "https://app.ej-assurances.fr/auth";
   const documents =
     Array.isArray(props.documents) && props.documents.length > 0
       ? props.documents
@@ -47,18 +36,20 @@ export function PublicIntakeRecueilEmail(props: {
     "<p>Merci pour votre demande d’étude d’assurance de prêt" +
     (props.dossier_reference ? " (dossier " + echapperHtml(props.dossier_reference) + ")" : "") +
     ". Elle est bien enregistrée.</p>" +
-    "<p><b>Étape 1 — Votre recueil des besoins (5 à 10 minutes)</b><br/>" +
-    "Quelques questions sur votre prêt et votre situation, pour que l’étude corresponde vraiment à votre besoin :</p>" +
+    "<p>Votre espace client sécurisé vient d’être ouvert : vous recevez dans un e-mail séparé vos identifiants provisoires, ainsi que notre Document d’Entrée en Relation.</p>" +
+    "<p><b>Étape suivante — votre recueil des besoins</b>, au choix depuis votre espace :</p>" +
+    "<ul>" +
+    "<li>remplir le recueil en ligne (5 à 10 minutes) ;</li>" +
+    "<li>ou déposer vos documents : offre de prêt, tableau d’amortissement et pièce d’identité de chaque assuré.</li>" +
+    "</ul>" +
     "<p><a href='" +
     lien +
-    "'>Compléter mon recueil des besoins</a></p>" +
-    "<p>Vos réponses sont enregistrées à chaque étape : vous pouvez reprendre plus tard avec le même lien, valable 30 jours.</p>" +
-    "<p><b>Étape 2 — Les documents utiles</b></p>" +
+    "'>Accéder à mon espace client</a></p>" +
+    "<p>Documents utiles pour votre étude :</p>" +
     "<ul>" +
     documents.map((d) => "<li>" + echapperHtml(d) + "</li>").join("") +
     "</ul>" +
-    "<p>Vous pouvez nous les transmettre en réponse à cet e-mail. N’y joignez aucune information médicale : si l’assureur en a besoin, il prévoit son propre questionnaire sécurisé.</p>" +
-    "<p>L’étude est gratuite et sans engagement. Je reviens vers vous sous 72 heures après réception de votre recueil.</p>" +
+    "<p>Une fois votre recueil transmis, vous recevrez votre lettre de mission à signer dans votre espace. L’étude est gratuite et sans engagement, et je reviens vers vous sous 72 heures.</p>" +
     "<p>Cordialement,<br/>Erwan Jaffrelot<br/>EJ Partners Assurances</p>";
   const style = {
     fontFamily: "Arial, sans-serif",
@@ -80,7 +71,6 @@ export const TEMPLATES_PARCOURS_PUBLIC: Record<string, TemplateEntry> = {
     previewData: {
       prenom: "Jean",
       dossier_reference: "EJ-2026-EMP-0001",
-      recueil_url: "https://ej-assurances.fr/recueil-besoins?token=" + "a".repeat(48),
     },
   },
 };
