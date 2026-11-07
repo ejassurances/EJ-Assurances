@@ -349,9 +349,9 @@ export function DevoirConseilPanel({
 
   /**
    * Frais de courtage (= frais de distribution) : calculés automatiquement,
-   * jamais saisis à la main — 10 % de l'économie brute, plancher 175 € par
+   * jamais saisis à la main — 5 % de l'économie brute, plancher 175 € par
    * assuré, déduction de la part partenaire (dossier + adhésion) au-delà du
-   * plancher, sans jamais redescendre sous ce plancher.
+   * plancher, sans jamais redescendre sous ce plancher (règle du 07/11/2026).
    */
   const nbAssures = useMemo(() => {
     const liste = assuresEmprunteur(dossier?.recueil_besoins?.["assures"]);
@@ -1111,8 +1111,8 @@ export function DevoirConseilPanel({
                   <span className="font-semibold">{eur(fraisCourtageCalc.montant)}</span>
                   <span className="ml-2 text-xs text-muted-foreground">
                     {fraisCourtageCalc.planchierApplique
-                      ? `(plancher 175 € × ${nbAssures} assuré${nbAssures > 1 ? "s" : ""} — 10 % de l'économie était inférieur au plancher)`
-                      : `(10 % de l'économie = ${eur(fraisCourtageCalc.base)}, dont ${eur(fraisCourtageCalc.partPartenaireDeduite)} déduits pour le partenaire)`}
+                      ? `(plancher 175 € × ${nbAssures} assuré${nbAssures > 1 ? "s" : ""} — 5 % de l'économie était inférieur au plancher)`
+                      : `(5 % de l'économie = ${eur(fraisCourtageCalc.base)}, dont ${eur(fraisCourtageCalc.partPartenaireDeduite)} déduits pour le partenaire)`}
                   </span>
                 </div>
               ) : (
