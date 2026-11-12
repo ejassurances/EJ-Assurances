@@ -2,13 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { authorizePublicJob } from "@/lib/public-job-auth";
 import { STATUTS_DOSSIER_AVANT_LM } from "@/lib/referentiels";
 import { appUrl } from "@/lib/app-url";
+import { CODES_DOCUMENTS_PRET, relanceFormulaireDue } from "@/lib/relances-formulaire";
 
 /**
- * Agent commercial — relance J+2 : accusé de réception et liste des pièces
- * manquantes envoyés au client 2 jours après la création du dossier, dès que
- * le recueil des besoins est incomplet ou que des pièces obligatoires (dossier
- * ou KYC) manquent. Une seule relance tous les 2 jours, l'accusé de réception
- * n'étant envoyé qu'une seule fois par dossier.
+ * Relance « documents non déposés » (parcours du 11/11/2026) : deux rappels
+ * seulement, J+2 puis J+5 après la création du dossier, tant que l'offre de
+ * prêt / le tableau d'amortissement (ou la simulation) ne sont pas déposés.
+ * Arrêt dès le dépôt ou dès que le dossier quitte les étapes d'avant lettre
+ * de mission. Le recueil des besoins est rempli par le cabinet au rendez-vous
+ * et les pièces KYC sont demandées après : ils ne sont plus relancés ici.
  *
  * Appelé une fois par jour par le planificateur, avec l'en-tête `apikey`
  * (clé publiable du projet) ou `x-relance-token`.
@@ -17,7 +19,8 @@ export const Route = createFileRoute("/api/public/relance-pieces")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        if (!(await authorizePublicJob(request))) return new Response("Unauthorized", { status: 401 });
+        if (!(await authorizePublicJob(request)))
+          return new Response("Unauthorized", { status: 401 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { planifierLotEmails } = await import("@/lib/emails-file-attente.server");
@@ -41,48 +44,31 @@ export const Route = createFileRoute("/api/public/relance-pieces")({
           donnees: Record<string, unknown>;
           idempotency_key: string;
         }[] = [];
-        const details: { dossier: string; pieces: number; accuse: boolean }[] = [];
-
+        const details: { dossier: string; pieces: number; accuse: boolean; relance: string }[] = [];
 
         for (const d of dossiers ?? []) {
-          if (d.relance_pieces_envoyee_le && d.relance_pieces_envoyee_le > seuil) continue;
-
-          const manquants: string[] = [];
-
-          // Recueil des besoins incomplet.
-          const recueil = (d.recueil_besoins ?? null) as Record<string, unknown> | null;
-          const recueilVide = !recueil || Object.keys(recueil).length === 0;
-          if (recueilVide) manquants.push("Recueil de vos besoins à compléter dans votre espace client");
-
-          // Pièces obligatoires du dossier.
+          // Pièces de prêt du dossier (parcours du 11/11 : avant le rendez-vous,
+          // seuls l'offre de prêt et le tableau d'amortissement — ou la
+          // simulation pour un acquéreur — sont demandés ; KYC et recueil viennent après).
           const { data: pieces } = await supabaseAdmin
             .from("dossier_pieces_requises")
-            .select("libelle")
+            .select("code, libelle, statut")
             .eq("dossier_id", d.id)
-            .eq("obligatoire", true)
-            .eq("statut", "manquante");
-          for (const p of pieces ?? []) manquants.push(p.libelle);
+            .in("code", [...CODES_DOCUMENTS_PRET]);
+          const deposes = (pieces ?? []).some((p) => p.statut !== "manquante");
+          const relance = relanceFormulaireDue({
+            creeLe: d.created_at,
+            derniereRelanceLe: d.relance_pieces_envoyee_le,
+            documentsPretDeposes: deposes,
+          });
+          if (!relance) continue;
 
-          // Pièces KYC du client (identité, domicile, RIB).
-          if (d.client_id) {
-            const { data: kyc } = await supabaseAdmin
-              .from("client_kyc_documents")
-              .select("type, statut")
-              .eq("client_id", d.client_id);
-            const valides = new Set<string>(
-              (kyc ?? [])
-                .filter((k) => k.statut === "valide" || k.statut === "en_attente")
-                .map((k) => k.type as string),
-            );
-            const attendus: { type: string; libelle: string }[] = [
-              { type: "cni", libelle: "Pièce d'identité en cours de validité" },
-              { type: "justificatif_domicile", libelle: "Justificatif de domicile de moins de 3 mois" },
-              { type: "rib", libelle: "RIB" },
-            ];
-            for (const a of attendus) if (!valides.has(a.type)) manquants.push(a.libelle);
-
+          const manquants: string[] = (pieces ?? [])
+            .filter((p) => p.statut === "manquante" && p.code !== "simulation_pret")
+            .map((p) => p.libelle);
+          if (manquants.length === 0) {
+            manquants.push("Offre de prêt", "Tableau d'amortissement");
           }
-
           if (manquants.length === 0) continue;
 
           const accuse = !d.accuse_reception_envoye_le;
@@ -97,9 +83,10 @@ export const Route = createFileRoute("/api/public/relance-pieces")({
               reference: d.reference,
               pieces: manquants,
               accuse,
+              relance,
               link: appUrl("/espace/mon-espace"),
             },
-            idempotency_key: `relance-pieces-${d.id}-${new Date().toISOString().slice(0, 10)}`,
+            idempotency_key: `relance-pieces-${d.id}-${relance}`,
           });
 
           await supabaseAdmin
@@ -110,7 +97,7 @@ export const Route = createFileRoute("/api/public/relance-pieces")({
             })
             .eq("id", d.id);
 
-          details.push({ dossier: d.reference, pieces: manquants.length, accuse });
+          details.push({ dossier: d.reference, pieces: manquants.length, accuse, relance });
         }
 
         const { planifies, premier } = await planifierLotEmails(
