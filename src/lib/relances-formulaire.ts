@@ -31,4 +31,8 @@ export function relanceFormulaireDue(params: {
 }
 
 /** Codes de pièces qui arrêtent la relance : documents de prêt (ou simulation pour un acquéreur). */
-export const CODES_DOCUMENTS_PRET = ["offre_pret", "tableau_amortissement", "simulation_pret"] as const;
+export const CODES_DOCUMENTS_PRET = [
+  "offre_pret",
+  "tableau_amortissement",
+  "simulation_pret",
+] as const;

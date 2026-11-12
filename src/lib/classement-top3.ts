@@ -73,8 +73,15 @@ export function classerTop3(params: {
     const fraisDossier = (o.fraisDossier ?? 0) + (o.fraisAdhesion ?? 0);
     if (o.primesTotales == null || !Number.isFinite(o.primesTotales)) {
       return {
-        id: o.id, rang: null, top3: false, primesTotales: null, fraisDossier,
-        fraisDossierManquants, fraisDistribution: null, coutTotal: null, economieNette: null,
+        id: o.id,
+        rang: null,
+        top3: false,
+        primesTotales: null,
+        fraisDossier,
+        fraisDossierManquants,
+        fraisDistribution: null,
+        coutTotal: null,
+        economieNette: null,
       };
     }
     const economieBrute = ref - o.primesTotales;
@@ -92,8 +99,15 @@ export function classerTop3(params: {
     }
     const coutTotal = r2(o.primesTotales + fraisDossier + fraisDistribution);
     return {
-      id: o.id, rang: null, top3: false, primesTotales: o.primesTotales, fraisDossier,
-      fraisDossierManquants, fraisDistribution, coutTotal, economieNette: r2(ref - coutTotal),
+      id: o.id,
+      rang: null,
+      top3: false,
+      primesTotales: o.primesTotales,
+      fraisDossier,
+      fraisDossierManquants,
+      fraisDistribution,
+      coutTotal,
+      economieNette: r2(ref - coutTotal),
     };
   });
 

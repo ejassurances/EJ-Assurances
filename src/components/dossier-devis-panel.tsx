@@ -913,7 +913,7 @@ export function DossierDevisPanel({
       return d.cotisation_mensuelle != null ? Number(d.cotisation_mensuelle) * 1000 : Infinity;
     };
     return [...devisAffiches].sort((a, b) => cle(a) - cle(b));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [devisAffiches, coutTotalDevis]);
 
   /** Prépare la saisie du prix obtenu pour un produit du catalogue. */

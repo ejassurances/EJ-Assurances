@@ -11,13 +11,23 @@ const offres = [
 
 describe("classerTop3", () => {
   it("refuse tout prix sans assurance actuelle", () => {
-    const r = classerTop3({ coutAssuranceActuelle: null, nbAssures: 1, offres, courtageOffert: true });
+    const r = classerTop3({
+      coutAssuranceActuelle: null,
+      nbAssures: 1,
+      offres,
+      courtageOffert: true,
+    });
     expect(r.statut).toBe("sans_reference");
     expect(r.offres).toHaveLength(0);
   });
 
   it("classe sur le coût total, sans prix en fin, TOP 3 marqué (courtage offert)", () => {
-    const r = classerTop3({ coutAssuranceActuelle: 20000, nbAssures: 1, offres, courtageOffert: true });
+    const r = classerTop3({
+      coutAssuranceActuelle: 20000,
+      nbAssures: 1,
+      offres,
+      courtageOffert: true,
+    });
     expect(r.statut).toBe("ok");
     expect(r.offres.map((o) => o.id)).toEqual(["d", "b", "a", "e", "c"]);
     expect(r.offres.filter((o) => o.top3).map((o) => o.id)).toEqual(["d", "b", "a"]);

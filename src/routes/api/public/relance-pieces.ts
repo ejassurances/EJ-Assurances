@@ -19,7 +19,8 @@ export const Route = createFileRoute("/api/public/relance-pieces")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        if (!(await authorizePublicJob(request))) return new Response("Unauthorized", { status: 401 });
+        if (!(await authorizePublicJob(request)))
+          return new Response("Unauthorized", { status: 401 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { planifierLotEmails } = await import("@/lib/emails-file-attente.server");
@@ -44,7 +45,6 @@ export const Route = createFileRoute("/api/public/relance-pieces")({
           idempotency_key: string;
         }[] = [];
         const details: { dossier: string; pieces: number; accuse: boolean; relance: string }[] = [];
-
 
         for (const d of dossiers ?? []) {
           // Pièces de prêt du dossier (parcours du 11/11 : avant le rendez-vous,
