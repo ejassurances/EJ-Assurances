@@ -26,6 +26,7 @@ import { simulassurTariferDossier } from "@/lib/simulassur.functions";
 import { useCommissionBareme } from "@/hooks/use-commission-bareme";
 import { commissionDepuisDevis, tauxDefautDevis, type BaseCommission } from "@/lib/commission-devis";
 import { LIBELLE_SOURCE } from "@/lib/commissions-bareme";
+import { classerTop3, courtageOffertActif, type OffreClassee } from "@/lib/classement-top3";
 import { brancheTarifableSimulassur, nbAssuresSimulassur } from "@/lib/simulassur/eligibilite";
 
 
@@ -971,15 +972,35 @@ export function DossierDevisPanel({
           },
         ];
 
-  /** Propositions d'une tête assurée, du moins cher au plus cher. */
-  const propositionsParTete = (rang: number) =>
-    devisAffiches
-      .filter((d) => (d.assure_rang ?? 1) === rang)
-      .sort((a, b) => {
-        const va = coutTotalDevis(a) ?? (a.cotisation_mensuelle != null ? Number(a.cotisation_mensuelle) * 1000 : Infinity);
-        const vb = coutTotalDevis(b) ?? (b.cotisation_mensuelle != null ? Number(b.cotisation_mensuelle) * 1000 : Infinity);
-        return va - vb;
-      });
+  /**
+   * Classement TOP 3 d'une tête assurée (demande du 11/11/2026) : coût total
+   * client = primes + frais de dossier + frais de distribution, offres sans prix
+   * en fin de liste. Référence = assurance actuelle répartie entre les têtes.
+   * Les frais de dossier ne sont pas encore stockés par devis (colonne à créer) :
+   * comptés 0 et signalés.
+   */
+  const nbTetes = Math.max(1, assuresRecueil.length);
+  const classementTete = (rang: number) =>
+    classerTop3({
+      coutAssuranceActuelle: assuranceInit.coutRestant != null ? assuranceInit.coutRestant / nbTetes : null,
+      nbAssures: 1,
+      courtageOffert: courtageOffertActif(),
+      offres: devisAffiches
+        .filter((d) => (d.assure_rang ?? 1) === rang)
+        .map((d) => ({ id: d.id, primesTotales: coutTotalDevis(d), fraisDossier: null })),
+    });
+
+  /** Propositions d'une tête assurée, du moins cher au plus cher (coût total client). */
+  const propositionsParTete = (rang: number) => {
+    const membres = devisAffiches.filter((d) => (d.assure_rang ?? 1) === rang);
+    const c = classementTete(rang);
+    const ordre = new Map<string, number>();
+    if (c.statut === "ok") c.offres.forEach((o, i) => ordre.set(o.id, i));
+    const cle = (d: DossierDevis) =>
+      ordre.get(d.id) ??
+      (coutTotalDevis(d) ?? (d.cotisation_mensuelle != null ? Number(d.cotisation_mensuelle) * 1000 : Infinity));
+    return [...membres].sort((a, b) => cle(a) - cle(b));
+  };
 
   /** Agrégats du dossier : offre retenue par tête, sinon la moins chère. */
   const referencesParTete = assuresColonnes.map((a) => {
@@ -1514,6 +1535,10 @@ export function DossierDevisPanel({
           >
             {assuresColonnes.map((a) => {
               const offres = propositionsParTete(a.rang);
+              const top3 = classementTete(a.rang);
+              const infoTop3 = new Map<string, OffreClassee>(
+                top3.statut === "ok" ? top3.offres.map((o) => [o.id, o]) : [],
+              );
               const meilleur = offres[0];
               const retenuTete = offres.find((o) => estDevisRetenu(o));
               const reference = retenuTete ?? meilleur;
@@ -1570,6 +1595,11 @@ export function DossierDevisPanel({
                     <p className="text-xs font-medium uppercase tracking-wide text-ink-soft">
                       {offres.length} proposition{offres.length > 1 ? "s" : ""} — du moins cher au plus cher
                     </p>
+                    {top3.statut === "sans_reference" && offres.length > 0 && (
+                      <p className="mt-2 rounded-lg border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-xs text-amber-900">
+                        {top3.message} Aucun prix ne doit être communiqué au client tant que cette référence manque.
+                      </p>
+                    )}
                     {offres.length === 0 && (
                       <p className="mt-2 rounded-lg border border-dashed border-line px-3 py-3 text-xs text-ink-muted">
                         Aucun prix saisi pour cet assuré : utilisez « Saisir le prix » ou « Importer le devis » sur un
@@ -1583,6 +1613,7 @@ export function DossierDevisPanel({
                         const eco = economiePourDevis(d);
                         const note = notesProduits.get(d.produit_id ?? "")?.score ?? null;
                         const retenu = estDevisRetenu(d);
+                        const info = infoTop3.get(d.id);
                         return (
                           <div
                             key={d.id}
@@ -1597,6 +1628,11 @@ export function DossierDevisPanel({
                                 <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-ink text-[10px] text-primary-foreground">
                                   {i + 1}
                                 </span>
+                                {info?.top3 && (
+                                  <span className="mr-2 rounded-full bg-[color:var(--crm-gold)] px-2 py-0.5 text-[10px] font-semibold text-ink">
+                                    TOP 3
+                                  </span>
+                                )}
                                 {nomCompagnie(d.compagnie_id)} — {nomProduit(d.produit_id)}
                               </p>
                               <span
@@ -1664,6 +1700,25 @@ export function DossierDevisPanel({
                               </div>
                             </div>
 
+                            {info?.coutTotal != null && (
+                              <p className="mt-2 text-[11px] text-ink-soft">
+                                Coût client frais compris :{" "}
+                                <strong className="text-ink">{Math.round(info.coutTotal).toLocaleString("fr-FR")} €</strong>
+                                {" "}(frais de distribution{" "}
+                                {info.fraisDistribution === 0
+                                  ? "offerts jusqu'au 31/12/2026"
+                                  : `${Math.round(info.fraisDistribution ?? 0).toLocaleString("fr-FR")} €`}
+                                {info.fraisDossierManquants ? " ; frais de dossier compagnie non saisis" : ""})
+                                {(() => {
+                                  const c = commissionPourDevis(d);
+                                  return c.prevu?.total != null ? (
+                                    <span className="ml-2 rounded bg-ink/5 px-1.5 py-0.5 text-ink-muted" title="Interne cabinet, jamais montré au client">
+                                      Commission cabinet (interne) : {Math.round(c.prevu.total).toLocaleString("fr-FR")} €
+                                    </span>
+                                  ) : null;
+                                })()}
+                              </p>
+                            )}
                             {d.type_cotisation === "CRD" && (
                               <p className="mt-2 rounded-md bg-surface px-2 py-1 text-[11px] text-ink-soft">
                                 Cotisation sur capital restant dû : plus élevée au début puis dégressive. Cette
